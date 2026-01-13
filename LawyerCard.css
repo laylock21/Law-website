@@ -2,7 +2,7 @@
 
 .lawprof-profile-card {
     width: 100%;
-    max-width: 400px;
+    max-width: 320px;
     height: 600px;
     position: relative;
     cursor: pointer;
@@ -61,7 +61,7 @@
 .lawprof-profile-content {
     height: 35%;
     background: #b8b8b8;
-    padding: 25px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -71,10 +71,10 @@
 }
 
 .lawprof-profile-name {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 900;
     color: #2c2c2c;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     letter-spacing: 1px;
 }
 
@@ -124,7 +124,7 @@
 
 .lawprof-back-content {
     height: 100%;
-    padding: 50px 40px;
+    padding: 40px 30px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -133,26 +133,26 @@
 }
 
 .lawprof-description-section {
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 
 .lawprof-section-title {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 900;
     color: #2c2c2c;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     text-transform: uppercase;
 }
 
 .lawprof-description-text {
-    font-size: 14px;
-    line-height: 1.6;
+    font-size: 13px;
+    line-height: 1.5;
     color: #3a3a3a;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .lawprof-tags-section {
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 
 .lawprof-tags-container {
@@ -182,13 +182,13 @@
 }
 
 .lawprof-contact-section {
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 
 .lawprof-contact-item-back {
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     color: #2c2c2c;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
 }
 

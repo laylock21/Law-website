@@ -469,9 +469,9 @@ async function loadLawyers() {
             carouselInner.innerHTML = '';
             carouselIndicators.innerHTML = '';
 
-            // Group lawyers into slides (responsive: 1 on mobile, 2 on desktop)
+            // Group lawyers into slides (responsive: 1 on mobile, 3 on desktop)
             const isMobile = window.innerWidth <= 768;
-            const lawyersPerSlide = isMobile ? 1 : 2;
+            const lawyersPerSlide = isMobile ? 1 : 3;
             const slides = [];
             
             for (let i = 0; i < result.lawyers.length; i += lawyersPerSlide) {
@@ -585,7 +585,7 @@ function createLawyerCardHTML(lawyer) {
     ).join('');
 
     return `
-        <div class="col-md-6 col-sm-12 mb-4">
+        <div class="col-md-4 col-sm-12 mb-4">
             <div class="lawprof-profile-card">
                 <div class="lawprof-card-inner">
                     <div class="lawprof-card-front">

@@ -39,7 +39,7 @@
                     
                     <!-- Step 1: Username, First Name, Last Name -->
                     <div class="lawyer-form-step active" data-step="1">
-                        <h3 class="step-title" style="font-size: 20px; margin-bottom: 20px;">Basic Information</h3>
+                        <h3 class="step-title" style="font-size: 20px; margin-bottom: 20px;"><i class="fas fa-user-circle" style="color: #c5a253;"></i> Basic Information</h3>
                         <div class="form-group" style="margin-bottom: 16px;">
                             <label for="username_modal" style="display: block; margin-bottom: 6px; font-weight: 600; color: #000;">Username *</label>
                             <input type="text" id="username_modal" name="username" required style="width: 100%; padding: 12px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
@@ -58,7 +58,7 @@
 
                     <!-- Step 2: Email, Phone, Description -->
                     <div class="lawyer-form-step" data-step="2">
-                        <h3 class="step-title" style="font-size: 20px; margin-bottom: 20px;">Contact Information</h3>
+                        <h3 class="step-title" style="font-size: 20px; margin-bottom: 20px;"><i class="fas fa-check-circle" style="color: #c5a253;"></i> Contact Information</h3>
                         <div class="form-group" style="margin-bottom: 16px;">
                             <label for="email_modal" style="display: block; margin-bottom: 6px; font-weight: 600; color: #000;">Email *</label>
                             <input type="email" id="email_modal" name="email" required style="width: 100%; padding: 12px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
@@ -83,7 +83,7 @@
 
                     <!-- Step 3: Password Setup -->
                     <div class="lawyer-form-step" data-step="3">
-                        <h3 class="step-title" style="font-size: 20px; margin-bottom: 20px;">Password Setup</h3>
+                        <h3 class="step-title" style="font-size: 20px; margin-bottom: 20px;"><i class="fas fa-lock" style="color: #c5a253;"></i> Password Setup</h3>
                         <div class="password-setup-container" style="display: flex; flex-direction: column; gap: 16px;">
                             <div class="password-option" style="background: white; border: 2px solid #e0e0e0; border-radius: 10px; padding: 16px; transition: all 0.3s ease;">
                                 <label class="password-option-label" style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; margin: 0;">
@@ -126,7 +126,7 @@
 
                     <!-- Step 4: Specializations -->
                     <div class="lawyer-form-step" data-step="4">
-                        <h3 class="step-title" style="font-size: 20px; margin-bottom: 8px;">Legal Specializations</h3>
+                        <h3 class="step-title" style="font-size: 20px; margin-bottom: 8px;"><i class="fas fa-briefcase" style="color: #c5a253;"></i> Legal Specializations</h3>
                         <p class="step-description" style="color: #666; margin-bottom: 16px; font-size: 14px;">Select at least one area of legal expertise</p>
                         <div class="specializations-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-height: 300px; overflow-y: auto; padding-right: 6px;">
                             <?php if (isset($practice_areas)): ?>
@@ -240,29 +240,17 @@
 .step-title {
     font-size: 20px;
     font-weight: 700;
-    color: #000000;
+    color: white;
     margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 2px solid rgba(197, 162, 83, 0.3);
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #3a3a3a 0%, #4a6fa5 100%);
+    border-radius: 10px;
     position: relative;
     overflow: hidden;
-}
-
-.step-title::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 0;
-    height: 2px;
-    background: #c5a253;
-    animation: expandWidth 0.6s ease forwards;
-}
-
-@keyframes expandWidth {
-    to {
-        width: 100%;
-    }
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .step-description {

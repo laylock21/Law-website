@@ -831,8 +831,8 @@ html {
 /* Lawyers Section */
 .lawyer-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-	gap: 40px;
+	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+	gap: 16px;
 	align-items: start;
 	margin-left: auto;
 	margin-right: auto;
@@ -871,6 +871,11 @@ html {
 
 .carousel-item .col-md-6 {
 	padding: 0 15px;
+	height: 680px;
+}
+
+.carousel-item .col-md-4 {
+	padding: 0 8px;
 	height: 680px;
 }
 
