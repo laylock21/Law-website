@@ -19,12 +19,6 @@ $lawyer_name = $_SESSION['lawyer_name'];
 $success_message = '';
 $error_message = '';
 
-if(!empty($row['weekdays']) && isset($weekdayMap[$row['weekdays']])){
-    $dayNumber = $weekdayMap[$row['weekdays']];
-} else {
-    $dayNumber = null; // or default value
-}
-
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -137,7 +131,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 VALUES (?, 'one_time', ?, ?, ?, ?, ?, 1)
             ");
             $insert_stmt->execute([$lawyer_id, $specific_date, $day_name, $start_time, $end_time, $max_appointments]);
-            $insert_stmt->execute([$lawyer_id, $specific_date, $start_time, $end_time, $max_appointments]);
             
             $success_message = 'One-time schedule added successfully for ' . date('M d, Y', strtotime($specific_date)) . '!';
             
