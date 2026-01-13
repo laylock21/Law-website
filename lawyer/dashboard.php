@@ -65,11 +65,11 @@ try {
     $specializations_stmt->execute([$lawyer_id]);
     $specializations = $specializations_stmt->fetchAll();
     
-    // Get weekly availability - fetch ALL availabilities
+    // Get weekly availability - fetch only active schedules
     $availability_stmt = $pdo->prepare("
         SELECT * FROM lawyer_availability 
-        WHERE user_id = ?
-        ORDER BY created_at DESC
+        WHERE user_id = ? AND is_active = 1
+        ORDER BY schedule_type, specific_date, created_at DESC
     ");
     $availability_stmt->execute([$lawyer_id]);
     $all_availabilities = $availability_stmt->fetchAll();
@@ -199,25 +199,92 @@ $active_page = "dashboard";
                                 <a href="availability.php" class="btn-set-schedule">Set Your Schedule</a>
                             </div>
                         <?php else: ?>
-                            <?php foreach ($all_availabilities as $availability): ?>
+                            <?php 
+                            // Separate weekly and one-time schedules
+                            $weekly_schedules = [];
+                            $onetime_schedules = [];
+                            
+                            foreach ($all_availabilities as $availability) {
+                                if ($availability['schedule_type'] === 'weekly') {
+                                    $weekly_schedules[] = $availability;
+                                } elseif ($availability['schedule_type'] === 'one_time') {
+                                    $onetime_schedules[] = $availability;
+                                }
+                            }
+                            
+                            // Group weekly schedules by time slot
+                            $grouped_weekly = [];
+                            foreach ($weekly_schedules as $availability) {
+                                $day = $availability['weekdays']; // This is already a day name like 'Friday'
+                                $time_key = $availability['start_time'] . '-' . $availability['end_time'] . '-' . $availability['max_appointments'];
+                                if (!isset($grouped_weekly[$time_key])) {
+                                    $grouped_weekly[$time_key] = [
+                                        'days' => [],
+                                        'start_time' => $availability['start_time'],
+                                        'end_time' => $availability['end_time'],
+                                        'max_appointments' => $availability['max_appointments'],
+                                        'schedule_type' => 'weekly'
+                                    ];
+                                }
+                                // Only add the day if it's not already in the array (avoid duplicates)
+                                if (!in_array($day, $grouped_weekly[$time_key]['days'])) {
+                                    $grouped_weekly[$time_key]['days'][] = $day;
+                                }
+                            }
+                            
+                            // Sort days in weekly groups for better display
+                            $day_order = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                            foreach ($grouped_weekly as &$schedule) {
+                                usort($schedule['days'], function($a, $b) use ($day_order) {
+                                    return array_search($a, $day_order) - array_search($b, $day_order);
+                                });
+                            }
+                            
+                            // Group one-time schedules by date
+                            $grouped_onetime = [];
+                            foreach ($onetime_schedules as $availability) {
+                                $date_key = $availability['specific_date'] . '-' . $availability['start_time'] . '-' . $availability['end_time'] . '-' . $availability['max_appointments'];
+                                if (!isset($grouped_onetime[$date_key])) {
+                                    $grouped_onetime[$date_key] = [
+                                        'specific_date' => $availability['specific_date'],
+                                        'start_time' => $availability['start_time'],
+                                        'end_time' => $availability['end_time'],
+                                        'max_appointments' => $availability['max_appointments'],
+                                        'schedule_type' => 'one_time'
+                                    ];
+                                }
+                            }
+                            ?>
+                            
+                            <!-- Display Weekly Schedules -->
+                            <?php foreach ($grouped_weekly as $schedule): ?>
                                 <div class="availability-item">
                                     <div class="availability-days">
-                                        <strong>Available Days:</strong>
-                                        <?php 
-                                        $weekdays = explode(',', $availability['weekdays']);
-                                        $day_names = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                                        $available_days = [];
-                                        foreach ($weekdays as $day) {
-                                            $available_days[] = $day_names[$day];
-                                        }
-                                        echo implode(', ', $available_days);
-                                        ?>
+                                        <strong>Weekly Schedule - Available Days:</strong>
+                                        <?php echo implode(', ', $schedule['days']); ?>
                                         <div style="margin-top: 12px;">
-                                            <strong>Time:</strong> <?php echo date('g:i A', strtotime($availability['start_time'])); ?> - 
-                                            <?php echo date('g:i A', strtotime($availability['end_time'])); ?>
+                                            <strong>Time:</strong> <?php echo date('g:i A', strtotime($schedule['start_time'])); ?> - 
+                                            <?php echo date('g:i A', strtotime($schedule['end_time'])); ?>
                                         </div>
                                         <div style="margin-top: 8px;">
-                                            <strong>Max Appointments per Day:</strong> <?php echo $availability['max_appointments']; ?>
+                                            <strong>Max Appointments per Day:</strong> <?php echo $schedule['max_appointments']; ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                            
+                            <!-- Display One-Time Schedules -->
+                            <?php foreach ($grouped_onetime as $schedule): ?>
+                                <div class="availability-item">
+                                    <div class="availability-days">
+                                        <strong>One-Time Schedule - Available Days:</strong>
+                                        <?php echo date('l, F j, Y', strtotime($schedule['specific_date'])); ?>
+                                        <div style="margin-top: 12px;">
+                                            <strong>Time:</strong> <?php echo date('g:i A', strtotime($schedule['start_time'])); ?> - 
+                                            <?php echo date('g:i A', strtotime($schedule['end_time'])); ?>
+                                        </div>
+                                        <div style="margin-top: 8px;">
+                                            <strong>Max Appointments per Day:</strong> <?php echo $schedule['max_appointments']; ?>
                                         </div>
                                     </div>
                                 </div>
