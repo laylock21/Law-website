@@ -123,6 +123,7 @@ $active_page = "profile";
         <?php endif; ?>
         
         <?php if (isset($lawyer) && $lawyer): ?>
+        <!-- Profile Information Form -->
         <form action="process_profile_edit.php" method="POST" id="profileForm" class="profile-form">
             
             <!-- Top Row - Small Cards -->
@@ -177,46 +178,20 @@ $active_page = "profile";
                     </div>
                 </div>
 
-                <!-- Password Settings Card - Small -->
+                <!-- Password Change Card - Small -->
                 <div class="form-card password-card small-card">
                     <div class="card-header">
                         <h3><i class="fas fa-lock"></i> Password Settings</h3>
                     </div>
                     <div class="card-body">
-                        <div class="password-fields-container">
-                            <div id="password-fields" class="password-fields compact">
-                                <div class="form-group">
-                                    <label for="current_password">
-                                        <i class="fas fa-key"></i>
-                                        <span>Current</span>
-                                        <span class="required">*</span>
-                                    </label>
-                                    <input type="password" id="current_password" name="current_password" 
-                                           placeholder="Current password" class="form-input">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="new_password">
-                                        <i class="fas fa-lock"></i>
-                                        <span>New</span>
-                                        <span class="required">*</span>
-                                    </label>
-                                    <input type="password" id="new_password" name="new_password" 
-                                           placeholder="New password" class="form-input">
-                                    <div id="password-strength" class="password-strength"></div>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="confirm_new_password">
-                                        <i class="fas fa-check-double"></i>
-                                        <span>Confirm</span>
-                                        <span class="required">*</span>
-                                    </label>
-                                    <input type="password" id="confirm_new_password" name="confirm_new_password" 
-                                           placeholder="Confirm password" class="form-input">
-                                    <small id="password-match-status" class="form-hint">Passwords must match</small>
-                                </div>
-                            </div>
+                        <div style="text-align: center; padding: 20px 10px;">
+                            <p style="margin: 0 0 20px 0; color: #6c757d; font-size: 14px;">
+                                <i class="fas fa-shield-alt" style="color: #28a745; font-size: 32px; display: block; margin-bottom: 10px;"></i>
+                                Keep your account secure by updating your password regularly.
+                            </p>
+                            <button type="button" class="btn btn-primary" onclick="openPasswordModal()" style="width: 100%;">
+                                <i class="fas fa-key"></i> Change Password
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -353,6 +328,66 @@ $active_page = "profile";
             </div>
         </form>
         <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="passwordModal" class="modal-overlay" style="display: none;">
+        <div class="modal-container" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-lock"></i> Change Password</h3>
+                <button type="button" class="modal-close" onclick="closePasswordModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form action="process_password_change.php" method="POST" id="passwordForm">
+                <div class="modal-body">
+                    <p style="margin: 0 0 20px 0; color: #6c757d;">
+                        <i class="fas fa-info-circle"></i>
+                        Enter your current password and choose a new secure password. All fields are required.
+                    </p>
+                    
+                    <div class="form-group">
+                        <label for="password_current">
+                            <i class="fas fa-key"></i>
+                            <span>Current Password</span>
+                            <span class="required">*</span>
+                        </label>
+                        <input type="password" id="password_current" name="current_password" 
+                               placeholder="Enter your current password" class="form-input" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password_new">
+                            <i class="fas fa-lock"></i>
+                            <span>New Password</span>
+                            <span class="required">*</span>
+                        </label>
+                        <input type="password" id="password_new" name="new_password" 
+                               placeholder="Enter new password (min. 8 characters)" class="form-input" required>
+                        <div id="password-strength-modal" class="password-strength"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password_confirm">
+                            <i class="fas fa-check-double"></i>
+                            <span>Confirm New Password</span>
+                            <span class="required">*</span>
+                        </label>
+                        <input type="password" id="password_confirm" name="confirm_new_password" 
+                               placeholder="Confirm new password" class="form-input" required>
+                        <small id="password-match-status-modal" class="form-hint">Passwords must match</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-key"></i> Change Password
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closePasswordModal()">
+                        Cancel
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -666,21 +701,46 @@ $active_page = "profile";
         }
         
         // Password change functionality - removed toggle, fields always visible
-        // Set password fields as required since they're always visible
-        const currentPassword = document.getElementById('current_password');
-        const newPassword = document.getElementById('new_password');
-        const confirmPassword = document.getElementById('confirm_new_password');
+        // Password fields in the modal are always required
         
-        if (currentPassword && newPassword && confirmPassword) {
-            currentPassword.required = true;
-            newPassword.required = true;
-            confirmPassword.required = true;
+        // Open password modal
+        function openPasswordModal() {
+            const modal = document.getElementById('passwordModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+                
+                setTimeout(() => {
+                    modal.classList.add('show');
+                }, 10);
+                
+                // Clear form fields when opening
+                document.getElementById('passwordForm').reset();
+                document.getElementById('password-strength-modal').innerHTML = '';
+                document.getElementById('password-match-status-modal').textContent = 'Passwords must match';
+                document.getElementById('password-match-status-modal').style.color = '#6c757d';
+            }
         }
         
-        // Password strength indicator
-        document.getElementById('new_password').addEventListener('input', function() {
+        // Close password modal
+        function closePasswordModal() {
+            const modal = document.getElementById('passwordModal');
+            if (modal) {
+                modal.classList.remove('show');
+                document.body.style.overflow = 'auto';
+                
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                    // Clear form when closing
+                    document.getElementById('passwordForm').reset();
+                }, 300);
+            }
+        }
+        
+        // Password strength indicator for modal
+        document.getElementById('password_new').addEventListener('input', function() {
             const password = this.value;
-            const strengthDiv = document.getElementById('password-strength');
+            const strengthDiv = document.getElementById('password-strength-modal');
             
             if (password.length === 0) {
                 strengthDiv.innerHTML = '';
@@ -754,11 +814,11 @@ $active_page = "profile";
             `;
         });
         
-        // Password confirmation check
-        document.getElementById('confirm_new_password').addEventListener('input', function() {
-            const newPassword = document.getElementById('new_password').value;
+        // Password confirmation check for modal
+        document.getElementById('password_confirm').addEventListener('input', function() {
+            const newPassword = document.getElementById('password_new').value;
             const confirmPassword = this.value;
-            const statusDiv = document.getElementById('password-match-status');
+            const statusDiv = document.getElementById('password-match-status-modal');
             
             if (confirmPassword === '') {
                 statusDiv.textContent = 'Passwords must match';
@@ -775,7 +835,7 @@ $active_page = "profile";
             }
         });
         
-        // Form validation
+        // Profile form validation (no password validation)
         document.getElementById('profileForm').addEventListener('submit', function(e) {
             const specializations = document.querySelectorAll('input[name="specializations[]"]:checked');
             
@@ -785,52 +845,49 @@ $active_page = "profile";
                 return false;
             }
             
-            // Password validation - always validate since fields are always visible
-            const currentPassword = document.getElementById('current_password').value;
-            const newPassword = document.getElementById('new_password').value;
-            const confirmPassword = document.getElementById('confirm_new_password').value;
-            
-            // Only validate if user has entered any password field
-            if (currentPassword || newPassword || confirmPassword) {
-                if (!currentPassword) {
-                    e.preventDefault();
-                    alert('Please enter your current password.');
-                    document.getElementById('current_password').focus();
-                    return false;
-                }
-                
-                if (newPassword.length < 8) {
-                    e.preventDefault();
-                    alert('New password must be at least 8 characters long.');
-                    document.getElementById('new_password').focus();
-                    return false;
-                }
-                
-                if (newPassword !== confirmPassword) {
-                    e.preventDefault();
-                    alert('New passwords do not match.');
-                    document.getElementById('confirm_new_password').focus();
-                    return false;
-                }
-                
-                console.log('Password change validation passed');
-            }
-            
             // Confirm before submitting
-            const hasPasswordData = document.getElementById('current_password').value || 
-                                  document.getElementById('new_password').value || 
-                                  document.getElementById('confirm_new_password').value;
-            
-            const confirmMessage = hasPasswordData ? 
-                'Are you sure you want to update your profile and change your password?' : 
-                'Are you sure you want to update your profile?';
-                
-            if (!confirm(confirmMessage)) {
+            if (!confirm('Are you sure you want to update your profile?')) {
                 e.preventDefault();
                 return false;
             }
             
-            console.log('Form validation passed, submitting...');
+            console.log('Profile form validation passed, submitting...');
+        });
+        
+        // Password form validation
+        document.getElementById('passwordForm').addEventListener('submit', function(e) {
+            const currentPassword = document.getElementById('password_current').value;
+            const newPassword = document.getElementById('password_new').value;
+            const confirmPassword = document.getElementById('password_confirm').value;
+            
+            if (!currentPassword) {
+                e.preventDefault();
+                alert('Please enter your current password.');
+                document.getElementById('password_current').focus();
+                return false;
+            }
+            
+            if (newPassword.length < 8) {
+                e.preventDefault();
+                alert('New password must be at least 8 characters long.');
+                document.getElementById('password_new').focus();
+                return false;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                e.preventDefault();
+                alert('New passwords do not match.');
+                document.getElementById('password_confirm').focus();
+                return false;
+            }
+            
+            // Confirm before submitting
+            if (!confirm('Are you sure you want to change your password?')) {
+                e.preventDefault();
+                return false;
+            }
+            
+            console.log('Password change validation passed, submitting...');
         });
         
         // Auto-format phone number
@@ -849,9 +906,14 @@ $active_page = "profile";
         
         // Close modal when clicking outside
         document.addEventListener('click', function(e) {
-            const modal = document.getElementById('removePhotoModal');
-            if (e.target === modal) {
+            const removeModal = document.getElementById('removePhotoModal');
+            const passwordModal = document.getElementById('passwordModal');
+            
+            if (e.target === removeModal) {
                 closeRemoveModal();
+            }
+            if (e.target === passwordModal) {
+                closePasswordModal();
             }
         });
         
@@ -859,6 +921,7 @@ $active_page = "profile";
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeRemoveModal();
+                closePasswordModal();
             }
         });
     </script>
