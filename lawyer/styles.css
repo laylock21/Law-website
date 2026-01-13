@@ -6748,8 +6748,6 @@ button.btn-primary:hover {
 }
 
 /* End of Default Styles */
-    }
-    
     .card-header h3 {
         font-size: 0.9rem;
     }
@@ -6758,7 +6756,6 @@ button.btn-primary:hover {
     .lawyer-dashboard-grid {
         gap: 10px;
     }
-}
 /* ========================================
    COMPREHENSIVE SCREEN RESOLUTION SUPPORT
    ======================================== */
@@ -7436,7 +7433,7 @@ button.btn-primary:hover {
 }
 
 .consultation-modal .modal-header {
-    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    background: linear-gradient(135deg, #050505 0%, #808080 100%);
     color: white;
     padding: 24px 30px;
     border-radius: 12px 12px 0 0;
@@ -7673,7 +7670,7 @@ button.btn-primary:hover {
 }
 
 .modal-form-group button[type="submit"]:hover {
-    background: var(--navy);
+    background: #3a3a3a;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
