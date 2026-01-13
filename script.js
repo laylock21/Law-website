@@ -1224,9 +1224,11 @@ if (serviceSelect && lawyerSelect) {
 				// Feature: Fetch lawyer availability from database
 				const selectedOpt = lawyerSelect.options[lawyerSelect.selectedIndex];
 				const lawyerIdForAPI = selectedOpt?.dataset?.lawyerId || '';
+				
+				console.log('Fetching availability for:', lawyerNameForAPI, 'ID:', lawyerIdForAPI);
+				
 				const response = await fetch(`api/get_lawyer_availability.php?lawyer=${encodeURIComponent(lawyerNameForAPI)}&lawyer_id=${encodeURIComponent(lawyerIdForAPI)}`);
 				const result = await response.json();
-				
 				
 				// Hide loading state
 				loadingManager.hide(loaderId);
@@ -1237,6 +1239,7 @@ if (serviceSelect && lawyerSelect) {
 						availableDays: result.available_dates
 					};
 					
+					console.log('Stored availability for', selectedLawyer, ':', lawyerAvailability[selectedLawyer]);
 					
 					// Re-render calendar with lawyer's availability
 					window.renderCalendar();
