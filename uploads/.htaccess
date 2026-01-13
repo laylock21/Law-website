@@ -1,0 +1,14 @@
+# Prevent directory browsing
+Options -Indexes
+
+# Allow image files
+<FilesMatch "\.(jpg|jpeg|png|gif)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+# Deny non-image files (but don't override image rules)
+<FilesMatch "\.(php|html|txt|js|css)$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>

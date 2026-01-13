@@ -1,0 +1,18 @@
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="150" cy="150" r="150" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/>
+  
+  <!-- Person icon -->
+  <g transform="translate(150, 150)">
+    <!-- Head -->
+    <circle cx="0" cy="-30" r="35" fill="#6c757d"/>
+    
+    <!-- Body -->
+    <ellipse cx="0" cy="40" rx="55" ry="45" fill="#6c757d"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="150" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#6c757d">
+    No Photo
+  </text>
+</svg>

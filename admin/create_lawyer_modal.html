@@ -1,0 +1,547 @@
+<!-- Add this button to the page header -->
+<button type="button" class="btn btn-primary" id="openCreateLawyerModal" style="margin-left: 12px;">
+    <i class="fas fa-plus-circle"></i> Create New Lawyer
+</button>
+
+<!-- Create Lawyer Modal -->
+<div class="modal fade" id="createLawyerModal" tabindex="-1" aria-labelledby="createLawyerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content create-lawyer-modal">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createLawyerModalLabel">
+                    <i class="fas fa-user-plus me-2"></i>Create New Lawyer
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Progress Indicator -->
+                <div class="lawyer-progress-steps">
+                    <div class="lawyer-step active" data-step="1">
+                        <div class="lawyer-step-number">1</div>
+                        <div class="lawyer-step-label">Basic Info</div>
+                    </div>
+                    <div class="lawyer-step" data-step="2">
+                        <div class="lawyer-step-number">2</div>
+                        <div class="lawyer-step-label">Password</div>
+                    </div>
+                    <div class="lawyer-step" data-step="3">
+                        <div class="lawyer-step-number">3</div>
+                        <div class="lawyer-step-label">Specializations</div>
+                    </div>
+                </div>
+
+                <form method="POST" id="createLawyerFormModal">
+                    <input type="hidden" name="action" value="create_lawyer">
+                    
+                    <!-- Step 1: Basic Information -->
+                    <div class="lawyer-form-step active" data-step="1">
+                        <h3 class="step-title">Basic Information</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="username_modal">Username *</label>
+                                <input type="text" id="username_modal" name="username" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="email_modal">Email *</label>
+                                <input type="email" id="email_modal" name="email" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="first_name_modal">First Name *</label>
+                                <input type="text" id="first_name_modal" name="first_name" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="last_name_modal">Last Name *</label>
+                                <input type="text" id="last_name_modal" name="last_name" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="phone_modal">Phone</label>
+                                <input type="tel" id="phone_modal" name="phone" placeholder="(+63) 917 123 4567">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" style="margin-top: 24px;">
+                            <label for="description_modal">Description/Bio</label>
+                            <textarea id="description_modal" name="description" rows="3" placeholder="Brief description of the lawyer's experience and expertise"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Password Setup -->
+                    <div class="lawyer-form-step" data-step="2">
+                        <h3 class="step-title">Password Setup</h3>
+                        <div class="password-setup-container">
+                            <div class="password-option">
+                                <label class="password-option-label">
+                                    <input type="radio" name="password_option" value="auto" checked>
+                                    <div class="option-content">
+                                        <strong>Auto-generate temporary password</strong>
+                                        <small>System will create a secure temporary password that the lawyer must change on first login</small>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <div class="password-option">
+                                <label class="password-option-label">
+                                    <input type="radio" name="password_option" value="custom">
+                                    <div class="option-content">
+                                        <strong>Set custom password</strong>
+                                    </div>
+                                </label>
+                                <div id="custom-password-fields-modal" class="custom-password-fields">
+                                    <div class="form-grid">
+                                        <div class="form-group">
+                                            <label for="custom_password_modal">Password</label>
+                                            <input type="password" id="custom_password_modal" name="custom_password" placeholder="Enter password">
+                                            <small>Minimum 8 characters</small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="confirm_password_modal">Confirm Password</label>
+                                            <input type="password" id="confirm_password_modal" name="confirm_password" placeholder="Confirm password">
+                                            <small id="password-match-modal"></small>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="margin-top: 16px;">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="force_change_modal" name="force_change">
+                                            Force password change on first login
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Specializations -->
+                    <div class="lawyer-form-step" data-step="3">
+                        <h3 class="step-title">Legal Specializations</h3>
+                        <p class="step-description">Select at least one area of legal expertise</p>
+                        <div class="specializations-grid" id="specializationsGridModal">
+                            <!-- Will be populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="lawyer-form-navigation">
+                        <button type="button" class="btn btn-secondary btn-lawyer-prev" id="lawyerPrevBtn">
+                            <i class="fas fa-arrow-left"></i> Previous
+                        </button>
+                        <button type="button" class="btn btn-primary btn-lawyer-next" id="lawyerNextBtn">
+                            Next <i class="fas fa-arrow-right"></i>
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-lawyer-submit" id="lawyerSubmitBtn" style="display: none;">
+                            <i class="fas fa-check"></i> Create Lawyer Account
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Create Lawyer Modal Styles */
+.create-lawyer-modal {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.create-lawyer-modal .modal-header {
+    background: #6c757d !important;
+    color: white !important;
+    border-bottom: 3px solid #c5a253;
+    padding: 24px 32px;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.create-lawyer-modal .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #c5a253 0%, #d4af37 50%, #c5a253 100%);
+}
+
+.create-lawyer-modal .modal-header .btn-close {
+    filter: brightness(0) saturate(100%) invert(73%) sepia(18%) saturate(1015%) hue-rotate(8deg) brightness(91%) contrast(85%);
+    opacity: 0.9;
+    transition: all 0.3s ease;
+    transform: scale(1.1);
+}
+
+.create-lawyer-modal .modal-header .btn-close:hover {
+    opacity: 1;
+    transform: scale(1.1) rotate(90deg);
+}
+
+.create-lawyer-modal .modal-title {
+    font-weight: 700;
+    font-size: 1.35rem;
+    color: white;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.create-lawyer-modal .modal-body {
+    padding: 32px 40px;
+    background: white;
+}
+
+/* Progress Steps */
+.lawyer-progress-steps {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    margin-bottom: 40px;
+    padding: 24px;
+    background: linear-gradient(135deg, #fafafa 0%, white 100%);
+    border-radius: 12px;
+    border: 2px solid rgba(197, 162, 83, 0.2);
+}
+
+.lawyer-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.lawyer-step-number {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 18px;
+    border: 3px solid #e0e0e0;
+    background: #e0e0e0;
+    color: #999999;
+    transition: all 0.3s ease;
+}
+
+.lawyer-step-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #999999;
+    transition: all 0.3s ease;
+}
+
+.lawyer-step.completed .lawyer-step-number {
+    background: white;
+    border-color: #c5a253;
+    color: #c5a253;
+}
+
+.lawyer-step.completed .lawyer-step-label {
+    color: #c5a253;
+}
+
+.lawyer-step.active .lawyer-step-number {
+    background: linear-gradient(135deg, #c5a253 0%, #d4b36a 100%);
+    border-color: #c5a253;
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(197, 162, 83, 0.4);
+}
+
+.lawyer-step.active .lawyer-step-label {
+    color: #000000;
+    font-weight: 700;
+}
+
+/* Form Steps */
+.lawyer-form-step {
+    display: none;
+}
+
+.lawyer-form-step.active {
+    display: block;
+    animation: fadeInUp 0.4s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.step-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #000000;
+    margin-bottom: 8px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid rgba(197, 162, 83, 0.3);
+}
+
+.step-description {
+    color: #666666;
+    margin-bottom: 24px;
+    font-size: 15px;
+}
+
+/* Password Setup */
+.password-setup-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.password-option {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.password-option:has(input[type="radio"]:checked) {
+    border-color: #c5a253;
+    background: linear-gradient(135deg, #faf7f0 0%, white 100%);
+    box-shadow: 0 4px 12px rgba(197, 162, 83, 0.15);
+}
+
+.password-option-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    cursor: pointer;
+    margin-bottom: 0;
+}
+
+.password-option-label input[type="radio"] {
+    margin-top: 4px;
+    width: 20px;
+    height: 20px;
+    accent-color: #c5a253;
+}
+
+.option-content {
+    flex: 1;
+}
+
+.option-content strong {
+    display: block;
+    font-size: 16px;
+    color: #000000;
+    margin-bottom: 6px;
+}
+
+.option-content small {
+    display: block;
+    color: #666666;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.custom-password-fields {
+    display: none;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 2px solid rgba(197, 162, 83, 0.2);
+}
+
+.password-option:has(input[type="radio"]:checked) .custom-password-fields {
+    display: block;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333333;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #c5a253;
+}
+
+/* Form Navigation */
+.lawyer-form-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 2px solid rgba(197, 162, 83, 0.2);
+}
+
+.btn-lawyer-prev,
+.btn-lawyer-next,
+.btn-lawyer-submit {
+    padding: 14px 32px;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-lawyer-prev {
+    background: white;
+    color: #000000;
+    border: 2px solid #000000;
+}
+
+.btn-lawyer-prev:hover {
+    background: #000000;
+    color: white;
+    transform: translateX(-3px);
+}
+
+.btn-lawyer-next,
+.btn-lawyer-submit {
+    background: #c5a253;
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(197, 162, 83, 0.3);
+    margin-left: auto;
+}
+
+.btn-lawyer-next:hover,
+.btn-lawyer-submit:hover {
+    background: #b08f42;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(176, 143, 66, 0.4);
+}
+</style>
+
+<script>
+// Create Lawyer Modal JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('createLawyerModal');
+    const openBtn = document.getElementById('openCreateLawyerModal');
+    const prevBtn = document.getElementById('lawyerPrevBtn');
+    const nextBtn = document.getElementById('lawyerNextBtn');
+    const submitBtn = document.getElementById('lawyerSubmitBtn');
+    let currentStep = 1;
+    const totalSteps = 3;
+
+    // Open modal
+    if (openBtn) {
+        openBtn.addEventListener('click', function() {
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+            currentStep = 1;
+            showStep(currentStep);
+        });
+    }
+
+    // Previous button
+    prevBtn.addEventListener('click', function() {
+        if (currentStep > 1) {
+            currentStep--;
+            showStep(currentStep);
+        }
+    });
+
+    // Next button
+    nextBtn.addEventListener('click', function() {
+        if (validateStep(currentStep)) {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                showStep(currentStep);
+            }
+        }
+    });
+
+    function showStep(step) {
+        // Hide all steps
+        document.querySelectorAll('.lawyer-form-step').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.lawyer-step').forEach(s => {
+            s.classList.remove('active', 'completed');
+        });
+
+        // Show current step
+        document.querySelector(`.lawyer-form-step[data-step="${step}"]`).classList.add('active');
+        document.querySelector(`.lawyer-step[data-step="${step}"]`).classList.add('active');
+
+        // Mark completed steps
+        for (let i = 1; i < step; i++) {
+            document.querySelector(`.lawyer-step[data-step="${i}"]`).classList.add('completed');
+        }
+
+        // Update buttons
+        prevBtn.style.display = step === 1 ? 'none' : 'inline-flex';
+        nextBtn.style.display = step === totalSteps ? 'none' : 'inline-flex';
+        submitBtn.style.display = step === totalSteps ? 'inline-flex' : 'none';
+    }
+
+    function validateStep(step) {
+        const currentStepEl = document.querySelector(`.lawyer-form-step[data-step="${step}"]`);
+        const requiredInputs = currentStepEl.querySelectorAll('input[required], textarea[required]');
+        
+        for (let input of requiredInputs) {
+            if (!input.value.trim()) {
+                input.focus();
+                input.style.borderColor = '#dc3545';
+                setTimeout(() => input.style.borderColor = '', 2000);
+                return false;
+            }
+        }
+
+        // Validate specializations on step 3
+        if (step === 3) {
+            const checked = document.querySelectorAll('input[name="specializations[]"]:checked');
+            if (checked.length === 0) {
+                alert('Please select at least one specialization');
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // Password option toggle
+    document.querySelectorAll('input[name="password_option"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const customFields = document.getElementById('custom-password-fields-modal');
+            if (this.value === 'custom') {
+                customFields.style.display = 'block';
+            } else {
+                customFields.style.display = 'none';
+            }
+        });
+    });
+
+    // Password match validation
+    const confirmPassword = document.getElementById('confirm_password_modal');
+    if (confirmPassword) {
+        confirmPassword.addEventListener('input', function() {
+            const password = document.getElementById('custom_password_modal').value;
+            const matchEl = document.getElementById('password-match-modal');
+            if (this.value === password && this.value !== '') {
+                matchEl.textContent = '✓ Passwords match';
+                matchEl.style.color = '#28a745';
+            } else if (this.value !== '') {
+                matchEl.textContent = '✗ Passwords do not match';
+                matchEl.style.color = '#dc3545';
+            } else {
+                matchEl.textContent = '';
+            }
+        });
+    }
+});
+</script>

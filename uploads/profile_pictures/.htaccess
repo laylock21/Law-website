@@ -1,0 +1,8 @@
+# Allow image access for profile pictures
+Options -Indexes
+
+# Allow all image files
+<FilesMatch "\.(jpg|jpeg|png|gif)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>

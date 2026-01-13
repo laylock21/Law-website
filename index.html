@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Law Firm | Home</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+	
+	<!-- Bootstrap CSS -->
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+	
+	<!-- Font Awesome for icons -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous">
+	
+	<!-- Critical CSS for above-the-fold content -->
+	<style>
+		:root {
+			--white: #FFFFFF;
+			--eclipse: #3a3a3a;
+			--gold: #C5A253;
+			--navy: #3a3a3a;
+			--gray-light: #F8F9FA;
+			--text-dark: #3a3a3a;
+			--font-serif: 'Playfair Display', serif;
+			--font-sans: 'Inter', sans-serif;
+		}
+		* { box-sizing: border-box; }
+		html, body { margin: 0; padding: 0; height: 100%; font-family: var(--font-sans); color: var(--text-dark); background: var(--white); line-height: 1.6; }
+		
+		.site-header { position: fixed; top: 0; left: 0; right: 0; background: var(--white); border-bottom: 1px solid rgba(197, 162, 83, 0.2); box-shadow: 0 2px 20px rgba(11, 29, 58, 0.1); z-index: 1000; transition: all 0.3s ease; }
+		.header-inner { display: flex; align-items: center; justify-content: space-between; height: 80px; }
+		.container { width: 100%; max-width: clamp(1200px, 90vw, 1400px); margin: 0 auto; padding: 0 clamp(20px, 4vw, 40px); }
+		.logo { color: var(--navy); text-decoration: none; font-family: var(--font-serif); font-weight: 700; font-size: 28px; letter-spacing: -0.5px; transition: color 0.3s ease; }
+		.nav-list { list-style: none; display: flex; gap: 8px; margin: 0; padding: 0; }
+		.nav-list a { text-decoration: none; color: var(--navy); font-weight: 500; padding: 12px 16px; border-radius: 8px; transition: all 0.3s ease; font-size: 16px; position: relative; }
+		
+		.hero { 
+			background: #000000;
+			color: var(--white); 
+			padding: 100px 0 80px; 
+			min-height: 100vh; 
+			display: flex; 
+			align-items: center; 
+			position: relative; 
+			overflow: hidden; 
+		}
+		.hero-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 80px;
+			align-items: center;
+		}
+		.hero-content { 
+			position: relative; 
+			z-index: 2; 
+			text-align: left; 
+			max-width: 600px; 
+		}
+		.hero-image {
+			position: relative;
+			z-index: 2;
+			display: flex;
+			justify-content: flex-end;
+			align-items: center;
+		}
+		.hero-image img {
+			width: 100%;
+			max-width: 600px;
+			min-height: 400px;
+			height: auto;
+			object-fit: cover;
+			object-position: center;
+			border-radius: 12px;
+			box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+		}
+		.hero h1 { 
+			font-family: var(--font-serif); 
+			font-size: clamp(36px, 4.5vw, 56px); 
+			font-weight: 700; 
+			margin: 0 0 24px 0; 
+			line-height: 1.2; 
+			color: var(--white); 
+			letter-spacing: -0.5px;
+		}
+		.hero-tagline { 
+			font-size: clamp(16px, 2vw, 19px); 
+			margin: 0 0 40px 0; 
+			color: rgba(255, 255, 255, 0.85); 
+			font-weight: 400; 
+			line-height: 1.7;
+		}
+		.hero-actions { 
+			display: flex; 
+			gap: 16px; 
+			flex-wrap: wrap; 
+			justify-content: flex-start; 
+			align-items: center; 
+		}
+		
+		.btn { 
+			display: inline-flex; 
+			align-items: center; 
+			justify-content: center; 
+			border: 2px solid transparent; 
+			padding: 14px 32px; 
+			border-radius: 8px; 
+			cursor: pointer; 
+			font-weight: 600; 
+			text-decoration: none; 
+			transition: all 0.3s ease; 
+			font-size: 15px; 
+			min-height: 50px; 
+			font-family: var(--font-sans); 
+			letter-spacing: 0.3px;
+		}
+		.btn-primary { 
+			background: #D4AF37;
+			color: #000000; 
+			border-color: #D4AF37; 
+		}
+		.btn-primary:hover { 
+			background: #B8860B; 
+			border-color: #B8860B; 
+			transform: translateY(-2px); 
+			box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4); 
+		}
+		.btn-secondary { 
+			background: transparent; 
+			border-color: rgba(255, 255, 255, 0.3); 
+			color: var(--white); 
+		}
+		.btn-secondary:hover { 
+			background: rgba(255, 255, 255, 0.1); 
+			border-color: rgba(255, 255, 255, 0.5); 
+			transform: translateY(-2px);
+		}
+		.btn-outline { 
+			background: transparent; 
+			border-color: rgba(255, 255, 255, 0.8); 
+			color: var(--white); 
+		}
+		.btn-outline:hover { 
+			background: rgba(255, 255, 255, 0.1); 
+			border-color: var(--white); 
+		}
+		
+		/* Custom carousel with smooth slide transitions */
+		.carousel-container {
+			overflow: hidden;
+			padding: 0 80px;
+			margin: 0 auto;
+			position: relative;
+			/* Create a strict clipping boundary */
+			clip-path: inset(0);
+		}
+		
+		/* Ensure carousel inner also hides overflow during transitions */
+		.carousel-preview {
+			overflow: visible; /* Allow content to show */
+			position: relative;
+			width: 100%;
+			height: auto; /* Allow height to grow with content */
+			min-height: 650px; /* Larger minimum to accommodate all content */
+			/* Remove clipping that might hide content */
+		}
+		
+		.carousel-preview .carousel-inner {
+			overflow: visible; /* Allow content to show */
+			position: relative;
+			height: auto; /* Allow height to grow with content */
+			min-height: 650px; /* Larger minimum to accommodate all content */
+			width: 100%;
+			/* Remove clipping that might hide content */
+		}
+		
+		/* FADE transition for carousel items - NO SLIDING */
+		.carousel-preview .carousel-item {
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			width: 100%;
+			height: auto; /* Allow items to grow with content */
+			min-height: 650px; /* Ensure minimum height for all content */
+			opacity: 0;
+			display: none; /* Hide inactive slides completely */
+			transform: translateX(0); /* Keep all items in place */
+			transition: opacity 0.6s ease-in-out; /* Smooth fade */
+			pointer-events: none; /* Prevent clicks on hidden slides */
+			z-index: 1;
+		}
+		
+		.carousel-preview .carousel-item.active {
+			opacity: 1;
+			display: block; /* Show active slide */
+			transform: translateX(0);
+			transition: opacity 0.6s ease-in-out; /* Smooth fade */
+			pointer-events: auto; /* Allow clicks on active slide */
+			z-index: 2; /* Active slide on top */
+		}
+		
+		/* During transition, show both slides for smooth crossfade */
+		.carousel-preview .carousel-item.carousel-item-start,
+		.carousel-preview .carousel-item.carousel-item-end,
+		.carousel-preview .carousel-item.carousel-item-next,
+		.carousel-preview .carousel-item.carousel-item-prev {
+			display: block; /* Show during transition */
+			z-index: 2; /* Same level as active during transition */
+		}
+		
+		/* Disable all sliding animations - use fade only */
+		.carousel-preview .carousel-item.carousel-item-start,
+		.carousel-preview .carousel-item.carousel-item-end,
+		.carousel-preview .carousel-item.carousel-item-next,
+		.carousel-preview .carousel-item.carousel-item-prev {
+			opacity: 0;
+			transform: translateX(0); /* No sliding movement */
+		}
+		
+		.carousel-preview .carousel-item.carousel-item-next.carousel-item-start,
+		.carousel-preview .carousel-item.carousel-item-prev.carousel-item-end {
+			opacity: 1;
+			transform: translateX(0);
+		}
+		
+		/* Custom control buttons */
+		.custom-carousel-control {
+			background: var(--gold);
+			border: none;
+			border-radius: 50%;
+			width: 60px;
+			height: 60px;
+			top: 50%;
+			transform: translateY(-50%);
+			opacity: 0.9;
+			transition: all 0.3s ease;
+			z-index: 10;
+		}
+		
+		.custom-carousel-control:hover {
+			background: #3a3a3a;
+			opacity: 1;
+			transform: translateY(-50%) scale(1.1);
+		}
+		
+		.custom-carousel-control.carousel-control-prev {
+			left: 10px;
+		}
+		
+		.custom-carousel-control.carousel-control-next {
+			right: 10px;
+		}
+		
+		.control-icon {
+			color: white;
+			font-size: 18px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 100%;
+			height: 100%;
+		}
+		
+		/* Custom indicators */
+		.custom-indicators {
+			bottom: -60px;
+			margin-bottom: 0;
+		}
+		
+		.custom-indicators button {
+			background-color: var(--gold);
+			width: 14px;
+			height: 14px;
+			border-radius: 50%;
+			margin: 0 8px;
+			border: 2px solid transparent;
+			transition: all 0.3s ease;
+		}
+		
+		.custom-indicators button.active {
+			background-color: var(--navy);
+			border-color: var(--gold);
+			transform: scale(1.2);
+		}
+		
+		/* Override Bootstrap default transition duration and ensure smooth sliding */
+		.carousel-item {
+			transition-duration: 1s !important;
+			transition-timing-function: ease-in-out !important;
+		}
+		
+		/* Ensure proper slide direction animations */
+		.carousel-item-next:not(.carousel-item-start),
+		.active.carousel-item-end {
+			transform: translateX(100%);
+		}
+		
+		.carousel-item-prev:not(.carousel-item-end),
+		.active.carousel-item-start {
+			transform: translateX(-100%);
+		}
+		
+		.text-navy { color: var(--navy) !important; }
+		.lawyer-card { 
+			transition: transform 0.3s ease, box-shadow 0.3s ease; 
+			border: none;
+			border-radius: 15px;
+			background: rgba(255, 255, 255, 0.95);
+			backdrop-filter: blur(10px);
+		}
+		.lawyer-card:hover { 
+			transform: translateY(-10px); 
+			box-shadow: 0 15px 35px rgba(0,0,0,0.2) !important; 
+		}
+		
+		/* Practice area badges styling with responsive centering */
+		.lawyer-roles-container {
+			min-height: 60px;
+			align-items: center;
+			gap: 0.3rem;
+		}
+		
+		.lawyer-roles-container .badge {
+			font-size: 0.75rem;
+			padding: 0.4em 0.8em;
+			border-radius: 20px;
+			font-weight: 500;
+			white-space: nowrap;
+			flex-shrink: 0;
+		}
+		
+		/* Responsive badge layout */
+		@media (max-width: 576px) {
+			.lawyer-roles-container {
+				flex-direction: column;
+				gap: 0.2rem;
+			}
+		}
+		
+		/* Responsive adjustments */
+		@media (max-width: 768px) {
+			.carousel-container {
+				padding: 0 40px;
+				margin: 0 -40px;
+			}
+			.carousel-preview .carousel-inner {
+				padding: 0 20px;
+			}
+			.custom-carousel-control {
+				width: 45px;
+				height: 45px;
+			}
+			.control-icon {
+				font-size: 14px;
+			}
+			
+			/* Hero responsive */
+			.hero {
+				padding: 120px 0 60px;
+				min-height: auto;
+			}
+			.hero-grid {
+				grid-template-columns: 1fr;
+				gap: 40px;
+			}
+			.hero-content {
+				text-align: center;
+				max-width: 100%;
+			}
+			.hero-image {
+				justify-content: center;
+				order: -1;
+			}
+			.hero-image img {
+				max-width: 100%;
+			}
+			.hero h1 {
+				font-size: clamp(28px, 7vw, 40px);
+			}
+			.hero-tagline {
+				font-size: clamp(15px, 4vw, 17px);
+				margin-bottom: 32px;
+			}
+			.hero-actions {
+				justify-content: center;
+				flex-direction: column;
+				gap: 12px;
+			}
+			.btn {
+				width: 100%;
+				max-width: 300px;
+			}
+		}
+
+		/* Back to top button */
+		.back-to-top {
+			position: fixed;
+			right: 24px;
+			bottom: 24px;
+			width: 52px;
+			height: 52px;
+			border-radius: 50%;
+			border: none;
+			background: var(--muted-gold);
+			color: #3a3a3a;
+			box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			opacity: 0;
+			visibility: hidden;
+			transform: translateY(10px);
+			transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease, background 0.25s ease;
+			z-index: 1100;
+		}
+
+		.back-to-top:hover {
+			background: var(--gold);
+			color: #fff
+		}
+
+		.back-to-top.show {
+			opacity: 1;
+			visibility: visible;
+			transform: translateY(0);
+		}
+	</style>
+	
+	<!-- Load full CSS asynchronously -->
+	<link rel="preload" href="styles.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+	<noscript><link rel="stylesheet" href="styles.css"></noscript>
+	
+	<!-- Lawyer Profile Card Styles -->
+	<link rel="stylesheet" href="LawyerCard.css">
+</head>
+
+<body>
+	<a href="#main-content" class="skip-link">Skip to main content</a>
+	
+	<!-- Toast notification container -->
+	<div class="toast-container" id="toastContainer"></div>
+	
+	<!-- Mobile menu overlay -->
+	<div class="nav-overlay" id="navOverlay"></div>
+	
+	<header class="site-header" role="banner">
+		<div class="container header-inner">
+			<div class="brand">
+				<a href="#home" class="logo" aria-label="MD Law - Home">MD Law</a>
+			</div>
+			<nav class="nav" aria-label="Primary navigation">
+				<button class="nav-toggle" aria-expanded="false" aria-controls="primary-menu" aria-label="Toggle navigation menu">
+					<span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+				</button>
+				<ul id="primary-menu" class="nav-list" role="menubar">
+					<li role="none"><a href="#home" role="menuitem" aria-label="Go to home section">Home</a></li>
+					<li role="none"><a href="#about" role="menuitem" aria-label="Go to about section">About</a></li>
+					<li role="none"><a href="#services" role="menuitem" aria-label="Go to practice areas section">Practice Areas</a></li>
+					<li role="none"><a href="#testimonials" role="menuitem" aria-label="Go to case results section">Case Results</a></li>
+					<li role="none"><a href="#lawyers" role="menuitem" aria-label="Go to our team section">Our Team</a></li>
+					<li role="none"><a href="#appointment" role="menuitem" aria-label="Go to consultation booking section">Book Consultation</a></li>
+					<li role="none"><a href="#contact" role="menuitem" aria-label="Go to contact section">Contact</a></li>
+					<li role="none"><a href="login.php" role="menuitem" aria-label="Staff login" class="login-link">Staff Login</a></li>
+				</ul>
+			</nav>
+		</div>
+	</header>
+
+	<main id="main-content" role="main">
+		<section id="home" class="section hero" aria-labelledby="hero-title"> 
+			<div class="container">
+				<div class="hero-grid">
+					<div class="hero-content">
+						<h1 id="hero-title">Protecting Your Rights Since 2005</h1>
+						<p class="hero-tagline">Trusted Legal Solutions for Individuals, Families, and Businesses</p>
+						<div class="hero-actions" role="group" aria-label="Primary actions">
+							<a class="btn btn-primary" href="#appointment" aria-describedby="hero-title">Book a Consultation</a>
+							<a class="btn btn-secondary" href="#services" aria-describedby="hero-title">Our Practice Areas</a>
+						</div>
+					</div>
+					<div class="hero-image">
+						<img src="src/img/insidealawyer-soffice-1920w.jpg" alt="Professional law office with scales of justice and legal books" loading="eager" />
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section id="about" class="section alt">  
+			<div class="container">
+				<div class="about-content">
+					<div class="about-text slide-in-left">
+						<header class="section-header text-left">
+							<h2>About Our Firm</h2>
+							<p>We are a full-service law firm committed to delivering strategic, results-driven legal solutions with integrity and care.</p>
+						</header>
+						<div class="about-features">
+							<div class="feature-item">
+								<div class="feature-icon">
+									<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+										<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+									</svg>
+								</div>
+								<div>
+									<h4>Client-First Approach</h4>
+									<p>Personalized strategies tailored to your specific goals and circumstances.</p>
+								</div>
+							</div>
+							<div class="feature-item">
+								<div class="feature-icon">
+									<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+										<path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+									</svg>
+								</div>
+								<div>
+									<h4>Proven Results</h4>
+									<p>Decades of combined experience with successful outcomes in and out of court.</p>
+								</div>
+							</div>
+							<div class="feature-item">
+								<div class="feature-icon">
+									<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+										<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+									</svg>
+								</div>
+								<div>
+									<h4>Transparent Communication</h4>
+									<p>Clear, honest guidance throughout your legal journey with responsive support.</p>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="about-image">
+						<img src="src/img/pexels-sora-shimazaki-5668473.jpg" alt="Our legal team" loading="lazy" />
+					</div>
+				</div>
+			</div>
+		</section>	
+
+		<section id="services" class="section">
+			<div class="container">
+				<header class="section-header fade-in-up">
+					<h2>Our Practice Areas</h2>
+					<p>Expert legal counsel across multiple specialties with proven results</p>
+				</header>
+				<div class="services-grid fade-in-up">
+					<div class="service-card">
+						<div class="service-icon">
+							<svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+								<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+							</svg>
+						</div>
+						<h3>Criminal Defense</h3>
+						<p>Aggressive defense strategies and courtroom expertise to protect your rights and freedom.</p>
+					</div>
+					<div class="service-card">
+						<div class="service-icon">
+							<svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+								<path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A1.5 1.5 0 0 0 18.54 8H17c-.8 0-1.54.37-2.01 1l-4.7 6.27c-.3.4-.47.87-.47 1.35V22h10z"/>
+							</svg>
+						</div>
+						<h3>Family Law</h3>
+						<p>Compassionate guidance through divorce, custody, and family matters with focus on resolution.</p>
+					</div>
+					<div class="service-card">
+						<div class="service-icon">
+							<svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+								<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+							</svg>
+						</div>
+						<h3>Corporate Law</h3>
+						<p>Strategic business counsel, contract negotiation, and corporate governance for growing companies.</p>
+					</div>
+					<div class="service-card">
+						<div class="service-icon">
+							<svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+								<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.96.76 1.58V19z"/>
+							</svg>
+						</div>
+						<h3>Real Estate</h3>
+						<p>Comprehensive real estate services from transactions to development and planning strategies.</p>
+					</div>
+					<div class="service-card">
+						<div class="service-icon">
+							<svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+								<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 14H7v-2h10v2zm0-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+							</svg>
+						</div>
+						<h3>Health Care Law</h3>
+						<p>Navigating complex healthcare regulations, compliance, and medical practice legal matters.</p>
+					</div>
+					<div class="service-card">
+						<div class="service-icon">
+							<svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+								<path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09v6L12 21l-7-3.82v-6L1 9l11-6z"/>
+							</svg>
+						</div>
+						<h3>Educational Law</h3>
+						<p>Specialized legal services for educational institutions, compliance, and student rights.</p>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section id="testimonials" class="section">
+			<div class="container">
+				<header class="section-header fade-in-up">
+					<h2>Client Success Stories</h2>
+					<p>Real results from real clients who trusted us with their legal matters</p>
+				</header>
+				<div class="testimonials-grid">
+					<div class="testimonial-card">
+						<div class="testimonial-content">
+							<p>"The team at MD Law handled my criminal case with exceptional skill. Their expertise and dedication resulted in a complete dismissal of charges."</p>
+						</div>
+						<div class="testimonial-author">
+							<h4>Maria Rodriguez</h4>
+							<span>Criminal Defense Client</span>
+						</div>
+					</div>
+					<div class="testimonial-card">
+						<div class="testimonial-content">
+							<p>"During my divorce, they provided compassionate guidance while ensuring my rights were protected. The outcome exceeded my expectations."</p>
+						</div>
+						<div class="testimonial-author">
+							<h4>John Smith</h4>
+							<span>Family Law Client</span>
+						</div>
+					</div>
+					<div class="testimonial-card">
+						<div class="testimonial-content">
+							<p>"Their corporate law expertise helped us navigate complex regulations and secure favorable terms for our business expansion."</p>
+						</div>
+						<div class="testimonial-author">
+							<h4>Sarah Johnson</h4>
+							<span>Corporate Client</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section id="lawyers" class="section alt">
+			<div class="container">
+				<header class="section-header fade-in-up">
+					<h2>Our Legal Team</h2>
+					<p>Experienced attorneys dedicated to achieving the best possible outcomes for our clients</p>
+				</header>
+				
+				<!-- Bootstrap Carousel for Lawyers with Preview -->
+				<div class="carousel-container position-relative">
+					<div id="lawyersCarousel" class="carousel slide carousel-preview" data-bs-ride="false" data-bs-interval="false">
+						<div class="carousel-inner" id="lawyer-carousel-inner">
+							<!-- Loading placeholder -->
+							<div class="carousel-item active">
+								<div class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
+									<div class="loading-placeholder text-center">
+										<div class="spinner-border text-primary mb-3" role="status">
+											<span class="visually-hidden">Loading...</span>
+										</div>
+										<p class="text-muted">Loading our legal team...</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<!-- Custom Carousel controls with preview styling -->
+						<button class="carousel-control-prev custom-carousel-control" type="button" data-bs-target="#lawyersCarousel" data-bs-slide="prev">
+							<div class="control-icon">
+								<i class="fas fa-chevron-left"></i>
+							</div>
+							<span class="visually-hidden">Previous</span>
+						</button>
+						<button class="carousel-control-next custom-carousel-control" type="button" data-bs-target="#lawyersCarousel" data-bs-slide="next">
+							<div class="control-icon">
+								<i class="fas fa-chevron-right"></i>
+							</div>
+							<span class="visually-hidden">Next</span>
+						</button>
+						
+						<!-- Carousel indicators -->
+						<div class="carousel-indicators custom-indicators" id="lawyer-carousel-indicators">
+							<!-- Indicators will be added dynamically -->
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section id="appointment" class="section">
+			<div class="container">
+				<header class="section-header fade-in-up">
+					<h2>Book Your Consultation</h2>
+					<p>Tell us about your case and schedule a consultation. We'll confirm via email or phone.</p>
+				</header>
+				<div class="appointment-content">
+					<div class="appointment-calendar">
+						<div class="calendar" aria-label="Monthly calendar">
+							<div class="calendar-header">
+								<button class="cal-nav" data-dir="prev" aria-label="Previous month">&#10094;</button>
+								<h3 class="cal-title" id="calendar-title">March 2025</h3>
+								<button class="cal-nav" data-dir="next" aria-label="Next month">&#10095;</button>
+							</div>
+							<div class="calendar-grid" role="grid" aria-labelledby="calendar-title">
+								<div class="calendar-row calendar-weekdays" role="row">
+									<span role="columnheader">Sun</span>
+									<span role="columnheader">Mon</span>
+									<span role="columnheader">Tue</span>
+									<span role="columnheader">Wed</span>
+									<span role="columnheader">Thu</span>
+									<span role="columnheader">Fri</span>
+									<span role="columnheader">Sat</span>
+								</div>
+								<div class="calendar-body" role="rowgroup" id="calendar-body"></div>
+							</div>
+							                <p class="calendar-note">Selected date: <span id="selected-date-display">None</span></p>
+                <p class="calendar-required">* Date selection is required to schedule consultation</p>
+                
+                <!-- Calendar Legend -->
+                <div class="calendar-legend">
+                    <div class="legend-item">
+                        <div class="legend-color available"></div>
+                        <span>Available</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color unavailable"></div>
+                        <span>Unavailable</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color past"></div>
+                        <span>Past Date</span>
+                    </div>
+                </div>
+						</div>
+					</div>
+					<div class="appointment-form-container">
+						<!-- Multi-step Progress Indicator -->
+						<div class="form-progress">
+							<div class="progress-step active" data-step="1">
+								<div class="step-number">1</div>
+								<div class="step-label">Personal Info</div>
+							</div>
+							<div class="progress-line"></div>
+							<div class="progress-step" data-step="2">
+								<div class="step-number">2</div>
+								<div class="step-label">Contact</div>
+							</div>
+							<div class="progress-line"></div>
+							<div class="progress-step" data-step="3">
+								<div class="step-number">3</div>
+								<div class="step-label">Lawyer & Case</div>
+							</div>
+							<div class="progress-line"></div>
+							<div class="progress-step" data-step="4">
+								<div class="step-number">4</div>
+								<div class="step-label">Date & Submit</div>
+							</div>
+						</div>
+
+						<form id="appointment-form" class="form multi-step-form" novalidate>
+							<!-- Step 1: Personal Information -->
+							<div class="form-step active" data-step="1">
+								<h3 class="step-title">Personal Information</h3>
+								<div class="form-row">
+									<label for="lastName">Last Name <span class="required-asterisk" aria-label="required">*</span></label>
+									<input id="lastName" name="lastName" type="text" placeholder="Dela Cruz" required aria-describedby="lastName-help" />
+									<div id="lastName-help" class="sr-only">Enter your family name or surname</div>
+								</div>
+								<div class="form-row">
+									<label for="firstName">First Name <span class="required-asterisk" aria-label="required">*</span></label>
+									<input id="firstName" name="firstName" type="text" placeholder="Juan" required aria-describedby="firstName-help" />
+									<div id="firstName-help" class="sr-only">Enter your given name</div>
+								</div>
+								<div class="form-row">
+									<label for="middleName">Middle Name</label>
+									<input id="middleName" name="middleName" type="text" placeholder="Santos" aria-describedby="middleName-help" />
+									<div id="middleName-help" class="sr-only">Enter your middle name (optional)</div>
+								</div>
+							</div>
+
+							<!-- Step 2: Contact Information -->
+							<div class="form-step" data-step="2">
+								<h3 class="step-title">Contact Information</h3>
+								<div class="form-row">
+									<label for="email">Email Address <span class="required-asterisk" aria-label="required">*</span></label>
+									<input id="email" name="email" type="email" placeholder="you@example.com" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" required aria-describedby="email-help" />
+									<div id="email-help" class="sr-only">Enter a valid email address for consultation confirmation</div>
+								</div>
+								<div class="form-row">
+									<label for="phone">Phone Number <span class="required-asterisk" aria-label="required">*</span></label>
+									<input id="phone" name="phone" type="tel" placeholder="09171234567" pattern="[0-9]{11}" maxlength="11" inputmode="numeric" autocomplete="tel" aria-describedby="phone-help" required />
+									<div id="phone-help" class="sr-only">Enter your 11-digit mobile phone number</div>
+								</div>
+							</div>
+
+							<!-- Step 3: Lawyer & Case Details -->
+							<div class="form-step" data-step="3">
+								<h3 class="step-title">Lawyer & Case Details</h3>
+								<div class="form-row">
+									<label for="lawyer">Select Lawyer <span class="required-asterisk" aria-label="required">*</span></label>
+									<select id="lawyer" name="lawyer" required>
+										<option value="">Select a lawyer</option>
+									</select>
+								</div>
+								<div class="form-row">
+									<label for="service">Practice Area <small style="color: #666;">(Auto-filled)</small></label>
+									<select id="service" name="service" required disabled>
+										<option value="">First select a lawyer</option>
+									</select>
+								</div>
+								<div class="form-row">
+									<label for="message">Case Description <span class="required-asterisk" aria-label="required">*</span></label>
+									<textarea id="message" name="message" rows="4" placeholder="Briefly describe your legal matter..." required></textarea>
+								</div>
+							</div>
+
+							<!-- Step 4: Date Selection & Submit -->
+							<div class="form-step" data-step="4">
+								<h3 class="step-title">Select Consultation Date</h3>
+								<div class="form-row">
+									<label>Consultation Date <span class="required-asterisk">*</span></label>
+									<div class="date-selection-info">
+										<p>Please select a date from the calendar on the left. Date selection is required to schedule your consultation.</p>
+									</div>
+								</div>
+								<p class="form-note" id="appointment-status" role="status" aria-live="polite"></p>
+							</div>
+
+							<input type="hidden" id="selected-lawyer" name="lawyer" />
+							<input type="hidden" id="selected-date" name="date" />
+							
+							<!-- Form Navigation Buttons -->
+							<div class="form-navigation">
+								<button type="button" class="btn btn-secondary btn-prev" id="prevBtn">
+									<i class="fas fa-arrow-left"></i> Previous
+								</button>
+								<button type="button" class="btn btn-primary btn-next" id="nextBtn">
+									Next <i class="fas fa-arrow-right"></i>
+								</button>
+								<button type="submit" class="btn btn-primary btn-submit" id="submitBtn" style="display: none;">
+									Schedule Consultation <i class="fas fa-check"></i>
+								</button>
+							</div>
+							<p class="form-validation-note" id="validation-note">Please complete all required fields</p>
+						</form>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- Status Modal -->
+		<div id="status-modal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="status-modal-title">
+			<div class="modal-content">
+				<button type="button" class="close" id="status-modal-close" aria-label="Close">&times;</button>
+				<h3 id="status-modal-title">Notification</h3>
+				<p id="status-modal-message"></p>
+				<div style="margin-top: 1rem; text-align: right;">
+					<button type="button" class="btn btn-primary" id="status-modal-ok">OK</button>
+				</div>
+			</div>
+		</div>
+
+		<section id="contact" class="section alt">
+			<div class="container">
+				<header class="section-header fade-in-up">
+					<h2>Contact Our Office</h2>
+					<p>Get in touch with our legal team for a consultation</p>
+				</header>
+
+				<div class="contact-content">
+					<div class="contact-info">
+						<div class="contact-card">
+							<h3>Office Information</h3>
+							<div class="contact-item">
+								<div class="contact-icon">
+									<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+										<path d="M12 2C8.14 2 5 5.14 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.86-3.14-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
+									</svg>
+								</div>
+								<div>
+									<strong>Address</strong>
+									<span>2F 647 Manuel Building Maly, San Mateo Rizal, Rodriguez, Philippines</span>
+								</div>
+							</div>
+							<div class="contact-item">
+								<div class="contact-icon">
+									<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+										<path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.05-.24c1.12.37 2.33.57 3.54.57.55 0 1 .45 1 1V20a1 1 0 01-1 1C10.3 21 3 13.7 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.21.2 2.42.57 3.54.12.35.03.74-.24 1.01l-2.21 2.24z"/>
+									</svg>
+								</div>
+								<div>
+									<strong>Phone</strong>
+									<span>(+63) 2 8123 4567</span>
+								</div>
+							</div>
+							<div class="contact-item">
+								<div class="contact-icon">
+									<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+										<path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5L4 8V6l8 5 8-5v2z"/>
+									</svg>
+								</div>
+								<div>
+									<strong>Email</strong>
+									<span>info@lexandco.com</span>
+								</div>
+							</div>
+						</div>
+						<div class="contact-card">
+							<h3>Office Hours</h3>
+							<div class="hours-item">
+								<span class="day">Monday - Friday</span>
+								<span class="time">9:00 AM - 6:00 PM</span>
+							</div>
+							<div class="hours-item">
+								<span class="day">Saturday</span>
+								<span class="time">9:00 AM - 1:00 PM</span>
+							</div>
+							<div class="hours-item">
+								<span class="day">Sunday</span>
+								<span class="time">Closed</span>
+							</div>
+						</div>
+					</div>
+					<div class="contact-map">
+						<div class="map-container" id="mapContainer">
+							<iframe 
+								src="https://maps.google.com/maps?q=647+Gen.+Luna+Ave,+Maly,+San+Mateo,+1850+Rizal,+Philippines&t=&z=17&ie=UTF8&iwloc=&output=embed"
+								width="100%" 
+								height="100%" 
+								style="border:0; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);" 
+								allowfullscreen="" 
+								loading="lazy" 
+								referrerpolicy="no-referrer-when-downgrade"
+								title="Office Location Map - Gen. Luna Ave, Maly, San Mateo, Rizal">
+							</iframe>
+							<div class="map-info">
+								<h3>Office Location</h3>
+								<p>647 Gen. Luna Ave, Maly<br>San Mateo, 1850 Rizal, Philippines</p>
+								<div class="map-actions">
+									<a href="https://www.google.com/maps/dir//647+Gen.+Luna+Ave,+Maly,+San+Mateo,+1850+Rizal,+Philippines" 
+									   target="_blank" 
+									   rel="noopener noreferrer"
+									   class="btn btn-outline"
+									   id="getDirectionsBtn">
+										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 5px;">
+											<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+											<circle cx="12" cy="10" r="3"></circle>
+										</svg>
+										Get Directions
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+	</main>
+
+	<footer class="site-footer">
+		<div class="container footer-inner">
+			<div class="footer-content">
+				<div class="footer-section">
+					<h3>MD Law</h3>
+					<p>Protecting your rights and securing your future with expert legal counsel since 2005.</p>
+				</div>
+				<div class="footer-section">
+					<h4>Quick Links</h4>
+					<ul>
+						<li><a href="#home">Home</a></li>
+						<li><a href="#services">Practice Areas</a></li>
+						<li><a href="#lawyers">Our Team</a></li>
+						<li><a href="#contact">Contact</a></li>
+					</ul>
+				</div>
+				<div class="footer-section">
+					<h4>Practice Areas</h4>
+					<ul>
+						<li><a href="#services">Criminal Defense</a></li>
+						<li><a href="#services">Family Law</a></li>
+						<li><a href="#services">Corporate Law</a></li>
+						<li><a href="#services">Real Estate</a></li>
+					</ul>
+				</div>
+				<div class="footer-section">
+					<h4>Contact Info</h4>
+					<p>2F 647 Manuel Building Maly<br>San Mateo Rizal, Rodriguez, Philippines</p>
+					<p>Phone: (+63) 2 8123 4567<br>Email: info@lexandco.com</p>
+				</div>
+			</div>
+			<div class="footer-bottom">
+				<p>&copy; <span id="year"></span> MD Law All rights reserved.</p>
+			</div>
+		</div>
+	</footer>
+
+	<!-- Time Slot Selection Modal -->
+	<div class="modal fade" id="timeSlotModal" tabindex="-1" aria-labelledby="timeSlotModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-xl modal-dialog-centered">
+			<div class="modal-content time-slot-modal">
+				<div class="modal-header">
+					<h5 class="modal-title" id="timeSlotModalLabel">
+						<i class="fas fa-clock me-2"></i>Select Time Slot
+					</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<!-- Appointment Info Card -->
+					<div class="appointment-info-card-compact mb-3">
+						<div class="info-item-compact">
+							<i class="fas fa-calendar-alt"></i>
+							<strong>Date:</strong> 
+							<span id="selectedDateDisplay" class="text-muted">-</span>
+						</div>
+						<div class="info-item-compact">
+							<i class="fas fa-user-tie"></i>
+							<strong>Lawyer:</strong> 
+							<span id="selectedLawyerDisplay" class="text-muted">-</span>
+						</div>
+					</div>
+					
+					<!-- Loading State -->
+					<div id="timeSlotsLoading" class="loading-container text-center py-5">
+						<div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+							<span class="visually-hidden">Loading time slots...</span>
+						</div>
+						<h6 class="text-muted">Loading available time slots...</h6>
+						<p class="small text-muted mb-0">Please wait while we check availability</p>
+					</div>
+					
+					<!-- Time Slots Container -->
+					<div id="timeSlotsContainer" style="display: none;">
+						<div class="d-flex align-items-center mb-3">
+							<i class="fas fa-clock text-primary me-2"></i>
+							<h6 class="mb-0">Available Time Slots <span id="availableSlotsCount" class="text-muted" style="font-weight: 500; margin-left: 6px;">(0 slots available)</span></h6>
+						</div>
+						<div class="time-slot-dropdown-container">
+							<select id="timeSlotSelect" class="time-slot-select form-select">
+								<option value="">Select a time slot</option>
+								<!-- Time slots will be populated here -->
+							</select>
+							<div class="time-slot-info-display mt-3" id="selectedSlotInfo" style="display: none;">
+								<i class="fas fa-check-circle text-success me-2"></i>
+								<span id="selectedSlotText"></span>
+							</div>
+						</div>
+						<div class="mt-3">
+							<small class="text-muted">
+								<i class="fas fa-info-circle me-1"></i>
+								Select a time slot from the dropdown above
+							</small>
+						</div>
+					</div>
+					
+					<!-- No Time Slots Message -->
+					<div id="noTimeSlotsMessage" style="display: none;" class="no-slots-container text-center py-4">
+						<div class="no-slots-icon mb-3">
+							<i class="fas fa-calendar-times text-warning" style="font-size: 3rem;"></i>
+						</div>
+						<h6 class="text-warning mb-2">No Available Time Slots</h6>
+						<p class="text-muted mb-3">This date is fully booked or unavailable.</p>
+						<small class="text-muted">Please select a different date or try another lawyer.</small>
+					</div>
+				</div>
+				<div class="modal-footer justify-content-between">
+					<div class="footer-info">
+						<small class="text-muted">
+							<i class="fas fa-shield-alt me-1"></i>
+							Your appointment will be confirmed after selection
+						</small>
+					</div>
+					<div class="footer-buttons">
+						<button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">
+							<i class="fas fa-times me-1"></i>Cancel
+						</button>
+						<button type="button" class="btn btn-primary" id="confirmTimeSlot" disabled>
+							<i class="fas fa-check me-1"></i>Confirm
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Back to Top Button -->
+	<button id="backToTop" class="back-to-top" aria-label="Back to top" title="Back to top">
+		<i class="fas fa-arrow-up" aria-hidden="true"></i>
+	</button>
+
+	<!-- Bootstrap JavaScript - Deferred for better performance -->
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous" defer></script>
+	
+	<!-- Font Awesome -->
+	<script src="https://kit.fontawesome.com/your-kit-id.js" crossorigin="anonymous" async></script>
+	
+	<!-- Main JavaScript - Deferred -->
+	<script src="script.js" defer></script>
+
+	<!-- Back to Top Behavior -->
+	<script>
+		(function() {
+			const btn = document.getElementById('backToTop');
+			if (!btn) return;
+
+			const toggleBtn = () => {
+				const scrolled = window.pageYOffset || document.documentElement.scrollTop;
+				if (scrolled > 300) {
+					btn.classList.add('show');
+				} else {
+					btn.classList.remove('show');
+				}
+			};
+
+			window.addEventListener('scroll', toggleBtn, { passive: true });
+			window.addEventListener('load', toggleBtn);
+
+			btn.addEventListener('click', function() {
+				window.scrollTo({ top: 0, behavior: 'smooth' });
+			});
+		})();
+	</script>

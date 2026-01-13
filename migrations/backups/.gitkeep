@@ -1,0 +1,9 @@
+# Backup Folder
+
+Store your database backups here before running migrations.
+
+Example:
+- backup_2025-10-02.sql
+- backup_before_migration_001.sql
+
+⚠️ Do not commit backup files to Git (they can be large)
