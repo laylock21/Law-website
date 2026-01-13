@@ -1332,7 +1332,7 @@ html {
 
 .contact-item {
 	display: flex;
-	gap: 16px;
+	gap: 32px;
 	margin-bottom: 20px;
 	text-align: justify;
 	padding-left: 32px;

@@ -58,9 +58,9 @@ try {
         exit;
     }
     
-    // Get ALL lawyer's schedules (both weekly and one-time)
+    // Get ALL lawyer's schedules (weekly, one-time, and blocked)
     $availability_stmt = $pdo->prepare("
-        SELECT schedule_type, specific_date, weekdays, start_time, end_time, max_appointments 
+        SELECT schedule_type, specific_date, start_date, end_date, weekdays, start_time, end_time, max_appointments, blocked_reason 
         FROM lawyer_availability 
         WHERE user_id = ? 
         AND is_active = 1
@@ -119,17 +119,50 @@ try {
             $end_date = (clone $start_date)->modify("+{$max_days} days");
         }
         
-        // Separate weekly and one-time schedules
+        // Separate weekly, one-time, and blocked schedules
         $weekly_schedules = [];
         $one_time_dates = [];
+        $blocked_dates = []; // Single blocked dates
+        $blocked_ranges = []; // Date ranges that are blocked
         
         foreach ($schedules as $schedule) {
             if ($schedule['schedule_type'] === 'weekly') {
                 $weekly_schedules[] = $schedule;
             } else if ($schedule['schedule_type'] === 'one_time') {
                 $one_time_dates[$schedule['specific_date']] = $schedule;
+            } else if ($schedule['schedule_type'] === 'blocked') {
+                // Check if it's a single date block or range block
+                if (!empty($schedule['specific_date'])) {
+                    // Single date block
+                    $blocked_dates[$schedule['specific_date']] = $schedule['blocked_reason'];
+                } else if (!empty($schedule['start_date']) && !empty($schedule['end_date'])) {
+                    // Date range block
+                    $blocked_ranges[] = [
+                        'start' => new DateTime($schedule['start_date']),
+                        'end' => new DateTime($schedule['end_date']),
+                        'reason' => $schedule['blocked_reason']
+                    ];
+                }
             }
         }
+        
+        // Helper function to check if a date is blocked
+        $isDateBlocked = function($date_str) use ($blocked_dates, $blocked_ranges) {
+            // Check single blocked dates
+            if (isset($blocked_dates[$date_str])) {
+                return true;
+            }
+            
+            // Check blocked ranges
+            $check_date = new DateTime($date_str);
+            foreach ($blocked_ranges as $range) {
+                if ($check_date >= $range['start'] && $check_date <= $range['end']) {
+                    return true;
+                }
+            }
+            
+            return false;
+        };
         
         // Generate dates from weekly schedules
         foreach ($weekly_schedules as $weekly) {
@@ -138,8 +171,14 @@ try {
             
             $current_date = clone $start_date;
             while ($current_date <= $end_date) {
-                $weekday = $current_date->format('w'); // 0=Sunday, 1=Monday, etc.
+                $weekday_name = $current_date->format('l'); // Get day name: Monday, Tuesday, etc.
                 $date_str = $current_date->format('Y-m-d');
+                
+                // Check if this date is blocked
+                if ($isDateBlocked($date_str)) {
+                    $current_date->modify('+1 day');
+                    continue;
+                }
                 
                 // Check if this date has a one-time override
                 if (isset($one_time_dates[$date_str])) {
@@ -148,7 +187,8 @@ try {
                     continue;
                 }
                 
-                if (in_array($weekday, $weekdays)) {
+                // Check if this weekday is in the lawyer's weekly schedule
+                if (in_array($weekday_name, $weekdays)) {
                     // Check current appointment count for this date
                     $count_stmt = $pdo->prepare("
                         SELECT COUNT(*) as appointment_count 
@@ -179,6 +219,11 @@ try {
         // Add one-time schedules
         foreach ($one_time_dates as $date_str => $one_time) {
             $schedule_date = new DateTime($date_str);
+            
+            // Check if this date is blocked
+            if ($isDateBlocked($date_str)) {
+                continue;
+            }
             
             // Skip if this is a blocked date (max_appointments = 0)
             if ($one_time['max_appointments'] == 0) {
@@ -241,6 +286,8 @@ try {
             'schedule_summary' => [
                 'weekly_schedules' => count($weekly_schedules),
                 'one_time_schedules' => count($one_time_dates),
+                'blocked_dates' => count($blocked_dates),
+                'blocked_ranges' => count($blocked_ranges),
                 'total_available_dates' => count($available_dates)
             ]
         ]);

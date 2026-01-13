@@ -114,28 +114,38 @@ try {
         $lawyer_id = (int)$lawyer['id'];
     }
 
-    $day_of_week = date('w', strtotime($date)); // 0 = Sunday, 6 = Saturday
+    // Get the day name (Monday, Tuesday, etc.) for the requested date
+    $day_name = date('l', strtotime($date)); // Returns full day name like "Monday"
     
     // Get lawyer's availability for this date
+    // Priority: one_time > blocked > weekly
     $availability_stmt = $pdo->prepare("
         SELECT 
             start_time,
             end_time,
             max_appointments,
             time_slot_duration,
-            schedule_type
+            schedule_type,
+            blocked_reason
         FROM lawyer_availability
         WHERE user_id = ?
         AND is_active = 1
         AND (
             (schedule_type = 'weekly' AND FIND_IN_SET(?, weekdays) > 0)
             OR (schedule_type = 'one_time' AND specific_date = ?)
+            OR (schedule_type = 'blocked' AND specific_date = ?)
+            OR (schedule_type = 'blocked' AND ? BETWEEN start_date AND end_date)
         )
-        ORDER BY schedule_type DESC
+        ORDER BY 
+            CASE schedule_type
+                WHEN 'one_time' THEN 1
+                WHEN 'blocked' THEN 2
+                WHEN 'weekly' THEN 3
+            END
         LIMIT 1
     ");
     
-    $availability_stmt->execute([$lawyer_id, $day_of_week, $date]);
+    $availability_stmt->execute([$lawyer_id, $day_name, $date, $date, $date]);
     $availability = $availability_stmt->fetch();
     
     if (!$availability) {
@@ -147,12 +157,25 @@ try {
         exit;
     }
     
-    // Check if date is blocked (max_appointments = 0)
+    // Check if date is blocked
+    if ($availability['schedule_type'] === 'blocked') {
+        echo json_encode([
+            'success' => true,
+            'time_slots' => [],
+            'message' => 'Date is blocked: ' . ($availability['blocked_reason'] ?? 'Unavailable'),
+            'blocked' => true,
+            'blocked_reason' => $availability['blocked_reason'] ?? 'Unavailable'
+        ]);
+        exit;
+    }
+    
+    // Check if date is blocked (max_appointments = 0) - legacy check
     if ($availability['max_appointments'] == 0) {
         echo json_encode([
             'success' => true,
             'time_slots' => [],
-            'message' => 'Date is blocked'
+            'message' => 'Date is blocked',
+            'blocked' => true
         ]);
         exit;
     }

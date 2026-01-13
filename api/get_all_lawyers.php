@@ -38,6 +38,7 @@ try {
     }
     
     // Get all active lawyers with their specializations, descriptions, and profile pictures
+    // Only include lawyers who have at least one 'weekly' or 'one_time' schedule
     $lawyers_stmt = $pdo->prepare("
         SELECT 
             u.id,
@@ -47,12 +48,15 @@ try {
             u.phone,
             u.description,
             u.profile_picture,
-            GROUP_CONCAT(pa.area_name SEPARATOR ', ') as specializations
+            GROUP_CONCAT(DISTINCT pa.area_name SEPARATOR ', ') as specializations
         FROM users u
         LEFT JOIN lawyer_specializations ls ON u.id = ls.user_id
         LEFT JOIN practice_areas pa ON ls.practice_area_id = pa.id
+        INNER JOIN lawyer_availability la ON u.id = la.user_id
         WHERE u.role = 'lawyer' 
         AND u.is_active = 1
+        AND la.is_active = 1
+        AND la.schedule_type IN ('weekly', 'one_time')
         GROUP BY u.id, u.first_name, u.last_name, u.email, u.phone, u.description, u.profile_picture
         ORDER BY u.first_name, u.last_name
     ");
