@@ -280,12 +280,27 @@ $active_page = "consultations";
 		});
 	}
 	
+	function openBulkWarningModal() {
+		const modal = document.getElementById('bulkWarningModal');
+		if (!modal) {
+			alert('Please select at least one consultation.');
+			return;
+		}
+		modal.style.display = 'block';
+	}
+	
+	function closeBulkWarningModal() {
+		const modal = document.getElementById('bulkWarningModal');
+		if (!modal) return;
+		modal.style.display = 'none';
+	}
+	
 	function confirmBulkAction() {
 		const selectedCheckboxes = document.querySelectorAll('.consultation-checkbox:checked');
 		const bulkAction = document.getElementById('bulk_action').value;
 		
 		if (selectedCheckboxes.length === 0) {
-			alert('Please select at least one consultation.');
+			openBulkWarningModal();
 			return false;
 		}
 		
@@ -448,12 +463,14 @@ $active_page = "consultations";
 
 	// Close modal when clicking outside of it
 	document.addEventListener('click', function(event) {
-		const modal = document.getElementById('consultationModal');
-		const modalContent = modal.querySelector('.modal-content');
+		const consultationModal = document.getElementById('consultationModal');
+		const bulkWarningModal = document.getElementById('bulkWarningModal');
 		
-		// Only close if clicking on the modal backdrop (not the content)
-		if (event.target === modal) {
+		if (consultationModal && event.target === consultationModal) {
 			closeConsultationModal();
+		}
+		if (bulkWarningModal && event.target === bulkWarningModal) {
+			closeBulkWarningModal();
 		}
 	});
 
@@ -467,13 +484,23 @@ $active_page = "consultations";
 		}
 	});
 
-	// Prevent modal content clicks from closing the modal
+	// Prevent modal content clicks from closing the modals
 	document.addEventListener('DOMContentLoaded', function() {
-		const modal = document.getElementById('consultationModal');
-		if (modal) {
-			const modalContent = modal.querySelector('.modal-content');
+		const consultationModal = document.getElementById('consultationModal');
+		if (consultationModal) {
+			const modalContent = consultationModal.querySelector('.modal-content');
 			if (modalContent) {
 				modalContent.addEventListener('click', function(event) {
+					event.stopPropagation();
+				});
+			}
+		}
+		
+		const bulkWarningModal = document.getElementById('bulkWarningModal');
+		if (bulkWarningModal) {
+			const bulkContent = bulkWarningModal.querySelector('.modal-content');
+			if (bulkContent) {
+				bulkContent.addEventListener('click', function(event) {
 					event.stopPropagation();
 				});
 			}
@@ -490,6 +517,22 @@ $active_page = "consultations";
 			</div>
 			<div class="modal-body" id="modalConsultationContent">
 				<!-- Content will be loaded here via AJAX -->
+			</div>
+		</div>
+	</div>
+
+	<!-- Bulk selection warning modal -->
+	<div id="bulkWarningModal" class="consultation-modal" style="display: none;">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h2>Nothing selected</h2>
+				<span class="modal-close" onclick="closeBulkWarningModal()">&times;</span>
+			</div>
+			<div class="modal-body">
+				<p>Please select at least one consultation before applying a bulk action.</p>
+				<div style="margin-top: 15px; display:flex; justify-content:flex-end;">
+					<button type="button" class="lawyer-btn" onclick="closeBulkWarningModal()">OK</button>
+				</div>
 			</div>
 		</div>
 	</div>

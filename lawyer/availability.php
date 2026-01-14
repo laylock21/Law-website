@@ -945,6 +945,67 @@ $active_page = "availability";
                 }
             }
         }
+        // Helper for new schedule modal status handling
+        function onScheduleStatusChange(value) {
+            const actionInput = document.getElementById('new_schedule_action');
+            const dateInput = document.getElementById('schedule_date');
+            const blockDateInput = document.getElementById('schedule_block_date');
+            const startInput = document.getElementById('schedule_start');
+            const endInput = document.getElementById('schedule_end');
+            const maxInput = document.getElementById('schedule_max');
+            const reasonGroup = document.getElementById('schedule_reason_group');
+
+            if (!actionInput) return;
+
+            if (value === 'unavailable') {
+                actionInput.value = 'block_date';
+                if (dateInput && blockDateInput) {
+                    blockDateInput.value = dateInput.value;
+                }
+                if (startInput) startInput.disabled = true;
+                if (endInput) endInput.disabled = true;
+                if (maxInput) maxInput.disabled = true;
+                if (reasonGroup) reasonGroup.style.display = 'block';
+            } else {
+                actionInput.value = 'add_onetime';
+                if (blockDateInput) blockDateInput.value = '';
+                if (startInput) startInput.disabled = false;
+                if (endInput) endInput.disabled = false;
+                if (maxInput) maxInput.disabled = false;
+                if (reasonGroup) reasonGroup.style.display = 'none';
+
+                if (value === 'today' && dateInput) {
+                    const today = new Date().toISOString().slice(0, 10);
+                    dateInput.value = today;
+                }
+            }
+        }
+
+        function openScheduleModal() {
+            const modal = document.getElementById('scheduleModal');
+            if (!modal) return;
+            modal.style.display = 'block';
+            const statusSelect = document.getElementById('schedule_status');
+            if (statusSelect) {
+                onScheduleStatusChange(statusSelect.value);
+            }
+        }
+
+        function closeScheduleModal() {
+            const modal = document.getElementById('scheduleModal');
+            if (!modal) return;
+            modal.style.display = 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const statusSelect = document.getElementById('schedule_status');
+            if (statusSelect) {
+                onScheduleStatusChange(statusSelect.value);
+                statusSelect.addEventListener('change', function () {
+                    onScheduleStatusChange(this.value);
+                });
+            }
+        });
     </script>
 </head>
 <body class="lawyer-page">
@@ -958,8 +1019,189 @@ $active_page = "availability";
         <?php if ($error_message): ?>
             <div class="error-message"><?php echo htmlspecialchars($error_message); ?></div>
         <?php endif; ?>
-        
-        <div class="content-grid-2x2">
+
+        <!-- Top summary stats bar -->
+        <div class="schedule-stats-bar" style="margin-bottom: 20px;">
+            <div class="stat-item">
+                <i class="fas fa-calendar-week"></i>
+                <span class="stat-number"><?php echo count($weekly_schedules); ?></span>
+                <span class="stat-label">Weekly Schedules</span>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-calendar-day"></i>
+                <span class="stat-number"><?php echo count($onetime_schedules); ?></span>
+                <span class="stat-label">One-Time Schedules</span>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-ban"></i>
+                <span class="stat-number"><?php echo $blocked_total; ?></span>
+                <span class="stat-label">Blocked Dates</span>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-users"></i>
+                <span class="stat-number">
+                    <?php
+                    $weekly_capacity = 0;
+                    foreach ($weekly_schedules as $s) {
+                        if ($s['is_active']) {
+                            $weekly_capacity += (int)$s['max_appointments'];
+                        }
+                    }
+                    $onetime_capacity = 0;
+                    foreach ($onetime_schedules as $s) {
+                        if ($s['is_active'] && strtotime($s['specific_date']) >= strtotime('today')) {
+                            $onetime_capacity += (int)$s['max_appointments'];
+                        }
+                    }
+                    echo $weekly_capacity + $onetime_capacity;
+                    ?>
+                </span>
+                <span class="stat-label">Total Potential Slots</span>
+            </div>
+        </div>
+
+        <div class="lawyer-availability-section">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3>Schedule</h3>
+                <button type="button" class="lawyer-btn" onclick="openScheduleModal()">
+                    <i class="fas fa-plus-circle"></i> Create Schedule
+                </button>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table class="admin-consultations-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left; padding: 12px;">Status</th>
+                            <th style="text-align:left; padding: 12px;">Type</th>
+                            <th style="text-align:left; padding: 12px;">Day / Date</th>
+                            <th style="text-align:left; padding: 12px;">Start Time</th>
+                            <th style="text-align:left; padding: 12px;">End Time</th>
+                            <th style="text-align:left; padding: 12px;">Max Appt</th>
+                            <th style="text-align:left; padding: 12px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($weekly_schedules as $s): ?>
+                            <tr>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
+                                    Active
+                                </td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
+                                    Weekly
+                                </td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
+                                    <?php echo htmlspecialchars($s['weekdays']); ?>
+                                </td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
+                                    <?php echo date('g:i A', strtotime($s['start_time'])); ?>
+                                </td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
+                                    <?php echo date('g:i A', strtotime($s['end_time'])); ?>
+                                </td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
+                                    <?php echo (int)$s['max_appointments']; ?> / day
+                                </td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
+                                    <form method="POST" style="display:inline;">
+                                        <input type="hidden" name="availability_id" value="<?php echo $s['id']; ?>">
+                                        <input type="hidden" name="action" value="delete">
+                                        <button type="submit" class="lawyer-btn" onclick="return confirm('Deactivate this schedule?')">Deactivate</button>
+                                    </form>
+                                    <form method="POST" style="display:inline;">
+                                        <input type="hidden" name="availability_id" value="<?php echo $s['id']; ?>">
+                                        <input type="hidden" name="action" value="permanent_delete">
+                                        <button type="submit" class="lawyer-btn" onclick="return confirm('Permanently delete this schedule?')">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+
+                        <?php foreach ($onetime_schedules as $s): ?>
+                            <tr>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
+                                    <?php echo strtotime($s['specific_date']) < strtotime('today') ? 'Past' : 'One time available'; ?>
+                                </td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
+                                    One-time
+                                </td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
+                                    <?php echo date('D, M d, Y', strtotime($s['specific_date'])); ?>
+                                </td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
+                                    <?php echo date('g:i A', strtotime($s['start_time'])); ?>
+                                </td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
+                                    <?php echo date('g:i A', strtotime($s['end_time'])); ?>
+                                </td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
+                                    <?php echo (int)$s['max_appointments']; ?>
+                                </td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
+                                    <form method="POST" style="display:inline;">
+                                        <input type="hidden" name="availability_id" value="<?php echo $s['id']; ?>">
+                                        <input type="hidden" name="action" value="delete">
+                                        <button type="submit" class="lawyer-btn" onclick="return confirm('Deactivate this schedule?')">Deactivate</button>
+                                    </form>
+                                    <form method="POST" style="display:inline;">
+                                        <input type="hidden" name="availability_id" value="<?php echo $s['id']; ?>">
+                                        <input type="hidden" name="action" value="permanent_delete">
+                                        <button type="submit" class="lawyer-btn" onclick="return confirm('Permanently delete this schedule?')">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+
+                        <?php foreach ($blocked_dates_paginated as $s): ?>
+                            <tr>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef; color:#dc3545;">
+                                    Unavailable
+                                </td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
+                                    <?php echo (!empty($s['start_date']) && !empty($s['end_date'])) ? 'Blocked range' : 'Blocked date'; ?>
+                                </td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
+                                    <?php
+                                    if (!empty($s['specific_date'])) {
+                                        echo date('D, M d, Y', strtotime($s['specific_date']));
+                                    } elseif (!empty($s['start_date']) && !empty($s['end_date'])) {
+                                        echo date('M d, Y', strtotime($s['start_date'])) . ' - ' . date('M d, Y', strtotime($s['end_date']));
+                                    }
+                                    ?>
+                                </td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">—</td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">—</td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">—</td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
+                                    <form method="POST" style="display:inline;">
+                                        <input type="hidden" name="availability_id" value="<?php echo $s['id']; ?>">
+                                        <input type="hidden" name="action" value="permanent_delete">
+                                        <button type="submit" class="lawyer-btn" onclick="return confirm('Unblock this date/range?')">Unblock</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <?php if ($blocked_total_pages > 1): ?>
+                <div style="display:flex; gap:8px; justify-content:center; margin-top:16px;">
+                    <?php if ($blocked_page > 1): ?>
+                        <a href="?blocked_page=<?php echo $blocked_page - 1; ?>" class="lawyer-btn">Prev</a>
+                    <?php else: ?>
+                        <span class="lawyer-btn" style="opacity:0.5; pointer-events:none;">Prev</span>
+                    <?php endif; ?>
+
+                    <?php if ($blocked_page < $blocked_total_pages): ?>
+                        <a href="?blocked_page=<?php echo $blocked_page + 1; ?>" class="lawyer-btn">Next</a>
+                    <?php else: ?>
+                        <span class="lawyer-btn" style="opacity:0.5; pointer-events:none;">Next</span>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+        <div class="legacy-availability-cards" style="display:none;">
                 <!-- Add Schedule Form -->
                 <div class="card modern-card">
                     <div class="card-header-modern">
@@ -1955,6 +2197,79 @@ $active_page = "availability";
             
     </main>
     
+    <!-- Create Schedule Modal -->
+    <div id="scheduleModal" class="consultation-modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create Schedule</h2>
+                <span class="modal-close" onclick="closeScheduleModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form method="POST" class="modern-form">
+                    <input type="hidden" name="action" id="new_schedule_action" value="add_onetime">
+                    <input type="hidden" name="block_date" id="schedule_block_date" value="">
+
+                    <div class="form-section">
+                        <div class="form-row">
+                            <div class="form-group-modern">
+                                <label class="form-label-modern">Status</label>
+                                <select name="schedule_status" id="schedule_status" class="form-select-modern">
+                                    <option value="today">Today</option>
+                                    <option value="one_time">One time available</option>
+                                    <option value="unavailable">Unavailable</option>
+                                </select>
+                            </div>
+                            <div class="form-group-modern">
+                                <label class="form-label-modern">Date</label>
+                                <input type="date" name="specific_date" id="schedule_date" min="<?php echo date('Y-m-d'); ?>" class="form-input-modern" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group-modern">
+                                <label class="form-label-modern">Start Time</label>
+                                <input type="time" name="start_time_onetime" id="schedule_start" value="09:00" class="form-input-modern">
+                            </div>
+                            <div class="form-group-modern">
+                                <label class="form-label-modern">End Time</label>
+                                <input type="time" name="end_time_onetime" id="schedule_end" value="17:00" class="form-input-modern">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group-modern">
+                                <label class="form-label-modern">Max Appointment</label>
+                                <select name="max_appointments_onetime" id="schedule_max" class="form-select-modern">
+                                    <?php for ($i = 1; $i <= 8; $i++): ?>
+                                        <option value="<?php echo $i; ?>" <?php echo $i === 5 ? 'selected' : ''; ?>><?php echo $i; ?></option>
+                                    <?php endfor; ?>
+                                </select>
+                            </div>
+                            <div class="form-group-modern" id="schedule_reason_group" style="display:none;">
+                                <label class="form-label-modern">Reason (for Unavailable)</label>
+                                <select name="reason" class="form-select-modern">
+                                    <option value="Unavailable">Unavailable</option>
+                                    <option value="Sick Leave">Sick Leave</option>
+                                    <option value="Personal Leave">Personal Leave</option>
+                                    <option value="Holiday">Holiday</option>
+                                    <option value="Emergency">Emergency</option>
+                                    <option value="Out of Office">Out of Office</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions-modern" style="margin-top: 10px; display:flex; justify-content:flex-end; gap:10px;">
+                        <button type="button" class="btn-secondary-modern" onclick="closeScheduleModal()">Cancel</button>
+                        <button type="submit" class="btn-primary-modern">
+                            <i class="fas fa-save"></i> Save Schedule
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <?php 
     // Output async email script if present
     if ($async_email_script) {
