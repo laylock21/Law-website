@@ -823,7 +823,8 @@
 								<div class="form-row">
 									<label>Consultation Date <span class="required-asterisk">*</span></label>
 									<div class="date-selection-info">
-										<p>Please select a date from the calendar on the left. Date selection is required to schedule your consultation.</p>
+										<p><strong>Click on an available date</strong> from the calendar on the left to select your consultation time slot.</p>
+										<p class="text-muted" style="font-size: 0.9em; margin-top: 8px;">After selecting a date, you'll be able to choose your preferred time and confirm your appointment.</p>
 									</div>
 								</div>
 								<p class="form-note" id="appointment-status" role="status" aria-live="polite"></p>
@@ -840,6 +841,7 @@
 								<button type="button" class="btn btn-primary btn-next" id="nextBtn">
 									Next <i class="fas fa-arrow-right"></i>
 								</button>
+								<!-- Schedule Consultation button is now hidden - submission happens via Confirm button in time slot modal -->
 								<button type="submit" class="btn btn-primary btn-submit" id="submitBtn" style="display: none;">
 									Schedule Consultation <i class="fas fa-check"></i>
 								</button>
@@ -1097,7 +1099,7 @@
 	<script src="https://kit.fontawesome.com/your-kit-id.js" crossorigin="anonymous" async></script>
 	
 	<!-- Main JavaScript - Deferred -->
-	<script src="script.js" defer></script>
+	<script src="script.js?v=3.0" defer></script>
 
 	<!-- Back to Top Behavior -->
 	<script>

@@ -144,7 +144,7 @@ html {
 }
 
 .modal .modal-content h3 {
-	background: linear-gradient(135deg, var(--navy) 0%, #1e3a8a 100%);
+	background: linear-gradient(135deg, #050505 0%, #808080 100%);
 	color: white;
 	padding: 24px 32px 20px;
 	margin: 0;
