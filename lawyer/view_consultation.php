@@ -132,7 +132,7 @@ $active_page = "consultations";
 </head>
 <body class="lawyer-page">
 	<div class="lawyer-dashboard">
-		<?php include 'partials/header.php'; ?>
+		<?php include 'partials/sidebar.php'; ?>
 
 		<main class="lawyer-main-content">
 			<div style="margin-bottom: 16px;">
