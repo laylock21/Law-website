@@ -1985,7 +1985,7 @@ function showNoTimeSlotsMessage(message) {
 }
 
 // Confirm time slot selection
-document.getElementById('confirmTimeSlot').addEventListener('click', () => {
+document.getElementById('confirmTimeSlot').addEventListener('click', async () => {
     if (selectedTimeSlot && currentSelectedDate) {
         // Update the calendar display
         const calendarButtons = document.querySelectorAll('.calendar-day button[data-date]');
@@ -2017,19 +2017,132 @@ document.getElementById('confirmTimeSlot').addEventListener('click', () => {
             console.log('Setting time value:', timeValue, 'from slot:', selectedTimeSlot);
         }
         
-        // Update submit button state
-        updateSubmitButtonState();
-        
-        // Show success message
-        const appointmentStatus = document.getElementById('appointment-status');
-        if (appointmentStatus) {
-            appointmentStatus.textContent = `Date and time selected: ${new Date(currentSelectedDate).toLocaleDateString()} at ${selectedTimeSlot.display}. You can now submit your consultation request.`;
-            appointmentStatus.style.color = '#28a745';
-        }
-        
-        // Close modal
+        // Close modal first
         const modal = bootstrap.Modal.getInstance(document.getElementById('timeSlotModal'));
         modal.hide();
+        
+        // Now submit the form directly
+        const appointmentForm = document.getElementById('appointment-form');
+        const formData = new FormData(appointmentForm);
+        
+        // Get form values
+        const lastName = formData.get('lastName');
+        const firstName = formData.get('firstName');
+        const middleName = formData.get('middleName');
+        const email = formData.get('email');
+        const phone = formData.get('phone');
+        const service = formData.get('service');
+        const lawyer = formData.get('lawyer');
+        const message = formData.get('message');
+        const date = hiddenDateInput.value;
+        const selectedTime = hiddenTimeInput.value;
+        
+        // Validate all required fields
+        if (!lastName || !firstName || !email || !phone || !service || !lawyer || !message) {
+            openStatusModal('Please fill out all required fields.');
+            return;
+        }
+        
+        // Enhanced validation with detailed error messages
+        const validationErrors = [];
+        
+        if (!validateName(firstName)) {
+            validationErrors.push('First name must be 2-50 characters, letters only');
+        }
+        if (!validateName(lastName)) {
+            validationErrors.push('Last name must be 2-50 characters, letters only');
+        }
+        if (middleName && !validateName(middleName)) {
+            validationErrors.push('Middle name must be 2-50 characters, letters only');
+        }
+        if (!validateEmail(email)) {
+            validationErrors.push('Please enter a valid email address');
+        }
+        if (!validatePhone(phone)) {
+            validationErrors.push('Phone number must be exactly 11 digits');
+        }
+        if (message.length < 10) {
+            validationErrors.push('Case description must be at least 10 characters');
+        }
+        
+        if (validationErrors.length > 0) {
+            openStatusModal('Please fix the following errors:\n• ' + validationErrors.join('\n• '));
+            return;
+        }
+        
+        // Check if date is selected
+        if (!date || date.trim() === '') {
+            openStatusModal('Please select a consultation date from the calendar.');
+            return;
+        }
+        
+        try {
+            // Prepare data with separate name fields and selected time
+            const submissionData = {
+                lastName: lastName,
+                firstName: firstName,
+                middleName: middleName,
+                email: email,
+                phone: phone,
+                service: service,
+                message: message,
+                lawyer: lawyer,
+                date: date,
+                selected_time: selectedTime
+            };
+            
+            // Submit to PHP backend
+            const response = await fetch('process_consultation.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(submissionData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // Show success message
+                openStatusModal(`Thank you, ${firstName}! We've received your consultation request for ${service}. We'll contact you within 24 hours to confirm your appointment with ${lawyer} on ${date}.`);
+                
+                // Trigger email processing if emails were queued
+                if (result.email_queued) {
+                    triggerEmailProcessing();
+                }
+                
+                // Reset form
+                appointmentForm.reset();
+                document.getElementById('selected-date-display').textContent = 'None';
+                document.getElementById('selected-date').value = '';
+                
+                // Reset to step 1
+                currentStep = 1;
+                showStep(currentStep);
+                
+                // Reset lawyer and practice area dropdowns
+                const lawyerSelect = document.getElementById('lawyer');
+                const serviceSelect = document.getElementById('service');
+                if (lawyerSelect) {
+                    lawyerSelect.value = '';
+                }
+                if (serviceSelect) {
+                    serviceSelect.innerHTML = '<option value="">First select a lawyer</option>';
+                    serviceSelect.disabled = true;
+                }
+                
+                // Clear calendar selection
+                const calendarButtons = document.querySelectorAll('.calendar-day button[data-date]');
+                calendarButtons.forEach(btn => btn.classList.remove('selected'));
+                currentSelectedDate = null;
+                
+            } else {
+                openStatusModal('Error: ' + (result.message || 'Failed to submit consultation request. Please try again.'));
+            }
+        } catch (error) {
+            console.error('Submission error:', error);
+            openStatusModal('An error occurred while submitting your request. Please try again later.');
+        }
     }
 });
 
@@ -2194,10 +2307,10 @@ function updateButtons() {
 		prevBtn.style.opacity = '1';
 	}
 	
-	// Next/Submit buttons
+	// Next/Submit buttons - Submit button is now always hidden since submission happens via Confirm button in time slot modal
 	if (currentStep === totalSteps) {
 		nextBtn.style.display = 'none';
-		submitBtn.style.display = 'inline-flex';
+		submitBtn.style.display = 'none'; // Keep hidden - submission happens via time slot modal
 	} else {
 		nextBtn.style.display = 'inline-flex';
 		submitBtn.style.display = 'none';
@@ -2266,6 +2379,19 @@ if (nextBtn) {
 					behavior: 'smooth', 
 					block: 'start' 
 				});
+				
+				// If we just moved to step 4 (date selection), automatically open time slot modal
+				if (currentStep === 4) {
+					// Check if date is selected
+					const selectedDate = document.getElementById('selected-date').value;
+					if (selectedDate) {
+						// Open time slot modal
+						setTimeout(() => {
+							const timeSlotModal = new bootstrap.Modal(document.getElementById('timeSlotModal'));
+							timeSlotModal.show();
+						}, 300);
+					}
+				}
 			}
 		} else {
 			// Shake the form to indicate error
