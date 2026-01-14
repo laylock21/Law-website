@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
     $action = $_POST['bulk_action'];
     $selected_consultations = $_POST['selected_consultations'] ?? [];
     
-    if (!empty($selected_consultations) && in_array($action, ['confirm', 'complete'])) {
+    if (!empty($selected_consultations) && in_array($action, ['confirm', 'complete', 'pending', 'cancelled'])) {
         try {
             $pdo = getDBConnection();
             require_once '../includes/EmailNotification.php';
@@ -58,18 +58,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
                 
                 if ($current) {
                     $old_status = $current['status'];
-                    $new_status = ($action === 'confirm') ? 'confirmed' : 'completed';
+                    
+                    // Map action to status
+                    $status_map = [
+                        'pending' => 'pending',
+                        'confirm' => 'confirmed',
+                        'complete' => 'completed',
+                        'cancelled' => 'cancelled'
+                    ];
+                    $new_status = $status_map[$action];
                     
                     // Only update if status is different
                     if ($old_status !== $new_status) {
-                        // Update status
-                        $update_stmt = $pdo->prepare("UPDATE consultations SET status = ? WHERE id = ?");
-                        $update_stmt->execute([$new_status, $consultation_id]);
+                        // Update status and cancellation reason
+                        if ($action === 'cancelled') {
+                            // Set cancellation reason when cancelled
+                            $update_stmt = $pdo->prepare("UPDATE consultations SET status = ?, cancellation_reason = ? WHERE id = ?");
+                            $update_stmt->execute([$new_status, 'Cancelled by admin', $consultation_id]);
+                        } else {
+                            // Clear cancellation reason when changing to pending, confirmed, or completed
+                            $update_stmt = $pdo->prepare("UPDATE consultations SET status = ?, cancellation_reason = NULL WHERE id = ?");
+                            $update_stmt->execute([$new_status, $consultation_id]);
+                        }
                         
                         if ($update_stmt->rowCount() > 0) {
                             $updated_count++;
                             
-                            // Send email notification
+                            // Send email notification for confirm and complete actions
                             $queued = false;
                             if ($new_status === 'confirmed') {
                                 $queued = $emailNotification->notifyAppointmentConfirmed($consultation_id);
@@ -107,8 +122,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
                 $_SESSION['async_email_script'] = $async_script;
             }
             
-            $action_name = ($action === 'confirm') ? 'confirmed' : 'completed';
-            $_SESSION['bulk_message'] = "Successfully {$action_name} {$updated_count} consultation(s). {$email_count} email(s) sent.";
+            $action_name = $action;
+            $message = "Successfully updated {$updated_count} consultation(s) to {$action_name}.";
+            if ($email_count > 0) {
+                $message .= " {$email_count} email(s) sent.";
+            }
+            $_SESSION['bulk_message'] = $message;
             
         } catch (Exception $e) {
             $_SESSION['bulk_error'] = "Error processing bulk action: " . $e->getMessage();
@@ -320,12 +339,14 @@ $active_page = "consultations";
                         </div>
                         
                         <!-- Bulk Actions Form -->
-                        <div class="bulk-actions-section">
+                        <div class="bulk-actions-section" id="bulk-actions-section">
                             <form method="POST" id="bulk-form" class="bulk-form">
                                 <select name="bulk_action" id="bulk_action" class="admin-dropdown admin-dropdown-primary">
                                     <option value="">Select Action</option>
+                                    <option value="pending">⏳ Set to Pending</option>
                                     <option value="confirm">✅ Bulk Confirm</option>
                                     <option value="complete">✅ Bulk Complete</option>
+                                    <option value="cancelled">❌ Bulk Cancel</option>
                                 </select>
                                 <button type="submit" class="admin-btn admin-btn-primary" onclick="return confirmBulkAction()">
                                     <i class="fas fa-check-circle"></i> Apply to Selected
@@ -448,6 +469,26 @@ $active_page = "consultations";
         consultationCheckboxes.forEach(checkbox => {
             checkbox.checked = selectAllCheckbox.checked;
         });
+        
+        updateBulkActionsVisibility();
+    }
+    
+    function updateBulkActionsVisibility() {
+        const selectedCheckboxes = document.querySelectorAll('.consultation-checkbox:checked');
+        const bulkActionsSection = document.getElementById('bulk-actions-section');
+        const searchContainer = document.querySelector('.search-container');
+        
+        if (selectedCheckboxes.length > 0) {
+            bulkActionsSection.classList.add('show');
+            if (searchContainer) {
+                searchContainer.classList.add('relative');
+            }
+        } else {
+            bulkActionsSection.classList.remove('show');
+            if (searchContainer) {
+                searchContainer.classList.remove('relative');
+            }
+        }
     }
     
     function confirmBulkAction() {
@@ -464,8 +505,16 @@ $active_page = "consultations";
             return false;
         }
         
-        const actionText = bulkAction === 'confirm' ? 'confirm' : 'complete';
-        const confirmMessage = `Are you sure you want to ${actionText} ${selectedCheckboxes.length} consultation(s)? This will send email notifications to clients.`;
+        let actionText = bulkAction;
+        let confirmMessage = '';
+        
+        if (bulkAction === 'confirm' || bulkAction === 'complete') {
+            confirmMessage = `Are you sure you want to ${actionText} ${selectedCheckboxes.length} consultation(s)? This will send email notifications to clients.`;
+        } else if (bulkAction === 'cancelled') {
+            confirmMessage = `Are you sure you want to cancel ${selectedCheckboxes.length} consultation(s)? The cancellation reason will be set to "Cancelled by admin".`;
+        } else if (bulkAction === 'pending') {
+            confirmMessage = `Are you sure you want to set ${selectedCheckboxes.length} consultation(s) to pending status?`;
+        }
         
         return confirm(confirmMessage);
     }
@@ -502,6 +551,15 @@ $active_page = "consultations";
             document.body.appendChild(form);
             form.submit();
         }
+    });
+    
+    // Add event listeners to all consultation checkboxes
+    document.addEventListener('DOMContentLoaded', function() {
+        const consultationCheckboxes = document.querySelectorAll('.consultation-checkbox');
+        
+        consultationCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateBulkActionsVisibility);
+        });
     });
     </script>
 </body>

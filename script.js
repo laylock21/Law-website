@@ -669,18 +669,20 @@ async function handleBookConsultation(lawyer, lawyerId) {
     // RESET FORM TO STEP 1 FIRST
     resetForm();
     
-    // NEW LOGIC: Select lawyer first, practice area auto-fills
+    // NEW LOGIC: Select lawyer first, practice area becomes available for selection
     try {
         const lawyerSelect = document.getElementById('lawyer');
         const serviceSelect = document.getElementById('service');
+        const practiceAreaBtn = document.getElementById('practiceAreaBtn');
+        const practiceAreaDisplay = document.getElementById('practiceAreaDisplay');
         
-        if (lawyerSelect && serviceSelect) {
+        if (lawyerSelect) {
             // Ensure lawyers are loaded first
             await loadAllLawyers();
             
             // Wait a moment for DOM to update
             setTimeout(() => {
-                // Select the lawyer (this will trigger practice area auto-fill)
+                // Select the lawyer (this will enable practice area selection)
                 lawyerSelect.value = lawyer;
                 lawyerSelect.dispatchEvent(new Event('change'));
                 
@@ -704,7 +706,7 @@ async function handleBookConsultation(lawyer, lawyerId) {
     // Update status message
     const appointmentStatus = document.getElementById('appointment-status');
     if (appointmentStatus) {
-        appointmentStatus.textContent = `✓ ${lawyer} selected. Practice area auto-filled. Please complete the form and select an available date.`;
+        appointmentStatus.textContent = `✓ ${lawyer} selected. Click to select practice area, then complete the form and select an available date.`;
         appointmentStatus.style.color = '#28a745'; // Green color for success
     }
 }
@@ -949,6 +951,8 @@ if (appointmentForm && appointmentStatus) {
 				// Reset lawyer and practice area dropdowns (NEW LOGIC: lawyer first, then practice area)
 				const lawyerSelect = document.getElementById('lawyer');
 				const serviceSelect = document.getElementById('service');
+				const practiceAreaBtn = document.getElementById('practiceAreaBtn');
+				const practiceAreaDisplay = document.getElementById('practiceAreaDisplay');
 				
 				if (lawyerSelect) {
 					// Reload all lawyers
@@ -957,9 +961,18 @@ if (appointmentForm && appointmentStatus) {
 				
 				if (serviceSelect) {
 					// Reset practice area to disabled state
-					serviceSelect.disabled = true;
-					serviceSelect.innerHTML = '<option value="">First select a lawyer</option>';
+					serviceSelect.value = '';
 				}
+				
+				if (practiceAreaBtn) {
+					practiceAreaBtn.disabled = true;
+				}
+				
+				if (practiceAreaDisplay) {
+					practiceAreaDisplay.textContent = 'First select a lawyer';
+				}
+				
+				availablePracticeAreas = [];
 				
 				// Clear calendar
 				clearSelectedDate();
@@ -1139,6 +1152,118 @@ function ensureFormInteractivity() {
 // Feature: REVERSED - Lawyer to practice area selection logic with database integration
 const serviceSelect = document.getElementById('service');
 const lawyerSelect = document.getElementById('lawyer');
+const practiceAreaBtn = document.getElementById('practiceAreaBtn');
+const practiceAreaDisplay = document.getElementById('practiceAreaDisplay');
+let practiceAreaModal;
+let availablePracticeAreas = [];
+
+// Initialize practice area modal
+document.addEventListener('DOMContentLoaded', () => {
+	const modalElement = document.getElementById('practiceAreaModal');
+	if (modalElement && typeof bootstrap !== 'undefined') {
+		practiceAreaModal = new bootstrap.Modal(modalElement);
+		
+		// Setup search functionality
+		const searchInput = document.getElementById('practiceAreaSearch');
+		if (searchInput) {
+			searchInput.addEventListener('input', filterPracticeAreas);
+		}
+	}
+});
+
+// Open practice area modal
+if (practiceAreaBtn) {
+	practiceAreaBtn.addEventListener('click', () => {
+		if (!practiceAreaBtn.disabled && availablePracticeAreas.length > 0) {
+			populatePracticeAreaModal();
+			practiceAreaModal.show();
+		}
+	});
+}
+
+// Populate practice area modal with available areas
+function populatePracticeAreaModal() {
+	const listContainer = document.getElementById('practiceAreaList');
+	const noResultsMsg = document.getElementById('noPracticeAreasMessage');
+	const searchInput = document.getElementById('practiceAreaSearch');
+	
+	if (!listContainer) return;
+	
+	// Clear search
+	if (searchInput) searchInput.value = '';
+	
+	listContainer.innerHTML = '';
+	
+	if (availablePracticeAreas.length === 0) {
+		noResultsMsg.style.display = 'block';
+		listContainer.style.display = 'none';
+		return;
+	}
+	
+	noResultsMsg.style.display = 'none';
+	listContainer.style.display = 'block';
+	
+	availablePracticeAreas.forEach(area => {
+		const item = document.createElement('div');
+		item.className = 'practice-area-item';
+		if (serviceSelect.value === area) {
+			item.classList.add('selected');
+		}
+		item.innerHTML = `<i class="fas fa-balance-scale"></i>${area}`;
+		item.addEventListener('click', () => selectPracticeArea(area));
+		listContainer.appendChild(item);
+	});
+}
+
+// Filter practice areas based on search
+function filterPracticeAreas() {
+	const searchInput = document.getElementById('practiceAreaSearch');
+	const listContainer = document.getElementById('practiceAreaList');
+	const noResultsMsg = document.getElementById('noPracticeAreasMessage');
+	
+	if (!searchInput || !listContainer) return;
+	
+	const searchTerm = searchInput.value.toLowerCase();
+	const items = listContainer.querySelectorAll('.practice-area-item');
+	let visibleCount = 0;
+	
+	items.forEach(item => {
+		const text = item.textContent.toLowerCase();
+		if (text.includes(searchTerm)) {
+			item.style.display = 'block';
+			visibleCount++;
+		} else {
+			item.style.display = 'none';
+		}
+	});
+	
+	if (visibleCount === 0) {
+		noResultsMsg.style.display = 'block';
+		listContainer.style.display = 'none';
+	} else {
+		noResultsMsg.style.display = 'none';
+		listContainer.style.display = 'block';
+	}
+}
+
+// Select a practice area
+function selectPracticeArea(area) {
+	serviceSelect.value = area;
+	practiceAreaDisplay.textContent = area;
+	
+	// Update selected state in modal
+	const items = document.querySelectorAll('.practice-area-item');
+	items.forEach(item => {
+		if (item.textContent.trim() === area) {
+			item.classList.add('selected');
+		} else {
+			item.classList.remove('selected');
+		}
+	});
+	
+	// Close modal
+	practiceAreaModal.hide();
+}
 
 // Load all lawyers on page load
 async function loadAllLawyers() {
@@ -1178,36 +1303,21 @@ if (serviceSelect && lawyerSelect) {
 		const selectedLawyer = lawyerSelect.value;
 		
 		if (selectedOption && selectedLawyer) {
-			// PART 1: Auto-fill practice area with lawyer's specializations
+			// PART 1: Populate practice areas for modal selection
 			const primarySpec = selectedOption.dataset.specialization;
 			const allSpecs = JSON.parse(selectedOption.dataset.specializations || '[]');
 			
-			// Auto-fill practice area with primary specialization
-			serviceSelect.innerHTML = '';
+			// Store available practice areas
+			availablePracticeAreas = allSpecs.length > 0 ? allSpecs : [primarySpec];
 			
-			if (allSpecs.length > 1) {
-				// If lawyer has multiple specializations, let user choose
-				serviceSelect.innerHTML = '<option value="">Select practice area</option>';
-				allSpecs.forEach(spec => {
-					const option = document.createElement('option');
-					option.value = spec;
-					option.textContent = spec;
-					if (spec === primarySpec) {
-						option.selected = true;
-					}
-					serviceSelect.appendChild(option);
-				});
-				serviceSelect.disabled = false;
-			} else {
-				// If lawyer has only one specialization, auto-fill it
-				const option = document.createElement('option');
-				option.value = primarySpec;
-				option.textContent = primarySpec;
-				option.selected = true;
-				serviceSelect.appendChild(option);
-				// Keep the select enabled so its value is included in form submission
-				serviceSelect.disabled = false;
+			// Enable practice area button
+			if (practiceAreaBtn) {
+				practiceAreaBtn.disabled = false;
+				practiceAreaDisplay.textContent = 'Click to select practice area';
 			}
+			
+			// Clear previous selection
+			serviceSelect.value = '';
 			
 			// PART 2: Update calendar with lawyer's availability
 			// Clear previous date selection
@@ -1257,8 +1367,12 @@ if (serviceSelect && lawyerSelect) {
 			}
 		} else {
 			// No lawyer selected, reset everything
-			serviceSelect.innerHTML = '<option value="">First select a lawyer</option>';
-			serviceSelect.disabled = true;
+			availablePracticeAreas = [];
+			if (practiceAreaBtn) {
+				practiceAreaBtn.disabled = true;
+				practiceAreaDisplay.textContent = 'First select a lawyer';
+			}
+			serviceSelect.value = '';
 			clearSelectedDate();
 		}
 	});
