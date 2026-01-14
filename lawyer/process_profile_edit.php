@@ -40,12 +40,6 @@ try {
     $description = trim($_POST['description'] ?? '');
     $specializations = $_POST['specializations'] ?? [];
     
-    // Password change data
-    $change_password = isset($_POST['change_password']);
-    $current_password = trim($_POST['current_password'] ?? '');
-    $new_password = trim($_POST['new_password'] ?? '');
-    $confirm_new_password = trim($_POST['confirm_new_password'] ?? '');
-    
     // Basic validation
     if (empty($first_name) || empty($last_name) || empty($email)) {
         throw new Exception("First name, last name, and email are required fields.");
@@ -59,37 +53,6 @@ try {
         throw new Exception("Please select at least one legal specialization.");
     }
     
-    // Password change validation
-    if ($change_password) {
-        if (empty($current_password)) {
-            throw new Exception("Current password is required to change password.");
-        }
-        
-        if (empty($new_password)) {
-            throw new Exception("New password is required.");
-        }
-        
-        if (strlen($new_password) < 8) {
-            throw new Exception("New password must be at least 8 characters long.");
-        }
-        
-        if ($new_password !== $confirm_new_password) {
-            throw new Exception("New passwords do not match.");
-        }
-        
-        // Verify current password (plain text comparison for development)
-        $current_password_stmt = $pdo->prepare("
-            SELECT password FROM users 
-            WHERE id = ? AND role = 'lawyer'
-        ");
-        $current_password_stmt->execute([$lawyer_id]);
-        $user_data = $current_password_stmt->fetch();
-        
-        if (!$user_data || $current_password !== $user_data['password']) {
-            throw new Exception("Current password is incorrect.");
-        }
-    }
-    
     // Check if email is already taken by another user
     $email_check_stmt = $pdo->prepare("
         SELECT id FROM users 
@@ -101,52 +64,25 @@ try {
         throw new Exception("This email address is already registered to another lawyer.");
     }
     
-    // Update user information in users table
-    if ($change_password) {
-        // Update profile with new password (plain text for development)
-        // Also clear temporary_password flag since user is changing their password
-        $update_user_stmt = $pdo->prepare("
-            UPDATE users 
-            SET first_name = ?, 
-                last_name = ?, 
-                email = ?, 
-                phone = ?, 
-                description = ?,
-                password = ?,
-                temporary_password = NULL
-            WHERE id = ? AND role = 'lawyer'
-        ");
-        
-        $update_result = $update_user_stmt->execute([
-            $first_name,
-            $last_name,
-            $email,
-            $phone,
-            $description,
-            $new_password,  // Store plain text password
-            $lawyer_id
-        ]);
-    } else {
-        // Update profile without changing password
-        $update_user_stmt = $pdo->prepare("
-            UPDATE users 
-            SET first_name = ?, 
-                last_name = ?, 
-                email = ?, 
-                phone = ?, 
-                description = ?
-            WHERE id = ? AND role = 'lawyer'
-        ");
-        
-        $update_result = $update_user_stmt->execute([
-            $first_name,
-            $last_name,
-            $email,
-            $phone,
-            $description,
-            $lawyer_id
-        ]);
-    }
+    // Update user information in users table (no password change)
+    $update_user_stmt = $pdo->prepare("
+        UPDATE users 
+        SET first_name = ?, 
+            last_name = ?, 
+            email = ?, 
+            phone = ?, 
+            description = ?
+        WHERE id = ? AND role = 'lawyer'
+    ");
+    
+    $update_result = $update_user_stmt->execute([
+        $first_name,
+        $last_name,
+        $email,
+        $phone,
+        $description,
+        $lawyer_id
+    ]);
     
     if (!$update_result) {
         throw new Exception("Failed to update profile information.");
@@ -186,15 +122,10 @@ try {
     $pdo->commit();
     
     // Log the profile update
-    $log_message = "Profile updated successfully for lawyer ID: $lawyer_id";
-    if ($change_password) {
-        $log_message .= " (password changed)";
-    }
-    error_log($log_message);
+    error_log("Profile updated successfully for lawyer ID: $lawyer_id");
     
     // Redirect with success message
-    $success_param = $change_password ? 'success=1&password_changed=1' : 'success=1';
-    header("Location: edit_profile.php?$success_param");
+    header("Location: edit_profile.php?success=1");
     exit;
     
 } catch (Exception $e) {

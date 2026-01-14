@@ -428,6 +428,64 @@
 			visibility: visible;
 			transform: translateY(0);
 		}
+		
+		/* Practice Area Button and Modal Styles */
+		.practice-area-btn {
+			background: white;
+			border: 1px solid #ddd;
+			padding: 12px 16px;
+			border-radius: 8px;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			text-align: left;
+			width: 100%;
+		}
+		
+		.practice-area-btn:hover:not(:disabled) {
+			border-color: var(--gold);
+			box-shadow: 0 2px 8px rgba(197, 162, 83, 0.2);
+		}
+		
+		.practice-area-btn:disabled {
+			background: #f5f5f5;
+			cursor: not-allowed;
+			opacity: 0.6;
+		}
+		
+		.practice-area-list {
+			max-height: 400px;
+			overflow-y: auto;
+		}
+		
+		.practice-area-item {
+			padding: 12px 16px;
+			border: 1px solid #e0e0e0;
+			border-radius: 8px;
+			margin-bottom: 8px;
+			cursor: pointer;
+			transition: all 0.2s ease;
+			background: white;
+		}
+		
+		.practice-area-item:hover {
+			background: #f8f9fa;
+			border-color: var(--gold);
+			transform: translateX(4px);
+		}
+		
+		.practice-area-item.selected {
+			background: #fff8e1;
+			border-color: var(--gold);
+			border-width: 2px;
+		}
+		
+		.practice-area-item i {
+			color: var(--gold);
+			margin-right: 10px;
+		}
 	</style>
 	
 	<!-- Load full CSS asynchronously -->
@@ -806,10 +864,12 @@
 									</select>
 								</div>
 								<div class="form-row">
-									<label for="service">Practice Area <small style="color: #666;">(Auto-filled)</small></label>
-									<select id="service" name="service" required disabled>
-										<option value="">First select a lawyer</option>
-									</select>
+									<label for="service">Practice Area <span class="required-asterisk" aria-label="required">*</span></label>
+									<button type="button" id="practiceAreaBtn" class="form-control text-start practice-area-btn" disabled>
+										<span id="practiceAreaDisplay">First select a lawyer</span>
+										<i class="fas fa-search" style="float: right; margin-top: 3px;"></i>
+									</button>
+									<input type="hidden" id="service" name="service" required />
 								</div>
 								<div class="form-row">
 									<label for="message">Case Description <span class="required-asterisk" aria-label="required">*</span></label>
@@ -998,6 +1058,42 @@
 			</div>
 		</div>
 	</footer>
+
+	<!-- Practice Area Selection Modal -->
+	<div class="modal fade" id="practiceAreaModal" tabindex="-1" aria-labelledby="practiceAreaModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="practiceAreaModalLabel">
+						<i class="fas fa-balance-scale me-2"></i>Select Practice Area
+					</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<!-- Search Input -->
+					<div class="mb-3">
+						<div class="input-group">
+							<span class="input-group-text">
+								<i class="fas fa-search"></i>
+							</span>
+							<input type="text" class="form-control" id="practiceAreaSearch" placeholder="Search practice areas..." autocomplete="off">
+						</div>
+					</div>
+					
+					<!-- Practice Areas List -->
+					<div id="practiceAreaList" class="practice-area-list">
+						<!-- Practice areas will be populated here -->
+					</div>
+					
+					<!-- No Results Message -->
+					<div id="noPracticeAreasMessage" style="display: none;" class="text-center py-4">
+						<i class="fas fa-search text-muted" style="font-size: 2rem;"></i>
+						<p class="text-muted mt-2">No practice areas found</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 
 	<!-- Time Slot Selection Modal -->
 	<div class="modal fade" id="timeSlotModal" tabindex="-1" aria-labelledby="timeSlotModalLabel" aria-hidden="true">

@@ -1099,6 +1099,7 @@ p, span, div, label {
     align-items: flex-start;
     flex-wrap: nowrap;
     gap: 20px;
+    position: relative;
 }
 
 .admin-section-header h2,
@@ -1136,9 +1137,22 @@ p, span, div, label {
 
 /* Search Container Styling */
 .search-container {
-    position: relative;
+    position: absolute;
+    right: 16px;
     display: flex;
     align-items: center;
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out, right 0.3s ease-out;
+}
+
+.search-container.relative {
+    position: relative;
+    right: auto;
+    margin-right: 32px;
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out, right 0.3s ease-out;
 }
 
 .search-input {
@@ -1205,12 +1219,44 @@ p, span, div, label {
 .bulk-actions-section {
     display: flex;
     align-items: center;
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    pointer-events: none;
+}
+
+.bulk-actions-section.show {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
 }
 
 .bulk-form {
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+.bulk-form select {
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out 0.2s;
+}
+
+.bulk-actions-section.show .bulk-form select {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.bulk-form button {
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out 0.2s;
+}
+
+.bulk-actions-section.show .bulk-form button {
+    opacity: 1;
+    transform: translateX(0);
 }
 
 /* Ensure dropdown and button have same height */
@@ -1226,7 +1272,8 @@ p, span, div, label {
     background: white;
     color: var(--text-dark);
     cursor: pointer;
-    transition: all 0.15s ease-in-out;
+    display: inline-block;
+    transition: transform .3s ease-out;
     appearance: none;
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
     background-repeat: no-repeat;
@@ -1234,6 +1281,12 @@ p, span, div, label {
     background-size: 16px 12px;
     padding-right: 40px;
     height: 42px; /* Match search input height */
+}
+
+.bulk-form select:hover,
+.admin-dropdown:hover,
+.form-select:hover {
+    transform: translate(0, 5px);
 }
 
 /* Override primary button styling for bulk actions */

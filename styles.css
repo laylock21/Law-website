@@ -4455,3 +4455,184 @@ a:not(.btn):hover::after {
 		order: -1;
 	}
 }
+
+/* Practice Area Modal Styles */
+.practice-area-btn {
+	background: white;
+	border: 1px solid #ddd;
+	padding: 12px 16px;
+	border-radius: 8px;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	text-align: left;
+	width: 100%;
+	font-size: 16px;
+	color: #333;
+}
+
+.practice-area-btn:hover:not(:disabled) {
+	border-color: var(--gold);
+	box-shadow: 0 2px 8px rgba(197, 162, 83, 0.2);
+	background: #fafafa;
+}
+
+.practice-area-btn:disabled {
+	background: #f5f5f5;
+	cursor: not-allowed;
+	opacity: 0.6;
+	color: #999;
+}
+
+#practiceAreaModal .modal-content {
+	border-radius: 12px;
+	border: none;
+	box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+	margin: auto;
+}
+
+#practiceAreaModal .modal-header {
+	background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+	color: white;
+	border-radius: 12px 12px 0 0;
+	padding: 20px 24px;
+	border-bottom: none;
+}
+
+#practiceAreaModal .modal-title {
+	font-family: var(--font-serif);
+	font-weight: 600;
+	font-size: 1.25rem;
+}
+
+#practiceAreaModal .btn-close {
+	filter: brightness(0) invert(1);
+	opacity: 0.8;
+}
+
+#practiceAreaModal .btn-close:hover {
+	opacity: 1;
+}
+
+#practiceAreaModal .modal-body {
+	padding: 24px;
+}
+
+.practice-area-list {
+	max-height: 400px;
+	overflow-y: auto;
+	padding-right: 8px;
+}
+
+.practice-area-list::-webkit-scrollbar {
+	width: 8px;
+}
+
+.practice-area-list::-webkit-scrollbar-track {
+	background: #f1f1f1;
+	border-radius: 4px;
+}
+
+.practice-area-list::-webkit-scrollbar-thumb {
+	background: var(--gold);
+	border-radius: 4px;
+}
+
+.practice-area-list::-webkit-scrollbar-thumb:hover {
+	background: #B8860B;
+}
+
+.practice-area-item {
+	padding: 14px 16px;
+	border: 2px solid #e0e0e0;
+	border-radius: 8px;
+	margin-bottom: 10px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	background: white;
+	display: flex;
+	align-items: center;
+	font-size: 15px;
+	color: #333;
+}
+
+.practice-area-item:hover {
+	background: #f8f9fa;
+	border-color: var(--gold);
+	transform: translateX(4px);
+	box-shadow: 0 2px 8px rgba(197, 162, 83, 0.15);
+}
+
+.practice-area-item.selected {
+	background: #fff8e1;
+	border-color: var(--gold);
+	border-width: 2px;
+	font-weight: 600;
+}
+
+.practice-area-item i {
+	color: var(--gold);
+	margin-right: 12px;
+	font-size: 18px;
+}
+
+#practiceAreaSearch {
+	border: 2px solid #e0e0e0;
+	border-radius: 8px;
+	padding: 10px 12px;
+	font-size: 15px;
+	transition: all 0.3s ease;
+}
+
+#practiceAreaSearch:focus {
+	border-color: var(--gold);
+	box-shadow: 0 0 0 3px rgba(197, 162, 83, 0.1);
+	outline: none;
+}
+
+.input-group-text {
+	background: white;
+	border: 2px solid #e0e0e0;
+	border-right: none;
+	border-radius: 8px 0 0 8px;
+	color: var(--gold);
+}
+
+#practiceAreaSearch {
+	border-left: none;
+	border-radius: 0 8px 8px 0;
+}
+
+#noPracticeAreasMessage {
+	padding: 40px 20px;
+}
+
+#noPracticeAreasMessage i {
+	font-size: 3rem;
+	color: #ccc;
+}
+
+#noPracticeAreasMessage p {
+	margin-top: 16px;
+	font-size: 16px;
+	color: #999;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+	#practiceAreaModal .modal-dialog {
+		margin: 10px;
+	}
+	
+	.practice-area-item {
+		padding: 12px 14px;
+		font-size: 14px;
+	}
+	
+	.practice-area-item i {
+		font-size: 16px;
+		margin-right: 10px;
+	}
+}
