@@ -165,7 +165,7 @@ $active_page = "consultations";
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="lawyer-page">
-	<?php include 'partials/header.php'; ?>
+	<?php include 'partials/sidebar.php'; ?>
 	<div class="lawyer-dashboard">
 
 		<main class="lawyer-main-content">

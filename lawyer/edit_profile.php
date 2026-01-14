@@ -92,7 +92,7 @@ $active_page = "profile";
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="lawyer-page edit-profile-page">
-    <?php include 'partials/header.php'; ?> 
+    <?php include 'partials/sidebar.php'; ?> 
 
     <!-- Main Content -->
     <div class="edit-profile-content">

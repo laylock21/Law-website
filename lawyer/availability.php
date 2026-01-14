@@ -948,7 +948,7 @@ $active_page = "availability";
     </script>
 </head>
 <body class="lawyer-page">
-    <?php include 'partials/header.php'; ?>
+    <?php include 'partials/sidebar.php'; ?>
         
     <main class="page-content">
         <?php if ($success_message): ?>

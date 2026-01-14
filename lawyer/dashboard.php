@@ -98,38 +98,7 @@ $active_page = "dashboard";
 
 </head>
 <body class="lawyer-page">
-        <?php include 'partials/header.php'; ?> 
-        <header class="lawyer-dashboard-header">
-            <div class="lawyer-dashboard-nav">
-                <div class="lawyer-info">
-                    <div class="lawyer-profile-section">
-                        <?php if ($profile_picture && file_exists("../uploads/profile_pictures/" . $profile_picture)): ?>
-                            <div class="lawyer-profile-picture">
-                                <img src="../uploads/profile_pictures/<?php echo htmlspecialchars($profile_picture); ?>" 
-                                     alt="<?php echo htmlspecialchars($lawyer_name); ?>'s Profile Picture" 
-                                     class="profile-img">
-                                <a href="edit_profile.php" class="profile-edit-overlay" title="Edit Profile">
-                                    <img src="../src/img/Edit Icon.png" alt="Edit" class="edit-icon">
-                                </a>
-                            </div>
-                        <?php else: ?>
-                            <div class="lawyer-profile-picture">
-                                <div class="profile-placeholder">
-                                    <?php echo strtoupper(substr($lawyer_name, 0, 1)); ?>
-                                </div>
-                                <a href="edit_profile.php" class="profile-edit-overlay" title="Edit Profile">
-                                    <img src="../src/img/Edit Icon.png" alt="Edit" class="edit-icon">
-                                </a>
-                            </div>
-                        <?php endif; ?>
-                        <div class="lawyer-details">
-                            <h1>Welcome, <?php echo htmlspecialchars($lawyer_name); ?></h1>
-                            <p>Lawyer Portal Dashboard</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </header>
+        <?php include 'partials/sidebar.php'; ?>
         
         <main class="lawyer-main-content">
             <?php if (isset($error_message)): ?>
