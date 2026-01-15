@@ -89,7 +89,7 @@ $active_page = "profile";
     <title>Edit Profile - <?php echo htmlspecialchars($_SESSION['lawyer_name']); ?></title>
     <link rel="stylesheet" href="../styles.css">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="../includes/modal-container.css">
+    <link rel="stylesheet" href="../includes/confirmation-modal.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="lawyer-page edit-profile-page">
@@ -392,66 +392,18 @@ $active_page = "profile";
         </div>
     </div>
 
-        <!-- Profile Confirm Modal -->
-        <div id="profileConfirmModal" class="modal-container" style="display:none;">
-            <div class="modal-overlay"></div>
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="modal-title">Confirm Update</h3>
-                    <button class="modal-close" onclick="closeProfileConfirmModal()">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <p id="profileConfirmMessage">Are you sure?</p>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" id="profileConfirmCancelBtn" onclick="closeProfileConfirmModal()">Cancel</button>
-                    <button class="btn btn-primary" id="profileConfirmBtn">Confirm</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Info Modal -->
-        <div id="infoModal" class="modal-container" style="display:none;">
-            <div class="modal-overlay"></div>
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="modal-title">Notice</h3>
-                    <button class="modal-close" onclick="closeInfoModal()">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <p id="infoModalMessage">Message</p>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-primary" onclick="closeInfoModal()">OK</button>
-                </div>
-            </div>
-        </div>
-
-    <!-- Remove Profile Picture Modal -->
-    <div id="removePhotoModal" class="modal-overlay" style="display: none;">
-        <div class="modal-container">
-            <div class="modal-header">
-                <h3><i class="fas fa-trash"></i> Remove Profile Picture</h3>
-                <button type="button" class="modal-close" onclick="closeRemoveModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to remove your profile picture?</p>
-                <p class="modal-subtitle">This action cannot be undone.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-danger" onclick="confirmRemovePhoto()">
-                    <i class="fas fa-trash"></i> Remove
-                </button>
-                <button type="button" class="btn btn-secondary" onclick="closeRemoveModal()">
-                    Cancel
-                </button>
-            </div>
-        </div>
-    </div>
+    <!-- Old modals removed - now using unified ConfirmModal system -->
+    
+    <!-- Load confirmation modal system BEFORE inline scripts -->
+    <script src="../includes/confirmation-modal.js?v=2"></script>
     
     <script>
+        // Debug: Check if ConfirmModal is loaded
+        console.log('ConfirmModal loaded:', typeof ConfirmModal !== 'undefined');
+        if (typeof ConfirmModal !== 'undefined') {
+            console.log('ConfirmModal methods:', Object.keys(ConfirmModal));
+        }
+        
         function updateSelectedCount() {
             const checkedBoxes = document.querySelectorAll('input[name="specializations[]"]:checked');
             document.getElementById('selectedCount').textContent = checkedBoxes.length;
@@ -467,43 +419,36 @@ $active_page = "profile";
                 checkbox.addEventListener('change', updateSelectedCount);
             });
 
-            // Add hover effects for profile picture and buttons
-            const photoContainer = document.querySelector('.photo-container');
-            const chooseBtn = document.querySelector('.btn-choose');
-            const removeBtn = document.querySelector('.btn-remove');
-
-            // Remove the conflicting JavaScript hover effects - CSS handles this better
-        });
-
-        // Profile picture upload handling
-        document.getElementById('profile_picture').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            console.log('=== PROFILE PICTURE UPLOAD DEBUG ===');
-            console.log('File selected:', file.name, 'Size:', file.size, 'Type:', file.type);
-            
-            // Validate file
-            const maxSize = 5 * 1024 * 1024; // 5MB
-            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-            
-            if (file.size > maxSize) {
-                console.log('ERROR: File too large');
-                alert('File size must be less than 5MB');
-                e.target.value = '';
-                return;
-            }
-            
-            if (!allowedTypes.includes(file.type)) {
-                console.log('ERROR: Invalid file type');
-                alert('Only JPG, PNG, and GIF files are allowed');
-                e.target.value = '';
-                return;
-            }
-            
-            console.log('File validation passed, starting upload...');
-            // Upload file directly without showing preview first
-            uploadProfilePicture(file);
+            // Profile picture upload handling
+            document.getElementById('profile_picture').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                console.log('=== PROFILE PICTURE UPLOAD DEBUG ===');
+                console.log('File selected:', file.name, 'Size:', file.size, 'Type:', file.type);
+                
+                // Validate file
+                const maxSize = 5 * 1024 * 1024; // 5MB
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                
+                if (file.size > maxSize) {
+                    console.log('ERROR: File too large');
+                    alert('File size must be less than 5MB');
+                    e.target.value = '';
+                    return;
+                }
+                
+                if (!allowedTypes.includes(file.type)) {
+                    console.log('ERROR: Invalid file type');
+                    alert('Only JPG, PNG, and GIF files are allowed');
+                    e.target.value = '';
+                    return;
+                }
+                
+                console.log('File validation passed, starting upload...');
+                // Upload file directly without showing preview first
+                uploadProfilePicture(file);
+            });
         });
         
         function uploadProfilePicture(file) {
@@ -594,8 +539,10 @@ $active_page = "profile";
             });
         }
         
-        function removeProfilePicture() {
+        async function removeProfilePicture() {
             console.log('=== REMOVE PROFILE PICTURE DEBUG ===');
+            console.log('ConfirmModal available:', typeof ConfirmModal !== 'undefined');
+            
             const removeBtn = document.querySelector('.btn-remove');
             console.log('Remove button found:', !!removeBtn);
             console.log('Remove button disabled:', removeBtn ? removeBtn.disabled : 'N/A');
@@ -605,41 +552,30 @@ $active_page = "profile";
                 return;
             }
             
-            // Show the modal instead of confirm dialog
-            showRemoveModal();
-        }
-        
-        function showRemoveModal() {
-            const modal = document.getElementById('removePhotoModal');
-            if (modal) {
-                modal.style.display = 'flex';
-                document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            try {
+                console.log('Showing confirmation modal...');
+                // Show unified confirmation modal
+                const confirmed = await ConfirmModal.confirm({
+                    title: 'Remove Profile Picture',
+                    message: 'Are you sure you want to remove your profile picture? This action cannot be undone.',
+                    confirmText: 'Remove',
+                    cancelText: 'Cancel',
+                    type: 'danger'
+                });
                 
-                // Trigger animation after a small delay to ensure display is set
-                setTimeout(() => {
-                    modal.classList.add('show');
-                }, 10);
-            }
-        }
-        
-        function closeRemoveModal() {
-            const modal = document.getElementById('removePhotoModal');
-            if (modal) {
-                modal.classList.remove('show');
-                document.body.style.overflow = 'auto'; // Restore scrolling
+                console.log('User response:', confirmed);
                 
-                // Hide modal after animation completes
-                setTimeout(() => {
-                    modal.style.display = 'none';
-                }, 300);
+                if (!confirmed) {
+                    console.log('User cancelled profile picture removal');
+                    return;
+                }
+                
+                console.log('User confirmed profile picture removal');
+            } catch (error) {
+                console.error('Error showing confirmation modal:', error);
+                return;
             }
-        }
-        
-        function confirmRemovePhoto() {
-            console.log('User confirmed profile picture removal');
-            closeRemoveModal();
             
-            const removeBtn = document.querySelector('.btn-remove');
             const statusDiv = document.getElementById('upload-status') || document.querySelector('.upload-status-horizontal');
             console.log('Status div found:', !!statusDiv);
             
@@ -697,8 +633,7 @@ $active_page = "profile";
                         previewImg.src = data.defaultUrl;
                     }
                     
-                    // Clear the file input
-                    const fileInput = document.getElementById('profile_picture');
+                    // Clear the file input (reuse variable from above)
                     if (fileInput) {
                         fileInput.value = '';
                     }
@@ -736,20 +671,13 @@ $active_page = "profile";
             });
         }
 
-        // Info modal helpers for profile update notifications
-        function openInfoModal(message) {
-            let mdl = document.getElementById('infoModal');
-            if (!mdl) return alert(message);
-            document.getElementById('infoModalMessage').textContent = message;
-            mdl.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeInfoModal() {
-            const mdl = document.getElementById('infoModal');
-            if (!mdl) return;
-            mdl.style.display = 'none';
-            document.body.style.overflow = 'auto';
+        // Info modal helpers using unified modal system
+        async function showInfoModal(message) {
+            await ConfirmModal.alert({
+                title: 'Notice',
+                message: message,
+                type: 'info'
+            });
         }
         
         // Password change functionality - removed toggle, fields always visible
@@ -789,242 +717,249 @@ $active_page = "profile";
             }
         }
         
-        // Password strength indicator for modal
-        document.getElementById('password_new').addEventListener('input', function() {
-            const password = this.value;
-            const strengthDiv = document.getElementById('password-strength-modal');
-            
-            if (password.length === 0) {
-                strengthDiv.innerHTML = '';
-                return;
+        // Wrap all event listeners in DOMContentLoaded to ensure elements exist
+        document.addEventListener('DOMContentLoaded', function() {
+            // Password strength indicator for modal
+            const passwordNewInput = document.getElementById('password_new');
+            if (passwordNewInput) {
+                passwordNewInput.addEventListener('input', function() {
+                    const password = this.value;
+                    const strengthDiv = document.getElementById('password-strength-modal');
+                    
+                    if (password.length === 0) {
+                        strengthDiv.innerHTML = '';
+                        return;
+                    }
+                    
+                    let strength = 0;
+                    let feedback = [];
+                    
+                    // Length check
+                    if (password.length >= 8) {
+                        strength += 1;
+                    } else {
+                        feedback.push('At least 8 characters');
+                    }
+                    
+                    // Uppercase check
+                    if (/[A-Z]/.test(password)) {
+                        strength += 1;
+                    } else {
+                        feedback.push('Uppercase letter');
+                    }
+                    
+                    // Lowercase check
+                    if (/[a-z]/.test(password)) {
+                        strength += 1;
+                    } else {
+                        feedback.push('Lowercase letter');
+                    }
+                    
+                    // Number check
+                    if (/\d/.test(password)) {
+                        strength += 1;
+                    } else {
+                        feedback.push('Number');
+                    }
+                    
+                    // Special character check
+                    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+                        strength += 1;
+                    } else {
+                        feedback.push('Special character');
+                    }
+                    
+                    // Display strength
+                    let strengthText = '';
+                    let strengthColor = '';
+                    
+                    if (strength <= 2) {
+                        strengthText = 'Weak';
+                        strengthColor = '#dc3545';
+                    } else if (strength <= 3) {
+                        strengthText = 'Fair';
+                        strengthColor = '#ffc107';
+                    } else if (strength <= 4) {
+                        strengthText = 'Good';
+                        strengthColor = '#28a745';
+                    } else {
+                        strengthText = 'Strong';
+                        strengthColor = '#28a745';
+                    }
+                    
+                    strengthDiv.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                            <div style="flex: 1; height: 4px; background: #e9ecef; border-radius: 2px;">
+                                <div style="height: 100%; background: ${strengthColor}; width: ${(strength/5)*100}%; border-radius: 2px; transition: all 0.3s;"></div>
+                            </div>
+                            <span style="color: ${strengthColor}; font-weight: bold; font-size: 12px;">${strengthText}</span>
+                        </div>
+                        ${feedback.length > 0 ? `<small style="color: #6c757d;">Missing: ${feedback.join(', ')}</small>` : ''}
+                    `;
+                });
             }
+            
+            // Password confirmation check for modal
+            const passwordConfirmInput = document.getElementById('password_confirm');
+            if (passwordConfirmInput) {
+                passwordConfirmInput.addEventListener('input', function() {
+                    const newPassword = document.getElementById('password_new').value;
+                    const confirmPassword = this.value;
+                    const statusDiv = document.getElementById('password-match-status-modal');
+                    
+                    if (confirmPassword === '') {
+                        statusDiv.textContent = 'Passwords must match';
+                        statusDiv.style.color = '#6c757d';
+                        return;
+                    }
+                    
+                    if (newPassword === confirmPassword) {
+                        statusDiv.textContent = '✓ Passwords match';
+                        statusDiv.style.color = '#28a745';
+                    } else {
+                        statusDiv.textContent = '✗ Passwords do not match';
+                        statusDiv.style.color = '#dc3545';
+                    }
+                });
+            }
+            
+            // Profile form validation using unified modal system
+            const profileForm = document.getElementById('profileForm');
+            if (profileForm) {
+                profileForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
 
+                    const specializations = document.querySelectorAll('input[name="specializations[]"]:checked');
+
+                    if (specializations.length === 0) {
+                        await ConfirmModal.alert({
+                            title: 'Validation Error',
+                            message: 'Please select at least one legal specialization.',
+                            type: 'warning'
+                        });
+                        return false;
+                    }
+
+                    // Show confirmation modal
+                    const confirmed = await ConfirmModal.confirm({
+                        title: 'Confirm Update',
+                        message: 'Are you sure you want to update your profile?',
+                        confirmText: 'Update Profile',
+                        cancelText: 'Cancel',
+                        type: 'info'
+                    });
+
+                    if (confirmed) {
+                        // Submit the form
+                        this.submit();
+                    }
+                });
+            }
+            
+            // Password form validation using unified modal system
+            const passwordForm = document.getElementById('passwordForm');
+            console.log('Password form found:', !!passwordForm);
+            if (passwordForm) {
+                passwordForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    console.log('Password form submitted');
+                    console.log('ConfirmModal available in handler:', typeof ConfirmModal !== 'undefined');
+                    
+                    const currentPassword = document.getElementById('password_current').value;
+                    const newPassword = document.getElementById('password_new').value;
+                    const confirmPassword = document.getElementById('password_confirm').value;
+                    
+                    if (!currentPassword) {
+                        await ConfirmModal.alert({
+                            title: 'Validation Error',
+                            message: 'Please enter your current password.',
+                            type: 'warning'
+                        });
+                        document.getElementById('password_current').focus();
+                        return false;
+                    }
+                    
+                    if (newPassword.length < 8) {
+                        await ConfirmModal.alert({
+                            title: 'Validation Error',
+                            message: 'New password must be at least 8 characters long.',
+                            type: 'warning'
+                        });
+                        document.getElementById('password_new').focus();
+                        return false;
+                    }
+                    
+                    if (newPassword !== confirmPassword) {
+                        await ConfirmModal.alert({
+                            title: 'Validation Error',
+                            message: 'New passwords do not match.',
+                            type: 'warning'
+                        });
+                        document.getElementById('password_confirm').focus();
+                        return false;
+                    }
+                    
+                    // Confirm before submitting
+                    const confirmed = await ConfirmModal.confirm({
+                        title: 'Confirm Password Change',
+                        message: 'Are you sure you want to change your password?',
+                        confirmText: 'Change Password',
+                        cancelText: 'Cancel',
+                        type: 'warning'
+                    });
+                    
+                    if (confirmed) {
+                        console.log('Password change validation passed, submitting...');
+                        this.submit();
+                    }
+                });
+            }
+            
+            // Auto-format phone number
+            const phoneInput = document.getElementById('phone');
+            if (phoneInput) {
+                phoneInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length > 0) {
+                        if (value.startsWith('63')) {
+                            value = value.substring(2);
+                        }
+                        if (value.length >= 10) {
+                            value = value.substring(0, 10);
+                            e.target.value = `(+63) ${value.substring(0, 3)} ${value.substring(3, 6)} ${value.substring(6)}`;
+                        }
+                    }
+                });
+            }
+            
             // Auto-open info modal if server indicated a success message
-            document.addEventListener('DOMContentLoaded', function() {
-                const serverMessage = <?php echo json_encode($message ?: ''); ?>;
-                if (serverMessage) {
-                    // Delay slightly so page finishes rendering
-                    setTimeout(function() {
-                        openInfoModal(serverMessage);
-                    }, 250);
-                }
-            });
-            
-            let strength = 0;
-            let feedback = [];
-            
-            // Length check
-            if (password.length >= 8) {
-                strength += 1;
-            } else {
-                feedback.push('At least 8 characters');
-            }
-            
-            // Uppercase check
-            if (/[A-Z]/.test(password)) {
-                strength += 1;
-            } else {
-                feedback.push('Uppercase letter');
-            }
-            
-            // Lowercase check
-            if (/[a-z]/.test(password)) {
-                strength += 1;
-            } else {
-                feedback.push('Lowercase letter');
-            }
-            
-            // Number check
-            if (/\d/.test(password)) {
-                strength += 1;
-            } else {
-                feedback.push('Number');
-            }
-            
-            // Special character check
-            if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-                strength += 1;
-            } else {
-                feedback.push('Special character');
-            }
-            
-            // Display strength
-            let strengthText = '';
-            let strengthColor = '';
-            
-            if (strength <= 2) {
-                strengthText = 'Weak';
-                strengthColor = '#dc3545';
-            } else if (strength <= 3) {
-                strengthText = 'Fair';
-                strengthColor = '#ffc107';
-            } else if (strength <= 4) {
-                strengthText = 'Good';
-                strengthColor = '#28a745';
-            } else {
-                strengthText = 'Strong';
-                strengthColor = '#28a745';
-            }
-            
-            strengthDiv.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
-                    <div style="flex: 1; height: 4px; background: #e9ecef; border-radius: 2px;">
-                        <div style="height: 100%; background: ${strengthColor}; width: ${(strength/5)*100}%; border-radius: 2px; transition: all 0.3s;"></div>
-                    </div>
-                    <span style="color: ${strengthColor}; font-weight: bold; font-size: 12px;">${strengthText}</span>
-                </div>
-                ${feedback.length > 0 ? `<small style="color: #6c757d;">Missing: ${feedback.join(', ')}</small>` : ''}
-            `;
-        });
-        
-        // Password confirmation check for modal
-        document.getElementById('password_confirm').addEventListener('input', function() {
-            const newPassword = document.getElementById('password_new').value;
-            const confirmPassword = this.value;
-            const statusDiv = document.getElementById('password-match-status-modal');
-            
-            if (confirmPassword === '') {
-                statusDiv.textContent = 'Passwords must match';
-                statusDiv.style.color = '#6c757d';
-                return;
-            }
-            
-            if (newPassword === confirmPassword) {
-                statusDiv.textContent = '✓ Passwords match';
-                statusDiv.style.color = '#28a745';
-            } else {
-                statusDiv.textContent = '✗ Passwords do not match';
-                statusDiv.style.color = '#dc3545';
+            const serverMessage = <?php echo json_encode($message ?: ''); ?>;
+            if (serverMessage) {
+                // Delay slightly so page finishes rendering
+                setTimeout(async function() {
+                    await ConfirmModal.alert({
+                        title: 'Success',
+                        message: serverMessage,
+                        type: 'success'
+                    });
+                }, 250);
             }
         });
         
-        // Profile form validation (no password validation)
-        window.__bypassProfileConfirm = false;
-
-        function openProfileConfirmModal(message) {
-            const mdl = document.getElementById('profileConfirmModal');
-            if (!mdl) return confirm(message);
-            document.getElementById('profileConfirmMessage').textContent = message;
-            mdl.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeProfileConfirmModal() {
-            const mdl = document.getElementById('profileConfirmModal');
-            if (!mdl) return;
-            mdl.style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
-
-        document.getElementById('profileForm').addEventListener('submit', function(e) {
-            if (window.__bypassProfileConfirm) {
-                // allow submission and reset flag
-                window.__bypassProfileConfirm = false;
-                return true;
-            }
-
-            const specializations = document.querySelectorAll('input[name="specializations[]"]:checked');
-
-            if (specializations.length === 0) {
-                e.preventDefault();
-                openInfoModal('Please select at least one legal specialization.');
-                return false;
-            }
-
-            // prevent immediate submit and show confirmation modal
-            e.preventDefault();
-            openProfileConfirmModal('Are you sure you want to update your profile?');
-            return false;
-        });
-        
-        // Password form validation
-        document.getElementById('passwordForm').addEventListener('submit', function(e) {
-            const currentPassword = document.getElementById('password_current').value;
-            const newPassword = document.getElementById('password_new').value;
-            const confirmPassword = document.getElementById('password_confirm').value;
-            
-            if (!currentPassword) {
-                e.preventDefault();
-                alert('Please enter your current password.');
-                document.getElementById('password_current').focus();
-                return false;
-            }
-            
-            if (newPassword.length < 8) {
-                e.preventDefault();
-                alert('New password must be at least 8 characters long.');
-                document.getElementById('password_new').focus();
-                return false;
-            }
-            
-            if (newPassword !== confirmPassword) {
-                e.preventDefault();
-                alert('New passwords do not match.');
-                document.getElementById('password_confirm').focus();
-                return false;
-            }
-            
-            // Confirm before submitting
-            if (!confirm('Are you sure you want to change your password?')) {
-                e.preventDefault();
-                return false;
-            }
-            
-            console.log('Password change validation passed, submitting...');
-        });
-        
-        // Auto-format phone number
-        document.getElementById('phone').addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 0) {
-                if (value.startsWith('63')) {
-                    value = value.substring(2);
-                }
-                if (value.length >= 10) {
-                    value = value.substring(0, 10);
-                    e.target.value = `(+63) ${value.substring(0, 3)} ${value.substring(3, 6)} ${value.substring(6)}`;
-                }
-            }
-        });
-        
-        // Close modal when clicking outside
+        // Close password modal when clicking outside
         document.addEventListener('click', function(e) {
-            const removeModal = document.getElementById('removePhotoModal');
             const passwordModal = document.getElementById('passwordModal');
             
-            if (e.target === removeModal) {
-                closeRemoveModal();
-            }
             if (e.target === passwordModal) {
                 closePasswordModal();
             }
-
-            // Close profile confirm or info modals when clicking overlay
-            const profileConfirmModal = document.getElementById('profileConfirmModal');
-            if (profileConfirmModal && e.target === profileConfirmModal) {
-                closeProfileConfirmModal();
-            }
-            const infoModal = document.getElementById('infoModal');
-            if (infoModal && e.target === infoModal) {
-                closeInfoModal();
-            }
         });
         
-        // Close modal with Escape key
+        // Close password modal with Escape key
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
-                closeRemoveModal();
                 closePasswordModal();
-                closeProfileConfirmModal();
-                closeInfoModal();
             }
-        });
-
-        // Handle profile confirm button
-        document.getElementById('profileConfirmBtn').addEventListener('click', function() {
-            closeProfileConfirmModal();
-            window.__bypassProfileConfirm = true;
-            document.getElementById('profileForm').submit();
         });
     </script>
 </body>

@@ -162,7 +162,7 @@ $active_page = "consultations";
 	<title>My Consultations - <?php echo htmlspecialchars($lawyer_name); ?></title>
 	<link rel="stylesheet" href="../styles.css">
 	<link rel="stylesheet" href="styles.css">
-	<link rel="stylesheet" href="../includes/modal-container.css">
+	<link rel="stylesheet" href="../includes/confirmation-modal.css">
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="lawyer-page">
@@ -266,6 +266,9 @@ $active_page = "consultations";
 	}
 	?>
 	
+	<!-- Load confirmation modal system BEFORE inline scripts -->
+	<script src="../includes/confirmation-modal.js"></script>
+	
 	<script>
 	function updatePanelInfo(title, description) {
 		document.getElementById('panel-title').textContent = 'MD Law - ' + title;
@@ -281,92 +284,71 @@ $active_page = "consultations";
 		});
 	}
 	
-	// Bulk action confirmation modal flow
-	window.__bulkPending = null;
+	// Wrap event listeners in DOMContentLoaded to ensure elements exist
+	document.addEventListener('DOMContentLoaded', function() {
+		// Bulk action confirmation using unified modal system
+		const bulkForm = document.getElementById('bulk-form');
+		if (bulkForm) {
+			bulkForm.addEventListener('submit', async function(e) {
+				e.preventDefault();
 
-	// Info modal for simple messages (e.g., missing action)
-	function openInfoModal(message) {
-		const mdl = document.getElementById('infoModal');
-		if (!mdl) return alert(message);
-		document.getElementById('infoModalMessage').textContent = message;
-		mdl.style.display = 'flex';
-	}
+				const selectedCheckboxes = document.querySelectorAll('.consultation-checkbox:checked');
+				const bulkAction = document.getElementById('bulk_action').value;
 
-	function closeInfoModal() {
-		document.getElementById('infoModal').style.display = 'none';
-	}
+				if (selectedCheckboxes.length === 0) {
+					await ConfirmModal.alert({
+						title: 'No Selection',
+						message: 'Please select at least one consultation.',
+						type: 'warning'
+					});
+					return;
+				}
 
-	function openBulkModal(message) {
-		const mdl = document.getElementById('bulkConfirmModal');
-		document.getElementById('bulkModalMessage').textContent = message;
-		mdl.style.display = 'flex';
-	}
+				if (!bulkAction) {
+					await ConfirmModal.alert({
+						title: 'No Action Selected',
+						message: 'Please select an action.',
+						type: 'warning'
+					});
+					return;
+				}
 
-	function closeBulkModal() {
-		const mdl = document.getElementById('bulkConfirmModal');
-		mdl.style.display = 'none';
-		window.__bulkPending = null;
-	}
+				const actionText = bulkAction === 'confirm' ? 'confirm' : 'complete';
+				const count = selectedCheckboxes.length;
+				const message = `Are you sure you want to ${actionText} ${count} consultation(s)? This will send email notifications to clients.`;
 
-	document.getElementById('bulk-form').addEventListener('submit', function(e) {
-		e.preventDefault();
+				const confirmed = await ConfirmModal.confirm({
+					title: 'Confirm Bulk Action',
+					message: message,
+					confirmText: 'Yes, Proceed',
+					cancelText: 'Cancel',
+					type: 'info'
+				});
 
-		const selectedCheckboxes = document.querySelectorAll('.consultation-checkbox:checked');
-		const bulkAction = document.getElementById('bulk_action').value;
+				if (confirmed) {
+					// Create and submit form
+					const form = document.createElement('form');
+					form.method = 'POST';
+					form.style.display = 'none';
 
-		if (selectedCheckboxes.length === 0) {
-			openInfoModal('Please select at least one consultation.');
-			return;
-		}
-
-		if (!bulkAction) {
-			openInfoModal('Please select an action.');
-			return;
-		}
-
-		const actionText = bulkAction === 'confirm' ? 'confirm' : 'complete';
-		const count = selectedCheckboxes.length;
-		const message = `Are you sure you want to ${actionText} ${count} consultation(s)? This will send email notifications to clients.`;
-
-		// Save pending data
-		window.__bulkPending = {
-			action: bulkAction,
-			ids: Array.from(selectedCheckboxes).map(cb => cb.value)
-		};
-
-		openBulkModal(message);
-	});
-
-	// Bulk modal buttons
-	document.addEventListener('click', function(e) {
-		if (e.target && e.target.id === 'bulkConfirmBtn') {
-			if (!window.__bulkPending) return;
-
-			// Create and submit form
-			const form = document.createElement('form');
-			form.method = 'POST';
-			form.style.display = 'none';
-
-			const actionInput = document.createElement('input');
-			actionInput.type = 'hidden';
-			actionInput.name = 'bulk_action';
-			actionInput.value = window.__bulkPending.action;
+					const actionInput = document.createElement('input');
+					actionInput.type = 'hidden';
+					actionInput.name = 'bulk_action';
+					actionInput.value = bulkAction;
 			form.appendChild(actionInput);
 
-			window.__bulkPending.ids.forEach(id => {
+			selectedCheckboxes.forEach(checkbox => {
 				const input = document.createElement('input');
 				input.type = 'hidden';
 				input.name = 'selected_consultations[]';
-				input.value = id;
+				input.value = checkbox.value;
 				form.appendChild(input);
 			});
 
 			document.body.appendChild(form);
 			form.submit();
 		}
-
-		if (e.target && (e.target.id === 'bulkCancelBtn' || e.target.classList.contains('modal-overlay'))) {
-			closeBulkModal();
+			});
 		}
 	});
 
@@ -529,40 +511,7 @@ $active_page = "consultations";
 	});
 	</script>
 
-	<!-- Bulk Confirmation Modal -->
-	<div id="bulkConfirmModal" class="modal-container" style="display: none;">
-		<div class="modal-overlay"></div>
-		<div class="modal-content">
-			<div class="modal-header">
-				<h3 class="modal-title">Confirm Bulk Action</h3>
-				<button class="modal-close" onclick="closeBulkModal()">&times;</button>
-			</div>
-			<div class="modal-body">
-				<p id="bulkModalMessage">Are you sure?</p>
-			</div>
-			<div class="modal-footer">
-				<button class="lawyer-btn" id="bulkCancelBtn">Cancel</button>
-				<button class="lawyer-btn" id="bulkConfirmBtn">Confirm</button>
-			</div>
-		</div>
-	</div>
-
-	<!-- Info Modal -->
-	<div id="infoModal" class="modal-container" style="display:none;">
-		<div class="modal-overlay"></div>
-		<div class="modal-content">
-			<div class="modal-header">
-				<h3 class="modal-title">Notice</h3>
-				<button class="modal-close" onclick="closeInfoModal()">&times;</button>
-			</div>
-			<div class="modal-body">
-				<p id="infoModalMessage">Message</p>
-			</div>
-			<div class="modal-footer">
-				<button class="lawyer-btn" onclick="closeInfoModal()">OK</button>
-			</div>
-		</div>
-	</div>
+	<!-- Old modals removed - now using unified ConfirmModal system -->
 
 	<!-- Consultation Details Modal -->
 	<div id="consultationModal" class="consultation-modal" style="display: none;">
