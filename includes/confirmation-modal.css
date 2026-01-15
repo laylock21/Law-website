@@ -1,0 +1,215 @@
+/**
+ * Unified Confirmation Modal Styles
+ * Uses kiro- prefix to avoid conflicts with existing modal styles
+ */
+
+/* Modal wrapper - full screen overlay */
+.kiro-modal-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: kiroFadeIn 0.2s ease-out;
+}
+
+/* Dark backdrop overlay */
+.kiro-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+}
+
+/* Modal dialog box */
+.kiro-modal-dialog {
+    position: relative;
+    z-index: 2;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: auto;
+    animation: kiroSlideIn 0.3s ease-out;
+}
+
+/* Modal header */
+.kiro-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.kiro-modal-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.kiro-modal-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    line-height: 1;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.kiro-modal-close:hover {
+    background-color: #f8f9fa;
+    color: #2c3e50;
+}
+
+/* Modal body */
+.kiro-modal-body {
+    padding: 24px;
+    color: #495057;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.kiro-modal-body p {
+    margin: 0;
+}
+
+/* Modal footer */
+.kiro-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+    border-radius: 0 0 8px 8px;
+}
+
+/* Button styles */
+.kiro-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    outline: none;
+}
+
+.kiro-btn:focus {
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* Secondary button (Cancel) */
+.kiro-btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.kiro-btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+/* Danger button (Delete, Remove) */
+.kiro-btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.kiro-btn-danger:hover {
+    background-color: #c82333;
+}
+
+/* Success button (Confirm, Save) */
+.kiro-btn-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.kiro-btn-success:hover {
+    background-color: #218838;
+}
+
+/* Warning button */
+.kiro-btn-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.kiro-btn-warning:hover {
+    background-color: #e0a800;
+}
+
+/* Info button (default) */
+.kiro-btn-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.kiro-btn-info:hover {
+    background-color: #138496;
+}
+
+/* Animations */
+@keyframes kiroFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes kiroSlideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .kiro-modal-dialog {
+        width: 95%;
+        margin: 10px;
+    }
+    
+    .kiro-modal-header,
+    .kiro-modal-body,
+    .kiro-modal-footer {
+        padding: 16px;
+    }
+    
+    .kiro-modal-footer {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .kiro-btn {
+        width: 100%;
+    }
+}

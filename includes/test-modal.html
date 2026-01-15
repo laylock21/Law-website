@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Unified Modal System</title>
+    <link rel="stylesheet" href="confirmation-modal.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .test-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .test-btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .test-btn-primary:hover {
+            background: #0056b3;
+        }
+        .test-btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .test-btn-danger:hover {
+            background: #c82333;
+        }
+        .test-btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .test-btn-success:hover {
+            background: #218838;
+        }
+        .test-btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .test-btn-warning:hover {
+            background: #e0a800;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            background: #e7f3ff;
+            border-left: 4px solid #007bff;
+            display: none;
+        }
+        .result.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎯 Unified Modal System Test</h1>
+        <p>Click the buttons below to test different modal types. The modals should appear perfectly centered with a dark overlay background.</p>
+        
+        <button class="test-btn test-btn-primary" onclick="testConfirm()">
+            Test Confirmation Modal
+        </button>
+        
+        <button class="test-btn test-btn-danger" onclick="testDanger()">
+            Test Danger Confirmation
+        </button>
+        
+        <button class="test-btn test-btn-success" onclick="testSuccess()">
+            Test Success Alert
+        </button>
+        
+        <button class="test-btn test-btn-warning" onclick="testWarning()">
+            Test Warning Alert
+        </button>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <script src="confirmation-modal.js"></script>
+    <script>
+        function showResult(message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = message;
+            resultDiv.classList.add('show');
+            setTimeout(() => {
+                resultDiv.classList.remove('show');
+            }, 3000);
+        }
+
+        async function testConfirm() {
+            const confirmed = await ConfirmModal.confirm({
+                title: 'Confirm Action',
+                message: 'This is a test confirmation modal. Is it centered with a dark overlay?',
+                confirmText: 'Yes, Perfect!',
+                cancelText: 'No, Issue',
+                type: 'info'
+            });
+            
+            if (confirmed) {
+                showResult('✅ You clicked: Yes, Perfect!');
+            } else {
+                showResult('❌ You clicked: No, Issue or Cancel');
+            }
+        }
+
+        async function testDanger() {
+            const confirmed = await ConfirmModal.confirm({
+                title: 'Delete Item',
+                message: 'Are you sure you want to delete this item? This action cannot be undone.',
+                confirmText: 'Delete',
+                cancelText: 'Cancel',
+                type: 'danger'
+            });
+            
+            if (confirmed) {
+                showResult('🗑️ Delete confirmed');
+            } else {
+                showResult('✋ Delete cancelled');
+            }
+        }
+
+        async function testSuccess() {
+            await ConfirmModal.alert({
+                title: 'Success!',
+                message: 'Your operation completed successfully. The modal should be centered!',
+                okText: 'Great!',
+                type: 'success'
+            });
+            
+            showResult('✅ Success alert closed');
+        }
+
+        async function testWarning() {
+            await ConfirmModal.alert({
+                title: 'Warning',
+                message: 'Please select at least one item before proceeding.',
+                okText: 'OK',
+                type: 'warning'
+            });
+            
+            showResult('⚠️ Warning alert closed');
+        }
+    </script>
+</body>
+</html>
