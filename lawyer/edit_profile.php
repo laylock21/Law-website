@@ -89,6 +89,7 @@ $active_page = "profile";
     <title>Edit Profile - <?php echo htmlspecialchars($_SESSION['lawyer_name']); ?></title>
     <link rel="stylesheet" href="../styles.css">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../includes/modal-container.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="lawyer-page edit-profile-page">
@@ -390,6 +391,41 @@ $active_page = "profile";
             </form>
         </div>
     </div>
+
+        <!-- Profile Confirm Modal -->
+        <div id="profileConfirmModal" class="modal-container" style="display:none;">
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Confirm Update</h3>
+                    <button class="modal-close" onclick="closeProfileConfirmModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p id="profileConfirmMessage">Are you sure?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="profileConfirmCancelBtn" onclick="closeProfileConfirmModal()">Cancel</button>
+                    <button class="btn btn-primary" id="profileConfirmBtn">Confirm</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Modal -->
+        <div id="infoModal" class="modal-container" style="display:none;">
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Notice</h3>
+                    <button class="modal-close" onclick="closeInfoModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p id="infoModalMessage">Message</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" onclick="closeInfoModal()">OK</button>
+                </div>
+            </div>
+        </div>
 
     <!-- Remove Profile Picture Modal -->
     <div id="removePhotoModal" class="modal-overlay" style="display: none;">
@@ -699,6 +735,22 @@ $active_page = "profile";
                 }
             });
         }
+
+        // Info modal helpers for profile update notifications
+        function openInfoModal(message) {
+            let mdl = document.getElementById('infoModal');
+            if (!mdl) return alert(message);
+            document.getElementById('infoModalMessage').textContent = message;
+            mdl.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeInfoModal() {
+            const mdl = document.getElementById('infoModal');
+            if (!mdl) return;
+            mdl.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
         
         // Password change functionality - removed toggle, fields always visible
         // Password fields in the modal are always required
@@ -746,6 +798,17 @@ $active_page = "profile";
                 strengthDiv.innerHTML = '';
                 return;
             }
+
+            // Auto-open info modal if server indicated a success message
+            document.addEventListener('DOMContentLoaded', function() {
+                const serverMessage = <?php echo json_encode($message ?: ''); ?>;
+                if (serverMessage) {
+                    // Delay slightly so page finishes rendering
+                    setTimeout(function() {
+                        openInfoModal(serverMessage);
+                    }, 250);
+                }
+            });
             
             let strength = 0;
             let feedback = [];
@@ -836,22 +899,42 @@ $active_page = "profile";
         });
         
         // Profile form validation (no password validation)
+        window.__bypassProfileConfirm = false;
+
+        function openProfileConfirmModal(message) {
+            const mdl = document.getElementById('profileConfirmModal');
+            if (!mdl) return confirm(message);
+            document.getElementById('profileConfirmMessage').textContent = message;
+            mdl.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeProfileConfirmModal() {
+            const mdl = document.getElementById('profileConfirmModal');
+            if (!mdl) return;
+            mdl.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
         document.getElementById('profileForm').addEventListener('submit', function(e) {
+            if (window.__bypassProfileConfirm) {
+                // allow submission and reset flag
+                window.__bypassProfileConfirm = false;
+                return true;
+            }
+
             const specializations = document.querySelectorAll('input[name="specializations[]"]:checked');
-            
+
             if (specializations.length === 0) {
                 e.preventDefault();
-                alert('Please select at least one legal specialization.');
+                openInfoModal('Please select at least one legal specialization.');
                 return false;
             }
-            
-            // Confirm before submitting
-            if (!confirm('Are you sure you want to update your profile?')) {
-                e.preventDefault();
-                return false;
-            }
-            
-            console.log('Profile form validation passed, submitting...');
+
+            // prevent immediate submit and show confirmation modal
+            e.preventDefault();
+            openProfileConfirmModal('Are you sure you want to update your profile?');
+            return false;
         });
         
         // Password form validation
@@ -915,6 +998,16 @@ $active_page = "profile";
             if (e.target === passwordModal) {
                 closePasswordModal();
             }
+
+            // Close profile confirm or info modals when clicking overlay
+            const profileConfirmModal = document.getElementById('profileConfirmModal');
+            if (profileConfirmModal && e.target === profileConfirmModal) {
+                closeProfileConfirmModal();
+            }
+            const infoModal = document.getElementById('infoModal');
+            if (infoModal && e.target === infoModal) {
+                closeInfoModal();
+            }
         });
         
         // Close modal with Escape key
@@ -922,7 +1015,16 @@ $active_page = "profile";
             if (e.key === 'Escape') {
                 closeRemoveModal();
                 closePasswordModal();
+                closeProfileConfirmModal();
+                closeInfoModal();
             }
+        });
+
+        // Handle profile confirm button
+        document.getElementById('profileConfirmBtn').addEventListener('click', function() {
+            closeProfileConfirmModal();
+            window.__bypassProfileConfirm = true;
+            document.getElementById('profileForm').submit();
         });
     </script>
 </body>

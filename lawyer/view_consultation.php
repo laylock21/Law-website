@@ -128,6 +128,7 @@ $active_page = "consultations";
 	<title>Consultation #<?php echo $consultation_id; ?> - <?php echo htmlspecialchars($lawyer_name); ?></title>
 	<link rel="stylesheet" href="../styles.css">
 	<link rel="stylesheet" href="styles.css">
+	<link rel="stylesheet" href="../includes/modal-container.css">
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="lawyer-page">
@@ -279,7 +280,41 @@ $active_page = "consultations";
 		echo $_SESSION['async_email_script'];
 		unset($_SESSION['async_email_script']);
 	}
+	// Show consultation message via modal if set
+	if (isset($_SESSION['consultation_message'])) {
+		$consultation_message = $_SESSION['consultation_message'];
+		unset($_SESSION['consultation_message']);
+		echo "\n<script>document.addEventListener('DOMContentLoaded', function(){\n";
+		echo "  (function(){\n";
+		echo "    var msg = " . json_encode($consultation_message) . ";\n";
+		echo "    function openInfo(msg){\n";
+		echo "      var mdl = document.getElementById('consultationInfoModal');\n";
+		echo "      if (!mdl) { alert(msg); return; }\n";
+		echo "      document.getElementById('consultationInfoMessage').textContent = msg;\n";
+		echo "      mdl.style.display = 'flex';\n";
+		echo "    }\n";
+		echo "    openInfo(msg);\n";
+		echo "  })();\n";
+		echo "});</script>\n";
+	}
 	?>
+
+	<!-- Consultation Info Modal -->
+	<div id="consultationInfoModal" class="modal-container" style="display:none;">
+		<div class="modal-overlay"></div>
+		<div class="modal-content">
+			<div class="modal-header">
+				<h3 class="modal-title">Notice</h3>
+				<button class="modal-close" onclick="document.getElementById('consultationInfoModal').style.display='none'">&times;</button>
+			</div>
+			<div class="modal-body">
+				<p id="consultationInfoMessage">Message</p>
+			</div>
+			<div class="modal-footer">
+				<button class="lawyer-btn" onclick="document.getElementById('consultationInfoModal').style.display='none'">OK</button>
+			</div>
+		</div>
+	</div>
 </body>
 </html>
 

@@ -236,6 +236,7 @@ $active_page = "consultations";
     <title>Admin - Consultations | MD Law Firm</title>
     <link rel="stylesheet" href="../styles.css">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../includes/modal-container.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="admin-page">
@@ -496,12 +497,12 @@ $active_page = "consultations";
         const bulkAction = document.getElementById('bulk_action').value;
         
         if (selectedCheckboxes.length === 0) {
-            alert('Please select at least one consultation.');
+            openInfoModal('Please select at least one consultation.');
             return false;
         }
         
         if (!bulkAction) {
-            alert('Please select an action.');
+            openInfoModal('Please select an action.');
             return false;
         }
         
@@ -516,40 +517,83 @@ $active_page = "consultations";
             confirmMessage = `Are you sure you want to set ${selectedCheckboxes.length} consultation(s) to pending status?`;
         }
         
-        return confirm(confirmMessage);
+        // Save pending bulk action and show modal
+        window.__bulkPending = {
+            action: bulkAction,
+            ids: Array.from(selectedCheckboxes).map(cb => cb.value),
+            message: confirmMessage
+        };
+
+        openBulkModal(confirmMessage);
+        return false;
     }
     
-    // Handle bulk form submission
+    // Handle bulk form submission via modal confirm
     document.getElementById('bulk-form').addEventListener('submit', function(e) {
         e.preventDefault();
-        
-        if (confirmBulkAction()) {
-            const selectedCheckboxes = document.querySelectorAll('.consultation-checkbox:checked');
-            const bulkAction = document.getElementById('bulk_action').value;
-            
-            // Create a form with selected consultations
+        confirmBulkAction();
+    });
+
+    // Info and bulk modals
+    window.__bulkPending = null;
+
+    function openInfoModal(message) {
+        const mdl = document.getElementById('adminInfoModal');
+        if (!mdl) return alert(message);
+        document.getElementById('adminInfoMessage').textContent = message;
+        mdl.style.display = 'flex';
+    }
+
+    function closeInfoModal() {
+        const mdl = document.getElementById('adminInfoModal');
+        if (!mdl) return;
+        mdl.style.display = 'none';
+    }
+
+    function openBulkModal(message) {
+        const mdl = document.getElementById('adminBulkModal');
+        if (!mdl) return confirm(message);
+        document.getElementById('adminBulkMessage').textContent = message;
+        mdl.style.display = 'flex';
+    }
+
+    function closeBulkModal() {
+        const mdl = document.getElementById('adminBulkModal');
+        if (!mdl) return;
+        mdl.style.display = 'none';
+        window.__bulkPending = null;
+    }
+
+    // Confirm button handler
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.id === 'adminBulkConfirmBtn') {
+            if (!window.__bulkPending) return;
+
             const form = document.createElement('form');
             form.method = 'POST';
             form.style.display = 'none';
-            
-            // Add bulk action
+
             const actionInput = document.createElement('input');
             actionInput.type = 'hidden';
             actionInput.name = 'bulk_action';
-            actionInput.value = bulkAction;
+            actionInput.value = window.__bulkPending.action;
             form.appendChild(actionInput);
-            
-            // Add selected consultations
-            selectedCheckboxes.forEach(checkbox => {
+
+            window.__bulkPending.ids.forEach(id => {
                 const input = document.createElement('input');
                 input.type = 'hidden';
                 input.name = 'selected_consultations[]';
-                input.value = checkbox.value;
+                input.value = id;
                 form.appendChild(input);
             });
-            
+
             document.body.appendChild(form);
             form.submit();
+        }
+
+        if (e.target && (e.target.id === 'adminBulkCancelBtn' || e.target.classList.contains('modal-overlay'))) {
+            closeBulkModal();
+            closeInfoModal();
         }
     });
     
@@ -562,5 +606,40 @@ $active_page = "consultations";
         });
     });
     </script>
+    
+    <!-- Admin Info Modal -->
+    <div id="adminInfoModal" class="modal-container" style="display:none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Notice</h3>
+                <button class="modal-close" onclick="closeInfoModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="adminInfoMessage">Message</p>
+            </div>
+            <div class="modal-footer">
+                <button class="admin-btn admin-btn-primary" onclick="closeInfoModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Bulk Confirm Modal -->
+    <div id="adminBulkModal" class="modal-container" style="display:none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Confirm Bulk Action</h3>
+                <button class="modal-close" onclick="closeBulkModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="adminBulkMessage">Are you sure?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="admin-btn admin-btn-secondary" id="adminBulkCancelBtn">Cancel</button>
+                <button class="admin-btn admin-btn-primary" id="adminBulkConfirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modal Container Usage Example</title>
+    
+    <!-- Include the modal CSS -->
+    <link rel="stylesheet" href="modal-container.css">
+    
+    <style>
+        body { padding: 40px; font-family: Arial, sans-serif; }
+        .demo-btn { margin: 10px; padding: 10px 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Modal Container Usage Examples</h1>
+    
+    <h2>Basic Usage:</h2>
+    <button class="demo-btn" onclick="example1()">Simple Modal</button>
+    <button class="demo-btn" onclick="example2()">Modal with Footer</button>
+    <button class="demo-btn" onclick="example3()">Custom Width Modal</button>
+    
+    <h2>Helper Methods:</h2>
+    <button class="demo-btn" onclick="example4()">Show Success</button>
+    <button class="demo-btn" onclick="example5()">Show Error</button>
+    <button class="demo-btn" onclick="example6()">Show Confirm</button>
+    <button class="demo-btn" onclick="example7()">Show Loading</button>
+    
+    <h2>Form Example:</h2>
+    <button class="demo-btn" onclick="showFormModal()">Open Form in Modal</button>
+
+    <!-- Include the modal HTML -->
+    <?php include 'modal-container.php'; ?>
+    
+    <!-- Include the modal JavaScript -->
+    <script src="modal-container.js"></script>
+    
+    <script>
+        // Example 1: Simple modal
+        function example1() {
+            ModalContainer.open({
+                title: 'Simple Modal',
+                body: '<p>This is a simple modal with just a title and body content.</p>'
+            });
+        }
+
+        // Example 2: Modal with footer
+        function example2() {
+            ModalContainer.open({
+                title: 'Modal with Footer',
+                body: '<p>This modal has custom footer buttons.</p>',
+                footer: `
+                    <button onclick="ModalContainer.close()" class="btn">Cancel</button>
+                    <button onclick="alert('Saved!'); ModalContainer.close();" class="btn">Save</button>
+                `
+            });
+        }
+
+        // Example 3: Custom width
+        function example3() {
+            ModalContainer.open({
+                title: 'Custom Width Modal',
+                body: '<p>This modal has a custom width of 600px.</p>',
+                width: '600px'
+            });
+        }
+
+        // Example 4: Success message
+        function example4() {
+            ModalContainer.showSuccess('Your changes have been saved successfully!');
+        }
+
+        // Example 5: Error message
+        function example5() {
+            ModalContainer.showError('Something went wrong. Please try again.');
+        }
+
+        // Example 6: Confirmation dialog
+        function example6() {
+            ModalContainer.confirm(
+                'Are you sure you want to delete this item?',
+                function() {
+                    alert('Item deleted!');
+                },
+                'Delete Confirmation'
+            );
+        }
+
+        // Example 7: Loading state
+        function example7() {
+            ModalContainer.showLoading('Processing your request...');
+            
+            // Simulate async operation
+            setTimeout(() => {
+                ModalContainer.close();
+                ModalContainer.showSuccess('Operation completed!');
+            }, 2000);
+        }
+
+        // Example 8: Form in modal
+        function showFormModal() {
+            const formHTML = `
+                <form id="exampleForm" onsubmit="handleFormSubmit(event)">
+                    <div style="margin-bottom: 15px;">
+                        <label>Name:</label>
+                        <input type="text" name="name" required style="width: 100%; padding: 8px;">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label>Email:</label>
+                        <input type="email" name="email" required style="width: 100%; padding: 8px;">
+                    </div>
+                </form>
+            `;
+            
+            const footerHTML = `
+                <button type="button" onclick="ModalContainer.close()">Cancel</button>
+                <button type="submit" form="exampleForm">Submit</button>
+            `;
+            
+            ModalContainer.open({
+                title: 'Contact Form',
+                body: formHTML,
+                footer: footerHTML,
+                width: '500px'
+            });
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            console.log('Form data:', Object.fromEntries(formData));
+            
+            ModalContainer.close();
+            ModalContainer.showSuccess('Form submitted successfully!');
+        }
+    </script>
+</body>
+</html>
