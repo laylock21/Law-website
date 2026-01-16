@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
     $action = $_POST['bulk_action'];
     $selected_consultations = $_POST['selected_consultations'] ?? [];
     
-    if (!empty($selected_consultations) && in_array($action, ['confirm', 'complete'])) {
+    if (!empty($selected_consultations) && in_array($action, ['confirm', 'complete', 'cancel'])) {
         try {
             $pdo = getDBConnection();
             require_once '../includes/EmailNotification.php';
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
                 
                 if ($current_consultation) {
                     $old_status = $current_consultation['status'];
-                    $new_status = ($action === 'confirm') ? 'confirmed' : 'completed';
+                    $new_status = ($action === 'confirm') ? 'confirmed' : (($action === 'cancel') ? 'cancelled' : 'completed');
                     
                     // Only update if status is different
                     if ($old_status !== $new_status) {
@@ -64,6 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
                                 $queued = $emailNotification->notifyAppointmentConfirmed($consultation_id);
                             } elseif ($new_status === 'completed') {
                                 $queued = $emailNotification->notifyAppointmentCompleted($consultation_id);
+                            } elseif ($new_status === 'cancelled') {
+                                $queued = $emailNotification->notifyAppointmentCancelled($consultation_id);
                             }
                             
                             if ($queued) {
@@ -96,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
                 $_SESSION['async_email_script'] = $async_script;
             }
             
-            $action_name = ($action === 'confirm') ? 'confirmed' : 'completed';
+            $action_name = ($action === 'confirm') ? 'confirmed' : (($action === 'cancel') ? 'cancelled' : 'completed');
             $_SESSION['bulk_message'] = "Successfully {$action_name} {$updated_count} consultation(s). {$email_count} email(s) sent.";
             
         } catch (Exception $e) {
@@ -186,6 +188,7 @@ $active_page = "consultations";
 								<option value="">Select Action</option>
 								<option value="confirm">Confirm</option>
 								<option value="complete">Complete</option>
+								<option value="cancel">Cancel</option>
 							</select>
 							<button type="submit" class="lawyer-btn btn-apply-selected">Apply to Selected</button>
 					</div>
@@ -315,7 +318,7 @@ $active_page = "consultations";
 					return;
 				}
 
-				const actionText = bulkAction === 'confirm' ? 'confirm' : 'complete';
+				const actionText = bulkAction === 'confirm' ? 'confirm' : (bulkAction === 'cancel' ? 'cancel' : 'complete');
 				const count = selectedCheckboxes.length;
 				const message = `Are you sure you want to ${actionText} ${count} consultation(s)? This will send email notifications to clients.`;
 
