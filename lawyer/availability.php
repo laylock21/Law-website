@@ -1038,6 +1038,11 @@ $active_page = "availability";
                 <span class="stat-label">Blocked Dates</span>
             </div>
             <div class="stat-item">
+                <i class="fas fa-calendar-times"></i>
+                <span class="stat-number"><?php echo $blocked_total; ?></span>
+                <span class="stat-label">Unavailable</span>
+            </div>
+            <div class="stat-item">
                 <i class="fas fa-users"></i>
                 <span class="stat-number">
                     <?php
@@ -1063,18 +1068,63 @@ $active_page = "availability";
         <div class="lawyer-availability-section">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <h3>Schedule</h3>
-                <button type="button" class="lawyer-btn" onclick="openScheduleModal()">
-                    <i class="fas fa-plus-circle"></i> Create Schedule
-                </button>
+                <div style="display:flex; gap: 10px; align-items: center;">
+                    <select id="status-filter" class="status-filter-dropdown" onchange="filterSchedules()">
+                        <option value="all">All Status</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="onetime">One Time</option>
+                        <option value="unavailable">Unavailable</option>
+                    </select>
+                    <button type="button" class="lawyer-btn btn-create-custom" onclick="openScheduleModal()">
+                        <i class="fas fa-plus-circle"></i> Create
+                    </button>
+                </div>
             </div>
+
+            <script>
+            function filterSchedules() {
+                const filter = document.getElementById('status-filter').value;
+                
+                // Filter Modern Sections
+                const weeklySection = document.getElementById('weekly-schedules-section');
+                const onetimeSection = document.getElementById('onetime-schedules-section');
+                const blockedSection = document.getElementById('blocked-dates-section');
+                
+                if (weeklySection) weeklySection.style.display = (filter === 'all' || filter === 'weekly') ? 'block' : 'none';
+                if (onetimeSection) onetimeSection.style.display = (filter === 'all' || filter === 'onetime') ? 'block' : 'none';
+                if (blockedSection) blockedSection.style.display = (filter === 'all' || filter === 'unavailable') ? 'block' : 'none';
+                
+                // Filter Table Rows
+                const rows = document.querySelectorAll('.admin-consultations-table tbody tr');
+                rows.forEach(row => {
+                    const typeCell = row.cells[1]; // 2nd column is Type
+                    if (typeCell) {
+                        const typeText = typeCell.textContent.trim().toLowerCase();
+                        let show = false;
+                        
+                        if (filter === 'all') {
+                            show = true;
+                        } else if (filter === 'weekly' && typeText.includes('weekly')) {
+                            show = true;
+                        } else if (filter === 'onetime' && typeText.includes('one-time')) {
+                            show = true;
+                        } else if (filter === 'unavailable' && (typeText.includes('blocked') || typeText.includes('unavailable'))) {
+                            show = true;
+                        }
+                        
+                        row.style.display = show ? '' : 'none';
+                    }
+                });
+            }
+            </script>
 
             <div style="overflow-x: auto;">
                 <table class="admin-consultations-table" style="width: 100%; border-collapse: collapse;">
                     <thead>
                         <tr>
+                            <th style="text-align:left; padding: 12px;">Day / Date</th>
                             <th style="text-align:left; padding: 12px;">Status</th>
                             <th style="text-align:left; padding: 12px;">Type</th>
-                            <th style="text-align:left; padding: 12px;">Day / Date</th>
                             <th style="text-align:left; padding: 12px;">Start Time</th>
                             <th style="text-align:left; padding: 12px;">End Time</th>
                             <th style="text-align:left; padding: 12px;">Max Appt</th>
@@ -1085,14 +1135,15 @@ $active_page = "availability";
                         <?php foreach ($weekly_schedules as $s): ?>
                             <tr>
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
+                                    <?php echo htmlspecialchars($s['weekdays']); ?>
+                                </td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
                                     Active
                                 </td>
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
                                     Weekly
                                 </td>
-                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
-                                    <?php echo htmlspecialchars($s['weekdays']); ?>
-                                </td>
+
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
                                     <?php echo date('g:i A', strtotime($s['start_time'])); ?>
                                 </td>
@@ -1105,11 +1156,6 @@ $active_page = "availability";
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
                                     <form method="POST" style="display:inline;">
                                         <input type="hidden" name="availability_id" value="<?php echo $s['id']; ?>">
-                                        <input type="hidden" name="action" value="delete">
-                                        <button type="submit" class="lawyer-btn" onclick="return confirm('Deactivate this schedule?')">Deactivate</button>
-                                    </form>
-                                    <form method="POST" style="display:inline;">
-                                        <input type="hidden" name="availability_id" value="<?php echo $s['id']; ?>">
                                         <input type="hidden" name="action" value="permanent_delete">
                                         <button type="submit" class="lawyer-btn" onclick="return confirm('Permanently delete this schedule?')">Delete</button>
                                     </form>
@@ -1120,14 +1166,15 @@ $active_page = "availability";
                         <?php foreach ($onetime_schedules as $s): ?>
                             <tr>
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
+                                    <?php echo date('D, M d, Y', strtotime($s['specific_date'])); ?>
+                                </td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
                                     <?php echo strtotime($s['specific_date']) < strtotime('today') ? 'Past' : 'One time available'; ?>
                                 </td>
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
                                     One-time
                                 </td>
-                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
-                                    <?php echo date('D, M d, Y', strtotime($s['specific_date'])); ?>
-                                </td>
+                                
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
                                     <?php echo date('g:i A', strtotime($s['start_time'])); ?>
                                 </td>
@@ -1140,11 +1187,6 @@ $active_page = "availability";
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
                                     <form method="POST" style="display:inline;">
                                         <input type="hidden" name="availability_id" value="<?php echo $s['id']; ?>">
-                                        <input type="hidden" name="action" value="delete">
-                                        <button type="submit" class="lawyer-btn" onclick="return confirm('Deactivate this schedule?')">Deactivate</button>
-                                    </form>
-                                    <form method="POST" style="display:inline;">
-                                        <input type="hidden" name="availability_id" value="<?php echo $s['id']; ?>">
                                         <input type="hidden" name="action" value="permanent_delete">
                                         <button type="submit" class="lawyer-btn" onclick="return confirm('Permanently delete this schedule?')">Delete</button>
                                     </form>
@@ -1154,12 +1196,6 @@ $active_page = "availability";
 
                         <?php foreach ($blocked_dates_paginated as $s): ?>
                             <tr>
-                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef; color:#dc3545;">
-                                    Unavailable
-                                </td>
-                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
-                                    <?php echo (!empty($s['start_date']) && !empty($s['end_date'])) ? 'Blocked range' : 'Blocked date'; ?>
-                                </td>
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
                                     <?php
                                     if (!empty($s['specific_date'])) {
@@ -1169,6 +1205,13 @@ $active_page = "availability";
                                     }
                                     ?>
                                 </td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef; color:#dc3545;">
+                                    Unavailable
+                                </td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
+                                    <?php echo (!empty($s['start_date']) && !empty($s['end_date'])) ? 'Blocked range' : 'Blocked date'; ?>
+                                </td>
+                                
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">—</td>
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">—</td>
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">—</td>
@@ -1176,7 +1219,7 @@ $active_page = "availability";
                                     <form method="POST" style="display:inline;">
                                         <input type="hidden" name="availability_id" value="<?php echo $s['id']; ?>">
                                         <input type="hidden" name="action" value="permanent_delete">
-                                        <button type="submit" class="lawyer-btn" onclick="return confirm('Unblock this date/range?')">Unblock</button>
+                                        <button type="submit" class="lawyer-btn btn-unblock-custom" onclick="return confirm('Unblock this date/range?')">Unblock</button>
                                     </form>
                                 </td>
                             </tr>
@@ -1576,7 +1619,7 @@ $active_page = "availability";
                 </div>
                 
                 <!-- Weekly Schedules -->
-                <div class="card modern-card weekly-schedules-card">
+                <div id="weekly-schedules-section" class="card modern-card weekly-schedules-card">
                     <div class="card-header-modern">
                         <h3 class="card-title-modern">
                             <i class="fas fa-calendar-week"></i>
@@ -1655,16 +1698,7 @@ $active_page = "availability";
                                                 </span>
                                             </div>
                                             <div class="schedule-actions">
-                                                <?php if ($schedule['is_active']): ?>
-                                                    <form method="POST" style="display: inline;">
-                                                        <input type="hidden" name="action" value="delete">
-                                                        <input type="hidden" name="availability_id" value="<?php echo $schedule['id']; ?>">
-                                                        <button type="submit" class="btn-action btn-deactivate" 
-                                                                onclick="return confirm('Deactivate this schedule?')" title="Deactivate">
-                                                            <i class="fas fa-pause"></i>
-                                                        </button>
-                                                    </form>
-                                                <?php else: ?>
+                                                <?php if (!$schedule['is_active']): ?>
                                                     <form method="POST" style="display: inline;">
                                                         <input type="hidden" name="action" value="activate">
                                                         <input type="hidden" name="availability_id" value="<?php echo $schedule['id']; ?>">
@@ -1738,7 +1772,7 @@ $active_page = "availability";
                 </div>
                 
                 <!-- One-Time Schedules -->
-                <div class="card modern-card">
+                <div id="onetime-schedules-section" class="card modern-card">
                     <div class="card-header-modern">
                         <h3 class="card-title-modern">
                             <i class="fas fa-calendar-day"></i>
@@ -1818,16 +1852,7 @@ $active_page = "availability";
                                                 <?php endif; ?>
                                             </div>
                                             <div class="schedule-actions">
-                                                <?php if ($schedule['is_active']): ?>
-                                                    <form method="POST" style="display: inline;">
-                                                        <input type="hidden" name="action" value="delete">
-                                                        <input type="hidden" name="availability_id" value="<?php echo $schedule['id']; ?>">
-                                                        <button type="submit" class="btn-action btn-deactivate" 
-                                                                onclick="return confirm('Deactivate this schedule?')" title="Deactivate">
-                                                            <i class="fas fa-pause"></i>
-                                                        </button>
-                                                    </form>
-                                                <?php else: ?>
+                                                <?php if (!$schedule['is_active']): ?>
                                                     <form method="POST" style="display: inline;">
                                                         <input type="hidden" name="action" value="activate">
                                                         <input type="hidden" name="availability_id" value="<?php echo $schedule['id']; ?>">
@@ -1915,7 +1940,7 @@ $active_page = "availability";
                 </div>
                 
                 <!-- Blocked Dates -->
-                <div class="card modern-card">
+                <div id="blocked-dates-section" class="card modern-card">
                     <div class="card-header-modern">
                         <h3 class="card-title-modern">
                             <i class="fas fa-ban"></i>
