@@ -87,8 +87,8 @@ $active_page = "profile";
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Profile - <?php echo htmlspecialchars($_SESSION['lawyer_name']); ?></title>
-    <link rel="stylesheet" href="../styles.css">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../src/css/styles.css">
+    <link rel="stylesheet" href="../src/lawyer/css/styles.css">
     <link rel="stylesheet" href="../includes/confirmation-modal.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -125,7 +125,7 @@ $active_page = "profile";
         
         <?php if (isset($lawyer) && $lawyer): ?>
         <!-- Profile Information Form -->
-        <form action="process_profile_edit.php" method="POST" id="profileForm" class="profile-form">
+        <form action="../api/lawyer/process_profile_edit.php" method="POST" id="profileForm" class="profile-form">
             
             <!-- Top Row - Small Cards -->
             <div class="form-cards-top-row">
@@ -319,13 +319,15 @@ $active_page = "profile";
             </div>
             
             <!-- Form Actions -->
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Update Profile
-                </button>
-                <a href="dashboard.php" class="btn btn-secondary">
-                    <i class="fas fa-times"></i> Cancel
-                </a>
+            <div class="form-actions" style="display: flex !important; justify-content: center !important; align-items: center !important; width: 100% !important; padding: 30px !important;">
+                <div style="display: flex; flex-direction: row; gap: 12px; width: 100%;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1; justify-content: center;">
+                        <i class="fas fa-save"></i> Update Profile
+                    </button>
+                    <a href="dashboard.php" class="btn btn-secondary" style="flex: 1; justify-content: center;">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
             </div>
         </form>
         <?php endif; ?>
@@ -341,7 +343,7 @@ $active_page = "profile";
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <form action="process_password_change.php" method="POST" id="passwordForm">
+            <form action="../api/lawyer/process_password_change.php" method="POST" id="passwordForm">
                 <div class="modal-body">
                     <p style="margin: 0 0 20px 0; color: #6c757d;">
                         <i class="fas fa-info-circle"></i>
@@ -465,7 +467,7 @@ $active_page = "profile";
                 statusDiv.innerHTML = '<div style="color: #007bff;">📤 Uploading...</div>';
             }
             
-            fetch('upload_profile_picture.php', {
+            fetch('../api/lawyer/upload_profile_picture.php', {
                 method: 'POST',
                 body: formData
             })
@@ -601,7 +603,7 @@ $active_page = "profile";
             console.log('Making API call to remove_profile_picture.php...');
             
             // Make actual API call to remove from server
-            fetch('remove_profile_picture.php', {
+            fetch('../api/lawyer/remove_profile_picture.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

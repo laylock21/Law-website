@@ -160,8 +160,8 @@ $active_page = "consultations";
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>My Consultations - <?php echo htmlspecialchars($lawyer_name); ?></title>
-	<link rel="stylesheet" href="../styles.css">
-	<link rel="stylesheet" href="styles.css">
+	<link rel="stylesheet" href="../src/css/styles.css">
+	<link rel="stylesheet" href="../src/lawyer/css/styles.css">
 	<link rel="stylesheet" href="../includes/confirmation-modal.css">
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -367,7 +367,7 @@ $active_page = "consultations";
 		modalContent.innerHTML = '<div class="modal-loading"><i class="fas fa-spinner fa-spin"></i> Loading consultation details...</div>';
 		
 		// Fetch consultation details via AJAX
-		fetch(`get_consultation_details.php?id=${consultationId}`)
+		fetch(`../api/lawyer/get_consultation_details.php?id=${consultationId}`)
 			.then(response => response.json())
 			.then(data => {
 				if (data.success) {
@@ -419,7 +419,7 @@ $active_page = "consultations";
 				submitBtn.disabled = true;
 				submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
 				
-				fetch('update_consultation_status.php', {
+				fetch('../api/lawyer/update_consultation_status.php', {
 					method: 'POST',
 					body: formData
 				})

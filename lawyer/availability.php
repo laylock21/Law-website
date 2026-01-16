@@ -626,8 +626,8 @@ $active_page = "availability";
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Availability - <?php echo htmlspecialchars($lawyer_name); ?></title>
-    <link rel="stylesheet" href="../styles.css">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../src/css/styles.css">
+    <link rel="stylesheet" href="../src/lawyer/css/styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script>
         function switchTab(tab) {
@@ -831,7 +831,7 @@ $active_page = "availability";
             container.style.pointerEvents = 'none';
             
             // Fetch new page
-            fetch(`get_blocked_dates_lawyer.php?page=${page}`)
+            fetch(`../api/lawyer/get_blocked_dates_lawyer.php?page=${page}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');

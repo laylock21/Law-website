@@ -425,7 +425,7 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Schedule - <?php echo htmlspecialchars($lawyer['first_name'] ?? 'Lawyer'); ?> <?php echo htmlspecialchars($lawyer['last_name'] ?? ''); ?></title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../src/admin/css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script>
         // AJAX Pagination for Blocked Dates
@@ -438,7 +438,7 @@ try {
             container.style.pointerEvents = 'none';
             
             // Fetch new page
-            fetch(`get_blocked_dates.php?lawyer_id=${lawyerId}&page=${page}`)
+            fetch(`../api/admin/get_blocked_dates.php?lawyer_id=${lawyerId}&page=${page}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');

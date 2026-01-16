@@ -12,7 +12,7 @@ if (!isset($_SESSION['user_logged_in']) || $_SESSION['user_logged_in'] !== true 
     exit;
 }
 
-require_once '../config/database.php';
+require_once '../../config/database.php';
 
 $lawyer_id = $_SESSION['lawyer_id'];
 $lawyer_name = $_SESSION['lawyer_name'] ?? 'Lawyer';

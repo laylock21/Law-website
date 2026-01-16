@@ -12,7 +12,7 @@ if (!isset($_SESSION['user_logged_in']) || $_SESSION['user_logged_in'] !== true 
     exit('Unauthorized');
 }
 
-require_once '../config/database.php';
+require_once '../../config/database.php';
 
 $lawyer_id = $_SESSION['user_id'];
 $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;

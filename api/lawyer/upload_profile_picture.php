@@ -29,8 +29,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 try {
-    require_once '../config/database.php';
-    require_once '../config/upload_config.php';
+    require_once '../../config/database.php';
+    require_once '../../config/upload_config.php';
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'Configuration error: ' . $e->getMessage()]);
     exit;
