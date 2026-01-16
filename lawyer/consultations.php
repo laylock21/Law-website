@@ -184,8 +184,8 @@ $active_page = "consultations";
 						<form method="POST" id="bulk-form" style="display: flex; gap: 10px; align-items: center;">
 							<select name="bulk_action" id="bulk_action" style="padding: 8px; border-radius: 6px; border: 1px solid #e9ecef;">
 								<option value="">Select Action</option>
-								<option value="confirm">Bulk Confirm</option>
-								<option value="complete">Bulk Complete</option>
+								<option value="confirm">Confirm</option>
+								<option value="complete">Complete</option>
 							</select>
 							<button type="submit" class="lawyer-btn btn-apply-selected">Apply to Selected</button>
 					</div>
