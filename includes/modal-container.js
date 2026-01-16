@@ -1,6 +1,7 @@
 /**
  * Reusable Modal Container JavaScript
  * Usage: Include this file and call ModalContainer methods
+ * Uses kiro- prefix to avoid conflicts with existing modal styles
  */
 
 const ModalContainer = {
@@ -13,18 +14,18 @@ const ModalContainer = {
     closeBtn: null,
 
     init() {
-        this.modal = document.getElementById('modal-container');
+        this.modal = document.getElementById('kiro-modal-container');
         if (!this.modal) {
             console.error('Modal container not found');
             return;
         }
 
-        this.overlay = this.modal.querySelector('.modal-overlay');
-        this.content = this.modal.querySelector('.modal-content');
-        this.title = this.modal.querySelector('.modal-title');
-        this.body = this.modal.querySelector('.modal-body');
-        this.footer = this.modal.querySelector('.modal-footer');
-        this.closeBtn = this.modal.querySelector('.modal-close');
+        this.overlay = this.modal.querySelector('.kiro-modal-overlay');
+        this.content = this.modal.querySelector('.kiro-modal-content');
+        this.title = this.modal.querySelector('.kiro-modal-title');
+        this.body = this.modal.querySelector('.kiro-modal-body');
+        this.footer = this.modal.querySelector('.kiro-modal-footer');
+        this.closeBtn = this.modal.querySelector('.kiro-modal-close');
 
         // Event listeners
         this.closeBtn.addEventListener('click', () => this.close());

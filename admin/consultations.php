@@ -234,13 +234,12 @@ $active_page = "consultations";
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Consultations | MD Law Firm</title>
-    <link rel="stylesheet" href="../styles.css">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="../includes/modal-container.css">
+    <link rel="stylesheet" href="../includes/confirmation-modal.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="admin-page">
-    <?php include 'partials/header.php'; ?>
+    <?php include 'partials/sidebar.php'; ?>
 
     <main class="admin-main-content">
         <div class="container">
@@ -329,7 +328,7 @@ $active_page = "consultations";
                                     </button>
                                 </div>
                                 <?php if (!empty($search_query)): ?>
-                                    <a href="consultations.php" class="admin-btn admin-btn-secondary clear-btn" title="Clear search">
+                                    <a href="consultations.php" style="position:absolute;right:280px;" class="admin-btn admin-btn-secondary clear-btn" title="Clear search">
                                         <i class="fas fa-times"></i> Clear
                                     </a>
                                 <?php endif; ?>
@@ -591,7 +590,7 @@ $active_page = "consultations";
             form.submit();
         }
 
-        if (e.target && (e.target.id === 'adminBulkCancelBtn' || e.target.classList.contains('modal-overlay'))) {
+        if (e.target && (e.target.id === 'adminBulkCancelBtn' || e.target.classList.contains('kiro-modal-backdrop'))) {
             closeBulkModal();
             closeInfoModal();
         }
@@ -608,36 +607,36 @@ $active_page = "consultations";
     </script>
     
     <!-- Admin Info Modal -->
-    <div id="adminInfoModal" class="modal-container" style="display:none;">
-        <div class="modal-overlay"></div>
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Notice</h3>
-                <button class="modal-close" onclick="closeInfoModal()">&times;</button>
+    <div id="adminInfoModal" class="kiro-modal-wrapper" style="display:none;">
+        <div class="kiro-modal-backdrop"></div>
+        <div class="kiro-modal-dialog">
+            <div class="kiro-modal-header">
+                <h3 class="kiro-modal-title">Notice</h3>
+                <button class="kiro-modal-close" onclick="closeInfoModal()">&times;</button>
             </div>
-            <div class="modal-body">
+            <div class="kiro-modal-body">
                 <p id="adminInfoMessage">Message</p>
             </div>
-            <div class="modal-footer">
-                <button class="admin-btn admin-btn-primary" onclick="closeInfoModal()">OK</button>
+            <div class="kiro-modal-footer">
+                <button class="kiro-btn kiro-btn-info" onclick="closeInfoModal()">OK</button>
             </div>
         </div>
     </div>
 
     <!-- Admin Bulk Confirm Modal -->
-    <div id="adminBulkModal" class="modal-container" style="display:none;">
-        <div class="modal-overlay"></div>
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Confirm Bulk Action</h3>
-                <button class="modal-close" onclick="closeBulkModal()">&times;</button>
+    <div id="adminBulkModal" class="kiro-modal-wrapper" style="display:none;">
+        <div class="kiro-modal-backdrop"></div>
+        <div class="kiro-modal-dialog">
+            <div class="kiro-modal-header">
+                <h3 class="kiro-modal-title">Confirm Bulk Action</h3>
+                <button class="kiro-modal-close" onclick="closeBulkModal()">&times;</button>
             </div>
-            <div class="modal-body">
+            <div class="kiro-modal-body">
                 <p id="adminBulkMessage">Are you sure?</p>
             </div>
-            <div class="modal-footer">
-                <button class="admin-btn admin-btn-secondary" id="adminBulkCancelBtn">Cancel</button>
-                <button class="admin-btn admin-btn-primary" id="adminBulkConfirmBtn">Confirm</button>
+            <div class="kiro-modal-footer">
+                <button class="kiro-btn kiro-btn-secondary" id="adminBulkCancelBtn">Cancel</button>
+                <button class="kiro-btn kiro-btn-info" id="adminBulkConfirmBtn">Confirm</button>
             </div>
         </div>
     </div>

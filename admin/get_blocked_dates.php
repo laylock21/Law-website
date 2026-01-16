@@ -29,16 +29,13 @@ try {
     $per_page = 5;
     $offset = ($page - 1) * $per_page;
     
-    // Get total count
+    // Get total count (max_appointments = 0 means blocked)
     $count_stmt = $pdo->prepare("
         SELECT COUNT(*) 
         FROM lawyer_availability
         WHERE user_id = ? 
-        AND schedule_type = 'blocked'
-        AND (
-            (specific_date IS NOT NULL AND specific_date >= CURDATE())
-            OR (start_date IS NOT NULL AND end_date IS NOT NULL AND end_date >= CURDATE())
-        )
+        AND max_appointments = 0
+        AND specific_date >= CURDATE()
     ");
     $count_stmt->execute([$lawyer_id]);
     $total = $count_stmt->fetchColumn();
@@ -46,15 +43,12 @@ try {
     
     // Get paginated blocked dates
     $blocked_stmt = $pdo->prepare("
-        SELECT id, specific_date, start_date, end_date, blocked_reason, created_at
+        SELECT id, specific_date, start_date, end_date, weekdays as blocked_reason, created_at
         FROM lawyer_availability
         WHERE user_id = ? 
-        AND schedule_type = 'blocked'
-        AND (
-            (specific_date IS NOT NULL AND specific_date >= CURDATE())
-            OR (start_date IS NOT NULL AND end_date IS NOT NULL AND end_date >= CURDATE())
-        )
-        ORDER BY COALESCE(specific_date, start_date) ASC
+        AND max_appointments = 0
+        AND specific_date >= CURDATE()
+        ORDER BY specific_date ASC
         LIMIT ? OFFSET ?
     ");
     $blocked_stmt->execute([$lawyer_id, $per_page, $offset]);

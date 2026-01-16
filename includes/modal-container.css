@@ -1,5 +1,6 @@
 /* Reusable Modal Container Styles */
-.modal-container {
+/* Uses kiro- prefix to avoid conflicts with existing modal styles */
+.kiro-modal-container {
     position: fixed;
     top: 0;
     left: 0;
@@ -11,7 +12,7 @@
     justify-content: center;
 }
 
-.modal-overlay {
+.kiro-modal-overlay {
     position: absolute;
     top: 0;
     left: 0;
@@ -21,7 +22,7 @@
     backdrop-filter: blur(2px);
 }
 
-.modal-content {
+.kiro-modal-content {
     position: relative;
     background: white;
     border-radius: 8px;
@@ -30,10 +31,10 @@
     max-height: 90vh;
     overflow: auto;
     z-index: 10000;
-    animation: modalFadeIn 0.3s ease-out;
+    animation: kiroModalFadeIn 0.3s ease-out;
 }
 
-@keyframes modalFadeIn {
+@keyframes kiroModalFadeIn {
     from {
         opacity: 0;
         transform: scale(0.9) translateY(-20px);
@@ -44,7 +45,7 @@
     }
 }
 
-.modal-close {
+.kiro-modal-close {
     position: absolute;
     top: 15px;
     right: 15px;
@@ -65,28 +66,28 @@
     z-index: 10001;
 }
 
-.modal-close:hover {
+.kiro-modal-close:hover {
     background-color: #f0f0f0;
     color: #333;
 }
 
-.modal-header {
+.kiro-modal-header {
     padding: 20px 50px 15px 20px;
     border-bottom: 1px solid #e0e0e0;
 }
 
-.modal-title {
+.kiro-modal-title {
     margin: 0;
     font-size: 24px;
     color: #333;
 }
 
-.modal-body {
+.kiro-modal-body {
     padding: 20px;
     min-width: 300px;
 }
 
-.modal-footer {
+.kiro-modal-footer {
     padding: 15px 20px;
     border-top: 1px solid #e0e0e0;
     display: flex;
@@ -94,18 +95,18 @@
     gap: 10px;
 }
 
-.modal-footer:empty {
+.kiro-modal-footer:empty {
     display: none;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-    .modal-content {
+    .kiro-modal-content {
         max-width: 95%;
         max-height: 95vh;
     }
     
-    .modal-body {
+    .kiro-modal-body {
         padding: 15px;
     }
 }
