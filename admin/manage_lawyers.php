@@ -69,13 +69,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             throw new Exception('Passwords do not match');
                         }
                         
-                        $hashed_password = $custom_password; // store plain text as requested
+                        $hashed_password = password_hash($custom_password, PASSWORD_BCRYPT);
                         $password_to_display = $custom_password;
                         $is_auto_generated = false;
                     } else {
                         // Auto-generate temporary password
                         $temp_password = 'lawyer' . rand(1000, 9999);
-                        $hashed_password = $temp_password; // store plain text as requested
+                        $hashed_password = password_hash($temp_password, PASSWORD_BCRYPT);
                         $password_to_display = $temp_password;
                         $is_auto_generated = true;
                         // Auto-generated passwords are always temporary
@@ -209,13 +209,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             throw new Exception('Passwords do not match');
                         }
                         
-                        $hashed_password = $custom_password; // store plain text as requested
+                        $hashed_password = password_hash($custom_password, PASSWORD_BCRYPT);
                         $password_to_display = $custom_password;
                         $is_auto_generated = false;
                     } else {
                         // Auto-generate temporary password
                         $temp_password = 'lawyer' . rand(1000, 9999);
-                        $hashed_password = $temp_password; // store plain text as requested
+                        $hashed_password = password_hash($temp_password, PASSWORD_BCRYPT);
                         $password_to_display = $temp_password;
                         $is_auto_generated = true;
                         // Auto-generated passwords are always temporary
@@ -436,7 +436,7 @@ $active_page = "lawyer";
         <div class="section" style="padding:32px 0 0 16px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 16px;">
                 <h2 style="margin: 0; border-bottom: 3px solid #c5a253; padding-bottom: 8px;">Existing Lawyers (<?php echo count($lawyers); ?>)</h2>
-                <button type="button" class="btn btn-primary" id="openCreateLawyerModal" style="padding: 12px 24px; background: #c5a253; border: none; border-radius: 8px; color: white; font-weight: 600; white-space: nowrap;"><i class="fas fa-plus-circle"></i> CREATE NEW LAWYER</button>
+                <button type="button" class="btn btn-primary" id="openCreateLawyerModal" style="padding: 12px 24px; background: #c5a253; border: none; border-radius: 8px; color: white; font-weight: 600; white-space: nowrap;margin-right:16px;"><i class="fas fa-plus-circle"></i> CREATE NEW LAWYER</button>
             </div>
             
             <?php if (empty($lawyers)): ?>
@@ -773,51 +773,62 @@ $active_page = "lawyer";
         });
         
         // Password confirmation validation
-        document.getElementById('confirm_password').addEventListener('input', function() {
-            const password = document.getElementById('custom_password').value;
-            const confirm = this.value;
-            const matchIndicator = document.getElementById('password-match');
-            
-            if (confirm === '') {
-                matchIndicator.textContent = '';
-                return;
-            }
-            
-            if (password === confirm) {
-                matchIndicator.textContent = '✓ Passwords match';
-                matchIndicator.style.color = '#28a745';
-            } else {
-                matchIndicator.textContent = '✗ Passwords do not match';
-                matchIndicator.style.color = '#dc3545';
-            }
-        });
+        const confirmPasswordField = document.getElementById('confirm_password');
+        if (confirmPasswordField) {
+            confirmPasswordField.addEventListener('input', function() {
+                const password = document.getElementById('custom_password').value;
+                const confirm = this.value;
+                const matchIndicator = document.getElementById('password-match');
+                
+                if (confirm === '') {
+                    matchIndicator.textContent = '';
+                    return;
+                }
+                
+                if (password === confirm) {
+                    matchIndicator.textContent = '✓ Passwords match';
+                    matchIndicator.style.color = '#28a745';
+                } else {
+                    matchIndicator.textContent = '✗ Passwords do not match';
+                    matchIndicator.style.color = '#dc3545';
+                }
+            });
+        }
         
         // Password strength indicator
-        document.getElementById('custom_password').addEventListener('input', function() {
-            const password = this.value;
-            const confirm = document.getElementById('confirm_password');
-            
-            // Clear confirm field validation when password changes
-            if (confirm.value) {
-                document.getElementById('password-match').textContent = '';
-            }
-            
-            // Basic strength indication
-            if (password.length >= 8) {
-                this.style.borderColor = '#28a745';
-            } else if (password.length > 0) {
-                this.style.borderColor = '#ffc107';
-            } else {
+        const customPasswordField = document.getElementById('custom_password');
+        if (customPasswordField) {
+            customPasswordField.addEventListener('input', function() {
+                const password = this.value;
+                const confirm = document.getElementById('confirm_password');
+                
+                // Clear confirm field validation when password changes
+                if (confirm && confirm.value) {
+                    const matchIndicator = document.getElementById('password-match');
+                    if (matchIndicator) {
+                        matchIndicator.textContent = '';
+                    }
+                }
+                
+                // Basic strength indication
+                if (password.length >= 8) {
+                    this.style.borderColor = '#28a745';
+                } else if (password.length > 0) {
+                    this.style.borderColor = '#ffc107';
+                } else {
                 this.style.borderColor = '#e9ecef';
             }
-        });
+            });
+        }
         
         
         // Enhanced form validation with visual feedback
-        document.getElementById('createLawyerForm').addEventListener('submit', function(e) {
-            const specializations = document.querySelectorAll('input[name="specializations[]"]:checked');
-            const requiredFields = ['first_name', 'last_name', 'username', 'email'];
-            let isValid = true;
+        const createLawyerForm = document.getElementById('createLawyerForm');
+        if (createLawyerForm) {
+            createLawyerForm.addEventListener('submit', function(e) {
+                const specializations = document.querySelectorAll('input[name="specializations[]"]:checked');
+                const requiredFields = ['first_name', 'last_name', 'username', 'email'];
+                let isValid = true;
             
             // Check required fields
             requiredFields.forEach(fieldId => {
@@ -873,6 +884,7 @@ $active_page = "lawyer";
             
             showNotification('Creating lawyer account...', 'info');
         });
+        }
         
         // Enhanced checkbox interactions
         document.querySelectorAll('.checkbox-item').forEach(item => {
@@ -1166,47 +1178,56 @@ Generated: ${new Date().toLocaleString()}`;
         });
         
         // Password confirmation validation for reset
-        document.getElementById('reset_confirm_password').addEventListener('input', function() {
-            const password = document.getElementById('reset_custom_password').value;
-            const confirm = this.value;
-            const matchIndicator = document.getElementById('reset-password-match');
-            
-            if (confirm === '') {
-                matchIndicator.textContent = '';
-                return;
-            }
-            
-            if (password === confirm) {
-                matchIndicator.textContent = '✓ Passwords match';
-                matchIndicator.style.color = '#28a745';
-                this.style.borderColor = '#28a745';
-            } else {
-                matchIndicator.textContent = '✗ Passwords do not match';
-                matchIndicator.style.color = '#dc3545';
-                this.style.borderColor = '#dc3545';
-            }
-        });
+        const resetConfirmPasswordField = document.getElementById('reset_confirm_password');
+        if (resetConfirmPasswordField) {
+            resetConfirmPasswordField.addEventListener('input', function() {
+                const password = document.getElementById('reset_custom_password').value;
+                const confirm = this.value;
+                const matchIndicator = document.getElementById('reset-password-match');
+                
+                if (confirm === '') {
+                    matchIndicator.textContent = '';
+                    return;
+                }
+                
+                if (password === confirm) {
+                    matchIndicator.textContent = '✓ Passwords match';
+                    matchIndicator.style.color = '#28a745';
+                    this.style.borderColor = '#28a745';
+                } else {
+                    matchIndicator.textContent = '✗ Passwords do not match';
+                    matchIndicator.style.color = '#dc3545';
+                    this.style.borderColor = '#dc3545';
+                }
+            });
+        }
         
         // Password strength indicator for reset
-        document.getElementById('reset_custom_password').addEventListener('input', function() {
-            const password = this.value;
-            const confirm = document.getElementById('reset_confirm_password');
-            
-            // Clear confirm field validation when password changes
-            if (confirm.value) {
-                document.getElementById('reset-password-match').textContent = '';
-                confirm.style.borderColor = '#e9ecef';
-            }
-            
-            // Basic strength indication
-            if (password.length >= 8) {
-                this.style.borderColor = '#28a745';
-            } else if (password.length > 0) {
-                this.style.borderColor = '#ffc107';
-            } else {
-                this.style.borderColor = '#e9ecef';
-            }
-        });
+        const resetCustomPasswordField = document.getElementById('reset_custom_password');
+        if (resetCustomPasswordField) {
+            resetCustomPasswordField.addEventListener('input', function() {
+                const password = this.value;
+                const confirm = document.getElementById('reset_confirm_password');
+                
+                // Clear confirm field validation when password changes
+                if (confirm && confirm.value) {
+                    const matchIndicator = document.getElementById('reset-password-match');
+                    if (matchIndicator) {
+                        matchIndicator.textContent = '';
+                    }
+                    confirm.style.borderColor = '#e9ecef';
+                }
+                
+                // Basic strength indication
+                if (password.length >= 8) {
+                    this.style.borderColor = '#28a745';
+                } else if (password.length > 0) {
+                    this.style.borderColor = '#ffc107';
+                } else {
+                    this.style.borderColor = '#e9ecef';
+                }
+            });
+        }
         
         // Close modal when clicking outside
         window.addEventListener('click', function(event) {

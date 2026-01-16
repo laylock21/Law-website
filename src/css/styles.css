@@ -426,7 +426,7 @@ html {
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background-image: url('src/img/insidealawyer-soffice-1920w.jpg');
+	background-image: url('../img/insidealawyer-soffice-1920w.jpg');
 	background-size: cover;
 	background-position: center;
 	background-repeat: no-repeat;

@@ -14,7 +14,7 @@ if (!isset($_SESSION['user_logged_in']) || $_SESSION['user_logged_in'] !== true 
 
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: edit_profile.php');
+    header('Location: ../../lawyer/edit_profile.php');
     exit;
 }
 
@@ -125,7 +125,7 @@ try {
     error_log("Profile updated successfully for lawyer ID: $lawyer_id");
     
     // Redirect with success message
-    header("Location: edit_profile.php?success=1");
+    header("Location: ../../lawyer/edit_profile.php?success=1");
     exit;
     
 } catch (Exception $e) {
@@ -139,7 +139,7 @@ try {
     
     // Redirect with error message
     $error_message = urlencode($e->getMessage());
-    header("Location: edit_profile.php?error=" . $error_message);
+    header("Location: ../../lawyer/edit_profile.php?error=" . $error_message);
     exit;
 }
 ?>

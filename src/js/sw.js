@@ -3,13 +3,13 @@
 
 const CACHE_NAME = 'lawfirm-v1';
 const urlsToCache = [
-    '/',
-    '/styles.css',
-    '/script.js',
-    '/src/img/lawyers.jpg',
-    '/src/img/99.jpg',
-    '/api/get_lawyers_by_specialization.php',
-    '/api/get_lawyer_availability.php'
+    '/Law-website/',
+    '/Law-website/src/css/styles.css',
+    '/Law-website/src/js/script.js',
+    '/Law-website/src/img/lawyers.jpg',
+    '/Law-website/src/img/99.jpg',
+    '/Law-website/api/get_lawyers_by_specialization.php',
+    '/Law-website/api/get_lawyer_availability.php'
 ];
 
 // Install event - cache resources

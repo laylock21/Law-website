@@ -1811,7 +1811,7 @@ window.addEventListener('scroll', throttle(() => {
 // Service Worker registration for caching
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
+        navigator.serviceWorker.register('/Law-website/src/js/sw.js')
             .then(registration => {
             })
             .catch(registrationError => {

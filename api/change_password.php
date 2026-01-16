@@ -76,16 +76,18 @@ try {
         exit;
     }
     
-    // Verify current password (plain text comparison for development)
-    if ($current_password !== $user['password']) {
+    // Verify current password using password_verify
+    if (!password_verify($current_password, $user['password'])) {
         echo json_encode(['success' => false, 'message' => 'Current password is incorrect']);
         exit;
     }
     
-    // Store new password as plain text (for development)
-    // Also clear the temporary_password flag since user is changing their password
+    // Hash the new password using password_hash with bcrypt
+    $hashed_password = password_hash($new_password, PASSWORD_BCRYPT);
+    
+    // Update password and clear temporary_password flag
     $update_stmt = $pdo->prepare("UPDATE users SET password = ?, temporary_password = NULL WHERE id = ?");
-    $update_stmt->execute([$new_password, $user_id]);
+    $update_stmt->execute([$hashed_password, $user_id]);
     
     echo json_encode(['success' => true, 'message' => 'Password changed successfully']);
     

@@ -34,9 +34,11 @@ class Auth {
             $user = $stmt->fetch();
             
             // Verify password and user status
-            // NOTE: Plain text password comparison per request (no hashing)
-            if ($user && $password === $user['password'] && $user['is_active'] == 1) {
-                return $this->createSession($user);
+            if ($user && $user['is_active'] == 1) {
+                // Use password_verify for hashed passwords
+                if (password_verify($password, $user['password'])) {
+                    return $this->createSession($user);
+                }
             }
             
             return false;

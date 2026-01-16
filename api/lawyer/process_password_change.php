@@ -14,7 +14,7 @@ if (!isset($_SESSION['user_logged_in']) || $_SESSION['user_logged_in'] !== true 
 
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: edit_profile.php');
+    header('Location: ../../lawyer/edit_profile.php');
     exit;
 }
 
@@ -51,7 +51,7 @@ try {
         throw new Exception("New passwords do not match.");
     }
     
-    // Verify current password (plain text comparison for development)
+    // Verify current password using password_verify
     $current_password_stmt = $pdo->prepare("
         SELECT password FROM users 
         WHERE id = ? AND role = 'lawyer'
@@ -59,12 +59,14 @@ try {
     $current_password_stmt->execute([$lawyer_id]);
     $user_data = $current_password_stmt->fetch();
     
-    if (!$user_data || $current_password !== $user_data['password']) {
+    if (!$user_data || !password_verify($current_password, $user_data['password'])) {
         throw new Exception("Current password is incorrect.");
     }
     
-    // Update password (plain text for development)
-    // Also clear temporary_password flag since user is changing their password
+    // Hash the new password using password_hash with bcrypt
+    $hashed_password = password_hash($new_password, PASSWORD_BCRYPT);
+    
+    // Update password and clear temporary_password flag
     $update_password_stmt = $pdo->prepare("
         UPDATE users 
         SET password = ?,
@@ -73,7 +75,7 @@ try {
     ");
     
     $update_result = $update_password_stmt->execute([
-        $new_password,  // Store plain text password
+        $hashed_password,
         $lawyer_id
     ]);
     
@@ -85,7 +87,7 @@ try {
     error_log("Password changed successfully for lawyer ID: $lawyer_id");
     
     // Redirect with success message
-    header("Location: edit_profile.php?success=1&password_changed=1");
+    header("Location: ../../lawyer/edit_profile.php?success=1&password_changed=1");
     exit;
     
 } catch (Exception $e) {
@@ -94,7 +96,7 @@ try {
     
     // Redirect with error message
     $error_message = urlencode($e->getMessage());
-    header("Location: edit_profile.php?error=" . $error_message);
+    header("Location: ../../lawyer/edit_profile.php?error=" . $error_message);
     exit;
 }
 ?>
