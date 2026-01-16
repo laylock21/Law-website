@@ -1065,6 +1065,13 @@ label {
     transform: translateY(-2px);
 }
 
+/* Specific hover for Apply to Selected and View Details buttons */
+.lawyer-btn.btn-apply-selected:hover,
+.lawyer-btn.btn-view-details:hover {
+    background: #B08F42 !important;
+    transform: translateY(-2px);
+}
+
 .lawyer-btn-danger {
     background: #dc3545;
 }

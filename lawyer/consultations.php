@@ -178,15 +178,17 @@ $active_page = "consultations";
 			<?php endif; ?>
 
 			<div class="lawyer-availability-section">
-				<h3>Consultation Requests</h3>
-				<div class="bulk-actions" style="margin: 10px 0;">
-					<form method="POST" id="bulk-form" style="display: flex; gap: 10px; align-items: center;">
-						<select name="bulk_action" id="bulk_action" style="padding: 8px; border-radius: 6px; border: 1px solid #e9ecef;">
-							<option value="">Select Action</option>
-							<option value="confirm">Bulk Confirm</option>
-							<option value="complete">Bulk Complete</option>
-						</select>
-						<button type="submit" class="lawyer-btn">Apply to Selected</button>
+				<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+					<h3>Consultation Requests</h3>
+					<div class="bulk-actions" style="margin: 10px 0;">
+						<form method="POST" id="bulk-form" style="display: flex; gap: 10px; align-items: center;">
+							<select name="bulk_action" id="bulk_action" style="padding: 8px; border-radius: 6px; border: 1px solid #e9ecef;">
+								<option value="">Select Action</option>
+								<option value="confirm">Bulk Confirm</option>
+								<option value="complete">Bulk Complete</option>
+							</select>
+							<button type="submit" class="lawyer-btn btn-apply-selected">Apply to Selected</button>
+					</div>
 					</form>
 				</div>
 				<div style="overflow-x: auto;">
@@ -234,7 +236,7 @@ $active_page = "consultations";
 									<td style="padding: 12px; border-bottom: 1px solid #e9ecef; "><?php echo date('M d, Y H:i', strtotime($row['created_at'])); ?></td>
 									<td style="padding: 12px; border-bottom: 1px solid #e9ecef; ">
 										<div style="display:flex; gap:8px; align-items:center; flex-wrap: wrap;">
-											<button onclick="openConsultationModal(<?php echo (int)$row['id']; ?>); return false;" class="lawyer-btn" style="text-decoration:none; padding:8px 12px; border: none; cursor: pointer;">View Details</button>
+											<button onclick="openConsultationModal(<?php echo (int)$row['id']; ?>); return false;" class="lawyer-btn btn-view-details" style="text-decoration:none; padding:8px 12px; border: none; cursor: pointer;">View Details</button>
 										</div>
 									</td>
 								</tr>

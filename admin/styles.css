@@ -441,6 +441,16 @@ p, span, div, label {
     box-shadow: 0 4px 8px rgba(197, 162, 83, 0.3);
 }
 
+/* Specific styles for Apply to Selected and View buttons */
+.admin-btn-primary.apply-selected:hover,
+.admin-btn-primary.btn-view:hover {
+    background: #B08F42 !important;
+    border-color: #B08F42 !important;
+    color: var(--white) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(197, 162, 83, 0.3);
+}
+
 /* Secondary Button (Outline) */
 .admin-btn-secondary {
     background: transparent;

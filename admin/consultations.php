@@ -350,7 +350,7 @@ $active_page = "consultations";
                                     <option value="complete">✅ Bulk Complete</option>
                                     <option value="cancelled">❌ Bulk Cancel</option>
                                 </select>
-                                <button type="submit" class="admin-btn admin-btn-primary" onclick="return confirmBulkAction()">
+                                <button type="submit" class="admin-btn admin-btn-primary apply-selected" onclick="return confirmBulkAction()">
                                     <i class="fas fa-check-circle"></i> Apply to Selected
                                 </button>
                             </form>
@@ -413,7 +413,7 @@ $active_page = "consultations";
                                     <td><?php echo date('M d, Y H:i', strtotime($consultation['created_at'])); ?></td>
                                     <td>
                                         <div class="admin-action-buttons">
-                                            <a href="view_consultation.php?id=<?php echo $consultation['id']; ?>" class="admin-btn admin-btn-primary">
+                                            <a href="view_consultation.php?id=<?php echo $consultation['id']; ?>" class="admin-btn admin-btn-primary btn-view">
                                                 <i class="fas fa-eye"></i> View
                                             </a>
                                         </div>
