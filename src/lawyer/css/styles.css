@@ -8423,3 +8423,187 @@ button.btn-primary:hover {
     cursor: pointer;
     transition: all 0.3s ease;
 }
+
+
+/* Confirmation Modal */
+.confirm-modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+}
+
+.confirm-modal-content {
+    background-color: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.confirm-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 28px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.confirm-modal-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--navy);
+    font-family: var(--font-serif);
+}
+
+.confirm-modal-close {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.confirm-modal-close:hover {
+    background: #f8f9fa;
+    color: var(--navy);
+}
+
+.confirm-modal-body {
+    padding: 32px 28px;
+}
+
+.confirm-modal-body p {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #495057;
+    line-height: 1.6;
+}
+
+.confirm-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 20px 28px;
+    border-top: 1px solid #e9ecef;
+}
+
+.confirm-modal-btn {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.confirm-modal-btn-cancel {
+    background: #f8f9fa;
+    color: #6c757d;
+}
+
+.confirm-modal-btn-cancel:hover {
+    background: #e9ecef;
+    color: var(--navy);
+}
+
+.confirm-modal-btn-ok {
+    background: linear-gradient(135deg, var(--gold) 0%, #d4b36a 100%);
+    color: white;
+    min-width: 100px;
+}
+
+.confirm-modal-btn-ok:hover {
+    background: linear-gradient(135deg, #d4b36a 0%, var(--gold) 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(197, 162, 83, 0.3);
+}
+
+
+/* Pagination Arrow Buttons */
+.pagination-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: var(--gold);
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.pagination-btn:hover {
+    background: #B08F42;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(197, 162, 83, 0.3);
+}
+
+.pagination-btn.pagination-disabled {
+    opacity: 0.4;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
+.pagination-btn i {
+    font-size: 0.9rem;
+}
+
+
+/* Expand Main Content - Remove Empty Spaces */
+.edit-profile-content {
+    width: 100%;
+    max-width: 100%;
+    padding: 20px;
+    margin-left: 0;
+}
+
+.edit-profile-content .container {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 20px;
+}
+
+.form-cards-top-row,
+.form-cards-bottom-row {
+    max-width: 100%;
+    width: 100%;
+}
+
+/* Ensure body takes full width */
+.lawyer-page.edit-profile-page {
+    width: 100%;
+    max-width: 100%;
+}

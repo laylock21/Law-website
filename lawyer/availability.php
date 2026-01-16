@@ -1165,10 +1165,10 @@ $active_page = "availability";
                                     <?php echo (int)$s['max_appointments']; ?> / day
                                 </td>
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef; text-align: center;">
-                                    <form method="POST" style="display:inline; width: 88px;">
+                                    <form method="POST" style="display:inline; width: 88px;" id="delete-form-weekly-<?php echo $s['id']; ?>">
                                         <input type="hidden" name="availability_id" value="<?php echo $s['id']; ?>">
                                         <input type="hidden" name="action" value="permanent_delete">
-                                        <button type="submit" class="lawyer-btn btn-delete-custom" onclick="return confirm('Permanently delete this schedule?')">Delete</button>
+                                        <button type="button" class="lawyer-btn btn-delete-custom" onclick="showConfirmModal('Delete Schedule', 'Permanently delete this schedule?', function() { document.getElementById('delete-form-weekly-<?php echo $s['id']; ?>').submit(); })">Delete</button>
                                     </form>
                                 </td>
                             </tr>
@@ -1196,10 +1196,10 @@ $active_page = "availability";
                                     <?php echo (int)$s['max_appointments']; ?>
                                 </td>
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef; text-align: center;">
-                                    <form method="POST" style="display:inline; width: 88px;">
+                                    <form method="POST" style="display:inline; width: 88px;" id="delete-form-onetime-<?php echo $s['id']; ?>">
                                         <input type="hidden" name="availability_id" value="<?php echo $s['id']; ?>">
                                         <input type="hidden" name="action" value="permanent_delete">
-                                        <button type="submit" class="lawyer-btn btn-delete-custom" onclick="return confirm('Permanently delete this schedule?')">Delete</button>
+                                        <button type="button" class="lawyer-btn btn-delete-custom" onclick="showConfirmModal('Delete Schedule', 'Permanently delete this schedule?', function() { document.getElementById('delete-form-onetime-<?php echo $s['id']; ?>').submit(); })">Delete</button>
                                     </form>
                                 </td>
                             </tr>
@@ -1227,10 +1227,10 @@ $active_page = "availability";
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">—</td>
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">—</td>
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef; text-align: center;">
-                                    <form method="POST" style="display:inline; width: 88px;">
+                                    <form method="POST" style="display:inline; width: 88px;" id="unblock-form-<?php echo $s['id']; ?>">
                                         <input type="hidden" name="availability_id" value="<?php echo $s['id']; ?>">
                                         <input type="hidden" name="action" value="permanent_delete">
-                                        <button type="submit" class="lawyer-btn btn-unblock-custom" onclick="return confirm('Unblock this date/range?')">Unblock</button>
+                                        <button type="button" class="lawyer-btn btn-unblock-custom" onclick="showConfirmModal('Unblock Date', 'Unblock this <?php echo (!empty($s['start_date']) && !empty($s['end_date'])) ? 'date range' : 'date'; ?>?', function() { document.getElementById('unblock-form-<?php echo $s['id']; ?>').submit(); })">Unblock</button>
                                     </form>
                                 </td>
                             </tr>
@@ -1242,15 +1242,15 @@ $active_page = "availability";
             <?php if ($blocked_total_pages > 1): ?>
                 <div style="display:flex; gap:8px; justify-content:center; margin-top:16px;">
                     <?php if ($blocked_page > 1): ?>
-                        <a href="?blocked_page=<?php echo $blocked_page - 1; ?>" class="lawyer-btn">Prev</a>
+                        <a href="?blocked_page=<?php echo $blocked_page - 1; ?>" class="pagination-btn pagination-prev"><i class="fas fa-chevron-left"></i></a>
                     <?php else: ?>
-                        <span class="lawyer-btn" style="opacity:0.5; pointer-events:none;">Prev</span>
+                        <span class="pagination-btn pagination-prev pagination-disabled"><i class="fas fa-chevron-left"></i></span>
                     <?php endif; ?>
 
                     <?php if ($blocked_page < $blocked_total_pages): ?>
-                        <a href="?blocked_page=<?php echo $blocked_page + 1; ?>" class="lawyer-btn">Next</a>
+                        <a href="?blocked_page=<?php echo $blocked_page + 1; ?>" class="pagination-btn pagination-next"><i class="fas fa-chevron-right"></i></a>
                     <?php else: ?>
-                        <span class="lawyer-btn" style="opacity:0.5; pointer-events:none;">Next</span>
+                        <span class="pagination-btn pagination-next pagination-disabled"><i class="fas fa-chevron-right"></i></span>
                     <?php endif; ?>
                 </div>
             <?php endif; ?>
@@ -2313,6 +2313,54 @@ $active_page = "availability";
     }
     ?>
     
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="confirm-modal">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 id="confirmModalTitle">Confirm Action</h3>
+                <button class="confirm-modal-close" onclick="closeConfirmModal()">&times;</button>
+            </div>
+            <div class="confirm-modal-body">
+                <p id="confirmModalMessage">Are you sure you want to proceed?</p>
+            </div>
+            <div class="confirm-modal-footer">
+                <button class="confirm-modal-btn confirm-modal-btn-cancel" onclick="closeConfirmModal()">Cancel</button>
+                <button class="confirm-modal-btn confirm-modal-btn-ok" id="confirmModalOk">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    let confirmCallback = null;
+
+    function showConfirmModal(title, message, callback) {
+        document.getElementById('confirmModalTitle').textContent = title;
+        document.getElementById('confirmModalMessage').textContent = message;
+        document.getElementById('confirmModal').style.display = 'flex';
+        confirmCallback = callback;
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('confirmModal').style.display = 'none';
+        confirmCallback = null;
+    }
+
+    document.getElementById('confirmModalOk').addEventListener('click', function() {
+        if (confirmCallback) {
+            confirmCallback();
+        }
+        closeConfirmModal();
+    });
+
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('confirmModal');
+        if (event.target === modal) {
+            closeConfirmModal();
+        }
+    });
+    </script>
+
     <script>
     function updatePanelInfo(title, description) {
         document.getElementById('panel-title').textContent = 'MD Law - ' + title;
