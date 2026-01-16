@@ -127,7 +127,7 @@
     padding: 40px 30px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-around;
     position: relative;
     z-index: 1;
 }

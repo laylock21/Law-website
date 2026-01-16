@@ -2379,19 +2379,6 @@ if (nextBtn) {
 					behavior: 'smooth', 
 					block: 'start' 
 				});
-				
-				// If we just moved to step 4 (date selection), automatically open time slot modal
-				if (currentStep === 4) {
-					// Check if date is selected
-					const selectedDate = document.getElementById('selected-date').value;
-					if (selectedDate) {
-						// Open time slot modal
-						setTimeout(() => {
-							const timeSlotModal = new bootstrap.Modal(document.getElementById('timeSlotModal'));
-							timeSlotModal.show();
-						}, 300);
-					}
-				}
 			}
 		} else {
 			// Shake the form to indicate error
