@@ -67,12 +67,11 @@ $active_page = "dashboard";
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | MD Law Firm</title>
-    <link rel="stylesheet" href="../styles.css">
     <link rel="stylesheet" href="styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="admin-page">
-    <?php include 'partials/header.php'; ?>
+    <?php include 'partials/sidebar.php'; ?>
 
     <main class="admin-main-content">
         <div class="container">

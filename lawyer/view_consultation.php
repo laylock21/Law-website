@@ -128,6 +128,7 @@ $active_page = "consultations";
 	<title>Consultation #<?php echo $consultation_id; ?> - <?php echo htmlspecialchars($lawyer_name); ?></title>
 	<link rel="stylesheet" href="../styles.css">
 	<link rel="stylesheet" href="styles.css">
+	<link rel="stylesheet" href="../includes/confirmation-modal.css">
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="lawyer-page">
@@ -279,7 +280,29 @@ $active_page = "consultations";
 		echo $_SESSION['async_email_script'];
 		unset($_SESSION['async_email_script']);
 	}
+	// Show consultation message via unified modal if set
+	if (isset($_SESSION['consultation_message'])) {
+		$consultation_message = $_SESSION['consultation_message'];
+		unset($_SESSION['consultation_message']);
+		echo "\n<script>\n";
+		echo "document.addEventListener('DOMContentLoaded', async function(){\n";
+		echo "  var msg = " . json_encode($consultation_message) . ";\n";
+		echo "  if (typeof ConfirmModal !== 'undefined') {\n";
+		echo "    await ConfirmModal.alert({\n";
+		echo "      title: 'Success',\n";
+		echo "      message: msg,\n";
+		echo "      type: 'success'\n";
+		echo "    });\n";
+		echo "  } else {\n";
+		echo "    alert(msg);\n";
+		echo "  }\n";
+		echo "});\n";
+		echo "</script>\n";
+	}
 	?>
+
+	<!-- Load confirmation modal system -->
+	<script src="../includes/confirmation-modal.js"></script>
 </body>
 </html>
 

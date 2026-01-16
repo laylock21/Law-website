@@ -19,6 +19,13 @@ $message = '';
 $error = '';
 $lawyer_id = isset($_GET['lawyer_id']) ? (int)$_GET['lawyer_id'] : 0;
 
+// Initialize variables to prevent undefined warnings
+$blocked_total = 0;
+$blocked_dates = [];
+$blocked_total_pages = 0;
+$upcoming_consultations = [];
+$lawyer = null;
+
 try {
     $pdo = getDBConnection();
     
@@ -365,16 +372,13 @@ try {
     $blocked_page = isset($_GET['blocked_page']) ? max(1, (int)$_GET['blocked_page']) : 1;
     $blocked_offset = ($blocked_page - 1) * $blocked_per_page;
     
-    // Get total count of blocked dates
+    // Get total count of blocked dates (max_appointments = 0 means blocked)
     $blocked_count_stmt = $pdo->prepare("
         SELECT COUNT(*) 
         FROM lawyer_availability
         WHERE user_id = ? 
-        AND schedule_type = 'blocked'
-        AND (
-            (specific_date IS NOT NULL AND specific_date >= CURDATE())
-            OR (start_date IS NOT NULL AND end_date IS NOT NULL AND end_date >= CURDATE())
-        )
+        AND max_appointments = 0
+        AND specific_date >= CURDATE()
     ");
     $blocked_count_stmt->execute([$lawyer_id]);
     $blocked_total = $blocked_count_stmt->fetchColumn();
@@ -382,15 +386,12 @@ try {
     
     // Get paginated blocked dates for this lawyer
     $blocked_stmt = $pdo->prepare("
-        SELECT id, specific_date, start_date, end_date, blocked_reason, created_at
+        SELECT id, specific_date, start_date, end_date, weekdays as blocked_reason, created_at
         FROM lawyer_availability
         WHERE user_id = ? 
-        AND schedule_type = 'blocked'
-        AND (
-            (specific_date IS NOT NULL AND specific_date >= CURDATE())
-            OR (start_date IS NOT NULL AND end_date IS NOT NULL AND end_date >= CURDATE())
-        )
-        ORDER BY COALESCE(specific_date, start_date) ASC
+        AND max_appointments = 0
+        AND specific_date >= CURDATE()
+        ORDER BY specific_date ASC
         LIMIT ? OFFSET ?
     ");
     $blocked_stmt->execute([$lawyer_id, $blocked_per_page, $blocked_offset]);
@@ -424,7 +425,6 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Schedule - <?php echo htmlspecialchars($lawyer['first_name'] ?? 'Lawyer'); ?> <?php echo htmlspecialchars($lawyer['last_name'] ?? ''); ?></title>
-    <link rel="stylesheet" href="../styles.css">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script>
@@ -483,10 +483,6 @@ try {
                 form.addEventListener('submit', function(e) {
                     e.preventDefault();
                     
-                    if (!confirm('Unblock this date?')) {
-                        return;
-                    }
-                    
                     const formData = new FormData(this);
                     
                     fetch('manage_lawyer_schedule.php?lawyer_id=<?php echo $lawyer_id; ?>', {
@@ -495,14 +491,27 @@ try {
                     })
                     .then(response => response.text())
                     .then(() => {
-                        // Reload the current page of blocked dates
-                        const currentPage = document.querySelector('.pagination .current');
-                        const page = currentPage ? parseInt(currentPage.textContent) : 1;
-                        loadBlockedDates(page);
+                        // Show success notification
+                        showNotification('Date unblocked successfully', 'success');
+                        
+                        // Get current page
+                        const currentPageEl = document.querySelector('.pagination .current');
+                        let currentPage = currentPageEl ? parseInt(currentPageEl.textContent) : 1;
+                        
+                        // Count remaining items on current page
+                        const remainingItems = document.querySelectorAll('.blocked-date-item').length;
+                        
+                        // If this was the last item on the page and we're not on page 1, go to previous page
+                        if (remainingItems === 1 && currentPage > 1) {
+                            currentPage = currentPage - 1;
+                        }
+                        
+                        // Reload the appropriate page
+                        loadBlockedDates(currentPage);
                     })
                     .catch(error => {
                         console.error('Error unblocking date:', error);
-                        alert('Error unblocking date. Please try again.');
+                        showNotification('Error unblocking date. Please try again.', 'error');
                     });
                 });
             });
@@ -539,18 +548,47 @@ try {
         function bulkUnblock() {
             const checkboxes = document.querySelectorAll('.blocked-checkbox:checked');
             if (checkboxes.length === 0) {
-                alert('Please select at least one blocked date to unblock.');
+                showNotification('Please select at least one blocked date to unblock.', 'error');
                 return;
             }
             
             const count = checkboxes.length;
-            if (!confirm(`Are you sure you want to unblock ${count} date(s)?`)) {
-                return;
-            }
-            
             const ids = Array.from(checkboxes).map(cb => cb.value);
-            document.getElementById('blocked-ids-input').value = ids.join(',');
-            document.getElementById('bulk-unblock-form').submit();
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('action', 'bulk_unblock');
+            formData.append('blocked_ids', ids.join(','));
+            
+            // Submit via AJAX
+            fetch('manage_lawyer_schedule.php?lawyer_id=<?php echo $lawyer_id; ?>', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(() => {
+                // Show success notification
+                showNotification(`Successfully unblocked ${count} date(s)`, 'success');
+                
+                // Get current page
+                const currentPageEl = document.querySelector('.pagination .current');
+                let currentPage = currentPageEl ? parseInt(currentPageEl.textContent) : 1;
+                
+                // Count remaining items on current page
+                const totalItems = document.querySelectorAll('.blocked-date-item').length;
+                
+                // If we're deleting all items on the page and we're not on page 1, go to previous page
+                if (count >= totalItems && currentPage > 1) {
+                    currentPage = currentPage - 1;
+                }
+                
+                // Reload the appropriate page
+                loadBlockedDates(currentPage);
+            })
+            .catch(error => {
+                console.error('Error unblocking dates:', error);
+                showNotification('Error unblocking dates. Please try again.', 'error');
+            });
         }
         
         // Toggle bulk delete mode
@@ -592,10 +630,67 @@ try {
                 }
             }
         }
+        
+        // Show notification function
+        function showNotification(message, type) {
+            // Remove any existing notifications
+            const existingNotification = document.querySelector('.ajax-notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type === 'success' ? 'success' : 'error'} ajax-notification`;
+            notification.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px; animation: slideIn 0.3s ease-out;';
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}
+            `;
+            
+            // Add animation keyframes if not already added
+            if (!document.querySelector('#notification-animation')) {
+                const style = document.createElement('style');
+                style.id = 'notification-animation';
+                style.textContent = `
+                    @keyframes slideIn {
+                        from {
+                            transform: translateX(400px);
+                            opacity: 0;
+                        }
+                        to {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                    }
+                    @keyframes slideOut {
+                        from {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                        to {
+                            transform: translateX(400px);
+                            opacity: 0;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            // Add to page
+            document.body.appendChild(notification);
+            
+            // Auto-remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
     </script>
 </head>
 <body class="admin-page">
-    <?php include 'partials/header.php'; ?>
+    <?php include 'partials/sidebar.php'; ?>
 
     <main class="admin-main-content">
         <div class="container">

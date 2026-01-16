@@ -389,15 +389,15 @@ $active_page = "lawyer";
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Lawyers - Admin Dashboard</title>
-    <link rel="stylesheet" href="../styles.css">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../includes/confirmation-modal.css">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="admin-page">
-    <?php include 'partials/header.php'; ?>
+    <?php include 'partials/sidebar.php'; ?>
 
     <main class="admin-main-content">
         <div class="container">
@@ -499,12 +499,12 @@ $active_page = "lawyer";
                                             📅
                                         </a>
                                         
-                                        <form method="POST" style="display: inline;">
+                                        <form method="POST" style="display: inline;" id="toggleForm<?php echo $lawyer['id']; ?>">
                                             <input type="hidden" name="action" value="toggle_status">
                                             <input type="hidden" name="lawyer_id" value="<?php echo $lawyer['id']; ?>">
                                             <input type="hidden" name="current_status" value="<?php echo $lawyer['is_active']; ?>">
-                                            <button type="submit" class="btn <?php echo $lawyer['is_active'] ? 'btn-warning' : 'btn-success'; ?>" 
-                                                    onclick="return confirm('Are you sure?')">
+                                            <button type="button" class="btn <?php echo $lawyer['is_active'] ? 'btn-warning' : 'btn-success'; ?>" 
+                                                    onclick="confirmToggleStatus('<?php echo htmlspecialchars($lawyer['first_name'] . ' ' . $lawyer['last_name']); ?>', <?php echo $lawyer['is_active']; ?>, <?php echo $lawyer['id']; ?>)">
                                                 <?php echo $lawyer['is_active'] ? 'Deactivate' : 'Activate'; ?>
                                             </button>
                                         </form>
@@ -514,11 +514,11 @@ $active_page = "lawyer";
                                                 🔐
                                         </button>
                                         
-                                        <form method="POST" style="display: inline;">
+                                        <form method="POST" style="display: inline;" id="deleteForm<?php echo $lawyer['id']; ?>">
                                             <input type="hidden" name="action" value="delete_lawyer">
                                             <input type="hidden" name="lawyer_id" value="<?php echo $lawyer['id']; ?>">
-                                            <button type="submit" class="btn btn-danger" 
-                                                    onclick="return confirmDelete('<?php echo htmlspecialchars($lawyer['first_name'] . ' ' . $lawyer['last_name']); ?>', <?php echo $lawyer['consultation_count']; ?>)">
+                                            <button type="button" class="btn btn-danger" 
+                                                    onclick="confirmDelete('<?php echo htmlspecialchars($lawyer['first_name'] . ' ' . $lawyer['last_name']); ?>', <?php echo $lawyer['consultation_count']; ?>, <?php echo $lawyer['id']; ?>)">
                                                 🗑️
                                             </button>
                                         </form>
@@ -536,7 +536,7 @@ $active_page = "lawyer";
     <div id="passwordResetModal" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 style="color:black;">Reset Password</h3>
+                <h3>Reset Password</h3>
                 <span class="close" onclick="closePasswordResetModal()">&times;</span>
             </div>
             <div class="modal-body">
@@ -601,6 +601,44 @@ $active_page = "lawyer";
     </div>
 
     <style>
+    /* Password Reset Modal Header - Clean White Background */
+    #passwordResetModal .modal-header {
+        background: white !important;
+        background-image: none !important;
+        background-color: white !important;
+        color: #333 !important;
+    }
+    
+    #passwordResetModal .modal-header h3 {
+        color: #333 !important;
+        background: none !important;
+    }
+    
+    #passwordResetModal .modal-header h3::before {
+        display: none !important;
+        content: none !important;
+    }
+    
+    #passwordResetModal .close {
+        color: #333 !important;
+        background: rgba(0,0,0,0.05) !important;
+    }
+    
+    #passwordResetModal .close:hover {
+        background: rgba(0,0,0,0.1) !important;
+    }
+    
+    /* Ensure Cancel button is visible */
+    #passwordResetModal .btn-secondary {
+        background: #6c757d !important;
+        color: white !important;
+        border: none !important;
+    }
+    
+    #passwordResetModal .btn-secondary:hover {
+        background: #5a6268 !important;
+    }
+    
     /* Password Reset Modal Styles */
     .password-option:has(input[type="radio"]:checked) {
         border-color: #c5a253 !important;
@@ -1052,18 +1090,45 @@ Generated: ${new Date().toLocaleString()}`;
             printWindow.print();
         }
         
-        // Enhanced delete confirmation with consultation warning
-        function confirmDelete(lawyerName, consultationCount) {
+        // Enhanced delete confirmation with consultation warning using unified modal
+        async function confirmDelete(lawyerName, consultationCount, lawyerId) {
             let message = `Are you sure you want to permanently delete "${lawyerName}"?`;
             
             if (consultationCount > 0) {
                 message += `\n\nWARNING: This lawyer has ${consultationCount} consultation(s) that will also be permanently deleted!`;
-                message += `\n\nThis action cannot be undone.`;
-            } else {
-                message += `\n\nThis action cannot be undone.`;
             }
             
-            return confirm(message);
+            message += `\n\nThis action cannot be undone.`;
+            
+            const confirmed = await ConfirmModal.confirm({
+                title: 'Delete Lawyer',
+                message: message,
+                confirmText: 'Delete',
+                cancelText: 'Cancel',
+                type: 'danger'
+            });
+            
+            if (confirmed) {
+                document.getElementById('deleteForm' + lawyerId).submit();
+            }
+        }
+        
+        // Toggle status confirmation using unified modal
+        async function confirmToggleStatus(lawyerName, currentStatus, lawyerId) {
+            const action = currentStatus ? 'deactivate' : 'activate';
+            const message = `Are you sure you want to ${action} "${lawyerName}"?`;
+            
+            const confirmed = await ConfirmModal.confirm({
+                title: `${action.charAt(0).toUpperCase() + action.slice(1)} Lawyer`,
+                message: message,
+                confirmText: action.charAt(0).toUpperCase() + action.slice(1),
+                cancelText: 'Cancel',
+                type: currentStatus ? 'warning' : 'success'
+            });
+            
+            if (confirmed) {
+                document.getElementById('toggleForm' + lawyerId).submit();
+            }
         }
         
         // Password Reset Modal Functions
@@ -1343,6 +1408,9 @@ Generated: ${new Date().toLocaleString()}`;
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Unified Confirmation Modal JS -->
+    <script src="../includes/confirmation-modal.js"></script>
     
     <!-- Create Lawyer Modal -->
     <?php include 'create_lawyer_modal_include.php'; ?>

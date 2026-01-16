@@ -234,12 +234,12 @@ $active_page = "consultations";
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Consultations | MD Law Firm</title>
-    <link rel="stylesheet" href="../styles.css">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../includes/confirmation-modal.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="admin-page">
-    <?php include 'partials/header.php'; ?>
+    <?php include 'partials/sidebar.php'; ?>
 
     <main class="admin-main-content">
         <div class="container">
@@ -318,20 +318,22 @@ $active_page = "consultations";
                         <div class="search-section">
                             <form method="GET" class="search-form">
                                 <div class="search-container">
-                                    <input type="text" 
-                                           name="search" 
-                                           value="<?php echo htmlspecialchars($search_query); ?>" 
-                                           placeholder="Search consultations..." 
-                                           class="form-control search-input">
-                                    <button type="submit" class="search-btn">
-                                        <i class="fas fa-search"></i>
-                                    </button>
+                                    <div class="search-input-wrapper">
+                                        <input type="text" 
+                                               name="search" 
+                                               value="<?php echo htmlspecialchars($search_query); ?>" 
+                                               placeholder="Search consultations..." 
+                                               class="form-control search-input">
+                                        <?php if (!empty($search_query)): ?>
+                                            <a href="consultations.php" class="clear-btn-inside" title="Clear search">
+                                                <i class="fas fa-times"></i>
+                                            </a>
+                                        <?php endif; ?>
+                                        <button type="submit" class="search-btn">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                                <?php if (!empty($search_query)): ?>
-                                    <a href="consultations.php" class="admin-btn admin-btn-secondary clear-btn" title="Clear search">
-                                        <i class="fas fa-times"></i> Clear
-                                    </a>
-                                <?php endif; ?>
                                 <!-- Preserve current sort parameters -->
                                 <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort_by); ?>">
                                 <input type="hidden" name="order" value="<?php echo htmlspecialchars($sort_order); ?>">
@@ -496,12 +498,12 @@ $active_page = "consultations";
         const bulkAction = document.getElementById('bulk_action').value;
         
         if (selectedCheckboxes.length === 0) {
-            alert('Please select at least one consultation.');
+            openInfoModal('Please select at least one consultation.');
             return false;
         }
         
         if (!bulkAction) {
-            alert('Please select an action.');
+            openInfoModal('Please select an action.');
             return false;
         }
         
@@ -516,40 +518,83 @@ $active_page = "consultations";
             confirmMessage = `Are you sure you want to set ${selectedCheckboxes.length} consultation(s) to pending status?`;
         }
         
-        return confirm(confirmMessage);
+        // Save pending bulk action and show modal
+        window.__bulkPending = {
+            action: bulkAction,
+            ids: Array.from(selectedCheckboxes).map(cb => cb.value),
+            message: confirmMessage
+        };
+
+        openBulkModal(confirmMessage);
+        return false;
     }
     
-    // Handle bulk form submission
+    // Handle bulk form submission via modal confirm
     document.getElementById('bulk-form').addEventListener('submit', function(e) {
         e.preventDefault();
-        
-        if (confirmBulkAction()) {
-            const selectedCheckboxes = document.querySelectorAll('.consultation-checkbox:checked');
-            const bulkAction = document.getElementById('bulk_action').value;
-            
-            // Create a form with selected consultations
+        confirmBulkAction();
+    });
+
+    // Info and bulk modals
+    window.__bulkPending = null;
+
+    function openInfoModal(message) {
+        const mdl = document.getElementById('adminInfoModal');
+        if (!mdl) return alert(message);
+        document.getElementById('adminInfoMessage').textContent = message;
+        mdl.style.display = 'flex';
+    }
+
+    function closeInfoModal() {
+        const mdl = document.getElementById('adminInfoModal');
+        if (!mdl) return;
+        mdl.style.display = 'none';
+    }
+
+    function openBulkModal(message) {
+        const mdl = document.getElementById('adminBulkModal');
+        if (!mdl) return confirm(message);
+        document.getElementById('adminBulkMessage').textContent = message;
+        mdl.style.display = 'flex';
+    }
+
+    function closeBulkModal() {
+        const mdl = document.getElementById('adminBulkModal');
+        if (!mdl) return;
+        mdl.style.display = 'none';
+        window.__bulkPending = null;
+    }
+
+    // Confirm button handler
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.id === 'adminBulkConfirmBtn') {
+            if (!window.__bulkPending) return;
+
             const form = document.createElement('form');
             form.method = 'POST';
             form.style.display = 'none';
-            
-            // Add bulk action
+
             const actionInput = document.createElement('input');
             actionInput.type = 'hidden';
             actionInput.name = 'bulk_action';
-            actionInput.value = bulkAction;
+            actionInput.value = window.__bulkPending.action;
             form.appendChild(actionInput);
-            
-            // Add selected consultations
-            selectedCheckboxes.forEach(checkbox => {
+
+            window.__bulkPending.ids.forEach(id => {
                 const input = document.createElement('input');
                 input.type = 'hidden';
                 input.name = 'selected_consultations[]';
-                input.value = checkbox.value;
+                input.value = id;
                 form.appendChild(input);
             });
-            
+
             document.body.appendChild(form);
             form.submit();
+        }
+
+        if (e.target && (e.target.id === 'adminBulkCancelBtn' || e.target.classList.contains('kiro-modal-backdrop'))) {
+            closeBulkModal();
+            closeInfoModal();
         }
     });
     
@@ -562,5 +607,40 @@ $active_page = "consultations";
         });
     });
     </script>
+    
+    <!-- Admin Info Modal -->
+    <div id="adminInfoModal" class="kiro-modal-wrapper" style="display:none;">
+        <div class="kiro-modal-backdrop"></div>
+        <div class="kiro-modal-dialog">
+            <div class="kiro-modal-header">
+                <h3 class="kiro-modal-title">Notice</h3>
+                <button class="kiro-modal-close" onclick="closeInfoModal()">&times;</button>
+            </div>
+            <div class="kiro-modal-body">
+                <p id="adminInfoMessage">Message</p>
+            </div>
+            <div class="kiro-modal-footer">
+                <button class="kiro-btn kiro-btn-info" onclick="closeInfoModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Bulk Confirm Modal -->
+    <div id="adminBulkModal" class="kiro-modal-wrapper" style="display:none;">
+        <div class="kiro-modal-backdrop"></div>
+        <div class="kiro-modal-dialog">
+            <div class="kiro-modal-header">
+                <h3 class="kiro-modal-title">Confirm Bulk Action</h3>
+                <button class="kiro-modal-close" onclick="closeBulkModal()">&times;</button>
+            </div>
+            <div class="kiro-modal-body">
+                <p id="adminBulkMessage">Are you sure?</p>
+            </div>
+            <div class="kiro-modal-footer">
+                <button class="kiro-btn kiro-btn-secondary" id="adminBulkCancelBtn">Cancel</button>
+                <button class="kiro-btn kiro-btn-info" id="adminBulkConfirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

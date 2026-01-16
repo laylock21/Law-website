@@ -169,95 +169,114 @@ $active_page = "dashboard";
                             </div>
                         <?php else: ?>
                             <?php 
-                            // Separate weekly and one-time schedules
-                            $weekly_schedules = [];
-                            $onetime_schedules = [];
+                            // Get current day name
+                            $today = date('l'); // e.g., "Monday"
+                            $today_date = date('Y-m-d');
+                            $tomorrow_date = date('Y-m-d', strtotime('+1 day'));
                             
+                            // Find today's schedule
+                            $today_schedule = null;
                             foreach ($all_availabilities as $availability) {
-                                if ($availability['schedule_type'] === 'weekly') {
-                                    $weekly_schedules[] = $availability;
-                                } elseif ($availability['schedule_type'] === 'one_time') {
-                                    $onetime_schedules[] = $availability;
+                                if ($availability['schedule_type'] === 'weekly' && $availability['weekdays'] === $today) {
+                                    $today_schedule = $availability;
+                                    break;
                                 }
                             }
                             
-                            // Group weekly schedules by time slot
-                            $grouped_weekly = [];
-                            foreach ($weekly_schedules as $availability) {
-                                $day = $availability['weekdays']; // This is already a day name like 'Friday'
-                                $time_key = $availability['start_time'] . '-' . $availability['end_time'] . '-' . $availability['max_appointments'];
-                                if (!isset($grouped_weekly[$time_key])) {
-                                    $grouped_weekly[$time_key] = [
-                                        'days' => [],
-                                        'start_time' => $availability['start_time'],
-                                        'end_time' => $availability['end_time'],
-                                        'max_appointments' => $availability['max_appointments'],
-                                        'schedule_type' => 'weekly'
-                                    ];
-                                }
-                                // Only add the day if it's not already in the array (avoid duplicates)
-                                if (!in_array($day, $grouped_weekly[$time_key]['days'])) {
-                                    $grouped_weekly[$time_key]['days'][] = $day;
-                                }
-                            }
-                            
-                            // Sort days in weekly groups for better display
+                            // Find next available day (tomorrow or later)
+                            $next_schedule = null;
+                            $next_date = null;
                             $day_order = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                            foreach ($grouped_weekly as &$schedule) {
-                                usort($schedule['days'], function($a, $b) use ($day_order) {
-                                    return array_search($a, $day_order) - array_search($b, $day_order);
-                                });
+                            
+                            // Check for one-time schedules first (tomorrow onwards)
+                            foreach ($all_availabilities as $availability) {
+                                if ($availability['schedule_type'] === 'one_time' && 
+                                    $availability['specific_date'] >= $tomorrow_date) {
+                                    if (!$next_schedule || $availability['specific_date'] < $next_date) {
+                                        $next_schedule = $availability;
+                                        $next_date = $availability['specific_date'];
+                                    }
+                                }
                             }
                             
-                            // Group one-time schedules by date
-                            $grouped_onetime = [];
-                            foreach ($onetime_schedules as $availability) {
-                                $date_key = $availability['specific_date'] . '-' . $availability['start_time'] . '-' . $availability['end_time'] . '-' . $availability['max_appointments'];
-                                if (!isset($grouped_onetime[$date_key])) {
-                                    $grouped_onetime[$date_key] = [
-                                        'specific_date' => $availability['specific_date'],
-                                        'start_time' => $availability['start_time'],
-                                        'end_time' => $availability['end_time'],
-                                        'max_appointments' => $availability['max_appointments'],
-                                        'schedule_type' => 'one_time'
-                                    ];
+                            // If no one-time schedule, find next weekly schedule
+                            if (!$next_schedule) {
+                                $current_day_index = array_search($today, $day_order);
+                                for ($i = 1; $i <= 7; $i++) {
+                                    $check_day_index = ($current_day_index + $i) % 7;
+                                    $check_day = $day_order[$check_day_index];
+                                    
+                                    foreach ($all_availabilities as $availability) {
+                                        if ($availability['schedule_type'] === 'weekly' && 
+                                            $availability['weekdays'] === $check_day) {
+                                            $next_schedule = $availability;
+                                            $next_date = date('Y-m-d', strtotime("+$i days"));
+                                            break 2;
+                                        }
+                                    }
                                 }
                             }
                             ?>
                             
-                            <!-- Display Weekly Schedules -->
-                            <?php foreach ($grouped_weekly as $schedule): ?>
-                                <div class="availability-item">
-                                    <div class="availability-days">
-                                        <strong>Weekly Schedule - Available Days:</strong>
-                                        <?php echo implode(', ', $schedule['days']); ?>
-                                        <div style="margin-top: 12px;">
-                                            <strong>Time:</strong> <?php echo date('g:i A', strtotime($schedule['start_time'])); ?> - 
-                                            <?php echo date('g:i A', strtotime($schedule['end_time'])); ?>
+                            <!-- Today's Schedule -->
+                            <div class="availability-item" style="background: #f8f9fa; border-left: 4px solid #C5A253; padding: 20px; border-radius: 8px; margin-bottom: 16px;">
+                                <div class="availability-header" style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                                    <i class="fas fa-calendar-day" style="color: #C5A253; font-size: 22px;"></i>
+                                    <strong style="font-size: 17px; color: #3a3a3a;">Today's Schedule</strong>
+                                </div>
+                                
+                                <?php if ($today_schedule): ?>
+                                    <div style="display: grid; gap: 10px;">
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <i class="fas fa-calendar" style="color: #666; width: 22px; font-size: 18px;"></i>
+                                            <span style="font-size: 18px; line-height: 1.3;"><strong style="font-size: 20px;"><?php echo $today; ?></strong>, <?php echo date('F j, Y'); ?></span>
                                         </div>
-                                        <div style="margin-top: 8px;">
-                                            <strong>Max Appointments per Day:</strong> <?php echo $schedule['max_appointments']; ?>
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <i class="fas fa-clock" style="color: #666; width: 22px; font-size: 16px;"></i>
+                                            <span style="font-size: 15px;"><?php echo date('g:i A', strtotime($today_schedule['start_time'])); ?> - <?php echo date('g:i A', strtotime($today_schedule['end_time'])); ?></span>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <i class="fas fa-users" style="color: #666; width: 22px; font-size: 16px;"></i>
+                                            <span style="font-size: 15px;">Max Appointments: <strong><?php echo $today_schedule['max_appointments']; ?></strong></span>
                                         </div>
                                     </div>
-                                </div>
-                            <?php endforeach; ?>
+                                <?php else: ?>
+                                    <div style="color: #666; font-style: italic; padding: 8px 0; font-size: 15px;">
+                                        <i class="fas fa-info-circle" style="margin-right: 6px;"></i>
+                                        No availability scheduled for today
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                             
-                            <!-- Display One-Time Schedules -->
-                            <?php foreach ($grouped_onetime as $schedule): ?>
-                                <div class="availability-item">
-                                    <div class="availability-days">
-                                        <strong>One-Time Schedule - Available Days:</strong>
-                                        <?php echo date('l, F j, Y', strtotime($schedule['specific_date'])); ?>
-                                        <div style="margin-top: 12px;">
-                                            <strong>Time:</strong> <?php echo date('g:i A', strtotime($schedule['start_time'])); ?> - 
-                                            <?php echo date('g:i A', strtotime($schedule['end_time'])); ?>
+                            <!-- Next Consultation -->
+                            <div class="availability-item" style="background: #fff; border: 1px solid #e0e0e0; padding: 20px; border-radius: 8px;">
+                                <div class="availability-header" style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                                    <i class="fas fa-calendar-check" style="color: #28a745; font-size: 22px;"></i>
+                                    <strong style="font-size: 17px; color: #3a3a3a;">Next Available Day</strong>
+                                </div>
+                                
+                                <?php if ($next_schedule): ?>
+                                    <div style="display: grid; gap: 10px;">
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <i class="fas fa-calendar" style="color: #666; width: 22px; font-size: 18px;"></i>
+                                            <span style="font-size: 18px; line-height: 1.3;"><strong style="font-size: 20px;"><?php echo date('l', strtotime($next_date)); ?></strong>, <?php echo date('F j, Y', strtotime($next_date)); ?></span>
                                         </div>
-                                        <div style="margin-top: 8px;">
-                                            <strong>Max Appointments per Day:</strong> <?php echo $schedule['max_appointments']; ?>
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <i class="fas fa-clock" style="color: #666; width: 22px; font-size: 16px;"></i>
+                                            <span style="font-size: 15px;"><?php echo date('g:i A', strtotime($next_schedule['start_time'])); ?> - <?php echo date('g:i A', strtotime($next_schedule['end_time'])); ?></span>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <i class="fas fa-users" style="color: #666; width: 22px; font-size: 16px;"></i>
+                                            <span style="font-size: 15px;">Max Appointments: <strong><?php echo $next_schedule['max_appointments']; ?></strong></span>
                                         </div>
                                     </div>
-                                </div>
-                            <?php endforeach; ?>
+                                <?php else: ?>
+                                    <div style="color: #666; font-style: italic; padding: 8px 0; font-size: 15px;">
+                                        <i class="fas fa-info-circle" style="margin-right: 6px;"></i>
+                                        No upcoming availability scheduled
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                         <?php endif; ?>
                     </div>
                 </div>

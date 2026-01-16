@@ -162,6 +162,7 @@ $active_page = "consultations";
 	<title>My Consultations - <?php echo htmlspecialchars($lawyer_name); ?></title>
 	<link rel="stylesheet" href="../styles.css">
 	<link rel="stylesheet" href="styles.css">
+	<link rel="stylesheet" href="../includes/confirmation-modal.css">
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="lawyer-page">
@@ -177,18 +178,16 @@ $active_page = "consultations";
 			<?php endif; ?>
 
 			<div class="lawyer-availability-section">
-				<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-					<h3>Consultation Requests</h3>
-					<div class="bulk-actions" style="margin: 10px 0;">
-						<form method="POST" id="bulk-form" style="display: flex; gap: 10px; align-items: center;">
-							<select name="bulk_action" id="bulk_action" style="padding: 8px; border-radius: 6px; border: 1px solid #e9ecef;">
-								<option value="">Select Action</option>
-								<option value="confirm">Bulk Confirm</option>
-								<option value="complete">Bulk Complete</option>
-							</select>
-							<button type="submit" class="lawyer-btn" onclick="return confirmBulkAction()">Apply to Selected</button>
-						</form>
-					</div>
+				<h3>Consultation Requests</h3>
+				<div class="bulk-actions" style="margin: 10px 0;">
+					<form method="POST" id="bulk-form" style="display: flex; gap: 10px; align-items: center;">
+						<select name="bulk_action" id="bulk_action" style="padding: 8px; border-radius: 6px; border: 1px solid #e9ecef;">
+							<option value="">Select Action</option>
+							<option value="confirm">Bulk Confirm</option>
+							<option value="complete">Bulk Complete</option>
+						</select>
+						<button type="submit" class="lawyer-btn">Apply to Selected</button>
+					</form>
 				</div>
 				<div style="overflow-x: auto;">
 					<form method="POST" id="consultations-form">
@@ -267,6 +266,9 @@ $active_page = "consultations";
 	}
 	?>
 	
+	<!-- Load confirmation modal system BEFORE inline scripts -->
+	<script src="../includes/confirmation-modal.js"></script>
+	
 	<script>
 	function updatePanelInfo(title, description) {
 		document.getElementById('panel-title').textContent = 'MD Law - ' + title;
@@ -282,62 +284,59 @@ $active_page = "consultations";
 		});
 	}
 	
-	function openBulkWarningModal() {
-		const modal = document.getElementById('bulkWarningModal');
-		if (!modal) {
-			alert('Please select at least one consultation.');
-			return;
-		}
-		modal.style.display = 'block';
-	}
-	
-	function closeBulkWarningModal() {
-		const modal = document.getElementById('bulkWarningModal');
-		if (!modal) return;
-		modal.style.display = 'none';
-	}
-	
-	function confirmBulkAction() {
-		const selectedCheckboxes = document.querySelectorAll('.consultation-checkbox:checked');
-		const bulkAction = document.getElementById('bulk_action').value;
-		
-		if (selectedCheckboxes.length === 0) {
-			openBulkWarningModal();
-			return false;
-		}
-		
-		if (!bulkAction) {
-			alert('Please select an action.');
-			return false;
-		}
-		
-		const actionText = bulkAction === 'confirm' ? 'confirm' : 'complete';
-		const confirmMessage = `Are you sure you want to ${actionText} ${selectedCheckboxes.length} consultation(s)? This will send email notifications to clients.`;
-		
-		return confirm(confirmMessage);
-	}
-	
-	// Handle bulk form submission
-	document.getElementById('bulk-form').addEventListener('submit', function(e) {
-		e.preventDefault();
-		
-		if (confirmBulkAction()) {
-			const selectedCheckboxes = document.querySelectorAll('.consultation-checkbox:checked');
-			const bulkAction = document.getElementById('bulk_action').value;
-			
-			// Create a form with selected consultations
-			const form = document.createElement('form');
-			form.method = 'POST';
-			form.style.display = 'none';
-			
-			// Add bulk action
-			const actionInput = document.createElement('input');
-			actionInput.type = 'hidden';
-			actionInput.name = 'bulk_action';
-			actionInput.value = bulkAction;
+	// Wrap event listeners in DOMContentLoaded to ensure elements exist
+	document.addEventListener('DOMContentLoaded', function() {
+		// Bulk action confirmation using unified modal system
+		const bulkForm = document.getElementById('bulk-form');
+		if (bulkForm) {
+			bulkForm.addEventListener('submit', async function(e) {
+				e.preventDefault();
+
+				const selectedCheckboxes = document.querySelectorAll('.consultation-checkbox:checked');
+				const bulkAction = document.getElementById('bulk_action').value;
+
+				if (selectedCheckboxes.length === 0) {
+					await ConfirmModal.alert({
+						title: 'No Selection',
+						message: 'Please select at least one consultation.',
+						type: 'warning'
+					});
+					return;
+				}
+
+				if (!bulkAction) {
+					await ConfirmModal.alert({
+						title: 'No Action Selected',
+						message: 'Please select an action.',
+						type: 'warning'
+					});
+					return;
+				}
+
+				const actionText = bulkAction === 'confirm' ? 'confirm' : 'complete';
+				const count = selectedCheckboxes.length;
+				const message = `Are you sure you want to ${actionText} ${count} consultation(s)? This will send email notifications to clients.`;
+
+				const confirmed = await ConfirmModal.confirm({
+					title: 'Confirm Bulk Action',
+					message: message,
+					confirmText: 'Yes, Proceed',
+					cancelText: 'Cancel',
+					type: 'info'
+				});
+
+				if (confirmed) {
+					// Create and submit form
+					const form = document.createElement('form');
+					form.method = 'POST';
+					form.style.display = 'none';
+
+					const actionInput = document.createElement('input');
+					actionInput.type = 'hidden';
+					actionInput.name = 'bulk_action';
+					actionInput.value = bulkAction;
 			form.appendChild(actionInput);
-			
-			// Add selected consultations
+
 			selectedCheckboxes.forEach(checkbox => {
 				const input = document.createElement('input');
 				input.type = 'hidden';
@@ -345,9 +344,11 @@ $active_page = "consultations";
 				input.value = checkbox.value;
 				form.appendChild(input);
 			});
-			
+
 			document.body.appendChild(form);
 			form.submit();
+		}
+			});
 		}
 	});
 
@@ -509,6 +510,8 @@ $active_page = "consultations";
 		}
 	});
 	</script>
+
+	<!-- Old modals removed - now using unified ConfirmModal system -->
 
 	<!-- Consultation Details Modal -->
 	<div id="consultationModal" class="consultation-modal" style="display: none;">
