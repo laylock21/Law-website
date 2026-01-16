@@ -12,7 +12,7 @@ if (!isset($_SESSION['user_logged_in']) || $_SESSION['user_logged_in'] !== true 
     exit;
 }
 
-require_once '../config/database.php';
+require_once '../../config/database.php';
 
 $lawyer_id = $_SESSION['lawyer_id'];
 
@@ -62,7 +62,7 @@ try {
     }
     
     // Send email notifications for status changes
-    require_once '../includes/EmailNotification.php';
+    require_once '../../includes/EmailNotification.php';
     $emailNotification = new EmailNotification($pdo);
     $queued = false;
     $email_type = '';

@@ -13,8 +13,8 @@ if (!isset($_SESSION['user_logged_in']) || $_SESSION['user_logged_in'] !== true 
     exit;
 }
 
-require_once '../config/database.php';
-require_once '../config/upload_config.php';
+require_once '../../config/database.php';
+require_once '../../config/upload_config.php';
 
 header('Content-Type: application/json');
 
