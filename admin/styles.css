@@ -97,6 +97,13 @@ p, span, div, label {
     padding: 0 var(--container-padding);
 }
 
+/* Override for admin main content - make it 95vw accounting for sidebar */
+.admin-main-content .container {
+    width: calc(95vw - 70px) !important;
+    max-width: none !important;
+    margin: 0 auto !important;
+}
+
 .container-fluid {
     width: 100%;
     padding: 0 var(--container-padding);
@@ -274,11 +281,7 @@ p, span, div, label {
    ADMIN MAIN CONTENT SYSTEM
    ============================================ */
 
-.admin-main-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 30px 20px;
-}
+/* Note: Main content width is controlled by .container inside it - see line ~4572 */
 
 /* ============================================
    BOOTSTRAP-INSPIRED FORM SYSTEM (Admin)
@@ -2415,6 +2418,35 @@ input[type="radio"] {
     cursor: pointer;
 }
 
+/* Table checkbox styling - larger and easier to click */
+table input[type="checkbox"],
+.consultation-checkbox,
+#select-all {
+    width: 20px !important;
+    height: 20px !important;
+    cursor: pointer !important;
+    accent-color: var(--gold) !important;
+    transform: scale(1.3); /* Make it visually larger */
+    margin: 0 auto;
+    display: block;
+}
+
+/* Add hover effect for table checkboxes */
+table input[type="checkbox"]:hover,
+.consultation-checkbox:hover,
+#select-all:hover {
+    transform: scale(1.5);
+    transition: transform 0.2s ease;
+}
+
+/* Make the table cell with checkbox larger for easier clicking */
+table td:has(input[type="checkbox"]),
+table th:has(input[type="checkbox"]) {
+    padding: 16px !important;
+    text-align: center;
+    cursor: pointer;
+}
+
 input[type="radio"]:focus {
     outline: none !important;
     box-shadow: none !important;
@@ -2462,7 +2494,7 @@ input[type="radio"]:focus {
 
 .lawyers-table {
     width: 100%;
-    min-width: 1200px; /* Reduced from 1400px for better fit */
+    min-width: auto; /* Remove fixed min-width to allow table to fit container */
     border-collapse: separate;
     border-spacing: 0;
     margin: 25px 0;
@@ -2929,7 +2961,7 @@ input[type="radio"]:focus {
     border-radius: var(--border-radius);
     box-shadow: var(--card-shadow);
     padding: 0;
-    width: 100%;
+    width: calc(100% - 32px); /* Add gap on the right */
     cursor: grab;
     user-select: none;
 }
