@@ -318,20 +318,22 @@ $active_page = "consultations";
                         <div class="search-section">
                             <form method="GET" class="search-form">
                                 <div class="search-container">
-                                    <input type="text" 
-                                           name="search" 
-                                           value="<?php echo htmlspecialchars($search_query); ?>" 
-                                           placeholder="Search consultations..." 
-                                           class="form-control search-input">
-                                    <button type="submit" class="search-btn">
-                                        <i class="fas fa-search"></i>
-                                    </button>
+                                    <div class="search-input-wrapper">
+                                        <input type="text" 
+                                               name="search" 
+                                               value="<?php echo htmlspecialchars($search_query); ?>" 
+                                               placeholder="Search consultations..." 
+                                               class="form-control search-input">
+                                        <?php if (!empty($search_query)): ?>
+                                            <a href="consultations.php" class="clear-btn-inside" title="Clear search">
+                                                <i class="fas fa-times"></i>
+                                            </a>
+                                        <?php endif; ?>
+                                        <button type="submit" class="search-btn">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                                <?php if (!empty($search_query)): ?>
-                                    <a href="consultations.php" style="position:absolute;right:280px;" class="admin-btn admin-btn-secondary clear-btn" title="Clear search">
-                                        <i class="fas fa-times"></i> Clear
-                                    </a>
-                                <?php endif; ?>
                                 <!-- Preserve current sort parameters -->
                                 <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort_by); ?>">
                                 <input type="hidden" name="order" value="<?php echo htmlspecialchars($sort_order); ?>">
