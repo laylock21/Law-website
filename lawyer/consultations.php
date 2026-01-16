@@ -177,16 +177,18 @@ $active_page = "consultations";
 			<?php endif; ?>
 
 			<div class="lawyer-availability-section">
-				<h3>Consultation Requests</h3>
-				<div class="bulk-actions" style="margin: 10px 0;">
-					<form method="POST" id="bulk-form" style="display: flex; gap: 10px; align-items: center;">
-						<select name="bulk_action" id="bulk_action" style="padding: 8px; border-radius: 6px; border: 1px solid #e9ecef;">
-							<option value="">Select Action</option>
-							<option value="confirm">Bulk Confirm</option>
-							<option value="complete">Bulk Complete</option>
-						</select>
-						<button type="submit" class="lawyer-btn" onclick="return confirmBulkAction()">Apply to Selected</button>
-					</form>
+				<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+					<h3>Consultation Requests</h3>
+					<div class="bulk-actions" style="margin: 10px 0;">
+						<form method="POST" id="bulk-form" style="display: flex; gap: 10px; align-items: center;">
+							<select name="bulk_action" id="bulk_action" style="padding: 8px; border-radius: 6px; border: 1px solid #e9ecef;">
+								<option value="">Select Action</option>
+								<option value="confirm">Bulk Confirm</option>
+								<option value="complete">Bulk Complete</option>
+							</select>
+							<button type="submit" class="lawyer-btn" onclick="return confirmBulkAction()">Apply to Selected</button>
+						</form>
+					</div>
 				</div>
 				<div style="overflow-x: auto;">
 					<form method="POST" id="consultations-form">
