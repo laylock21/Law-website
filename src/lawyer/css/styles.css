@@ -8580,3 +8580,30 @@ button.btn-primary:hover {
 .pagination-btn i {
     font-size: 0.9rem;
 }
+
+
+/* Expand Main Content - Remove Empty Spaces */
+.edit-profile-content {
+    width: 100%;
+    max-width: 100%;
+    padding: 20px;
+    margin-left: 0;
+}
+
+.edit-profile-content .container {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 20px;
+}
+
+.form-cards-top-row,
+.form-cards-bottom-row {
+    max-width: 100%;
+    width: 100%;
+}
+
+/* Ensure body takes full width */
+.lawyer-page.edit-profile-page {
+    width: 100%;
+    max-width: 100%;
+}
