@@ -536,7 +536,7 @@ $active_page = "lawyer";
     <div id="passwordResetModal" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 style="color:black;">Reset Password</h3>
+                <h3>Reset Password</h3>
                 <span class="close" onclick="closePasswordResetModal()">&times;</span>
             </div>
             <div class="modal-body">
@@ -601,6 +601,44 @@ $active_page = "lawyer";
     </div>
 
     <style>
+    /* Password Reset Modal Header - Clean White Background */
+    #passwordResetModal .modal-header {
+        background: white !important;
+        background-image: none !important;
+        background-color: white !important;
+        color: #333 !important;
+    }
+    
+    #passwordResetModal .modal-header h3 {
+        color: #333 !important;
+        background: none !important;
+    }
+    
+    #passwordResetModal .modal-header h3::before {
+        display: none !important;
+        content: none !important;
+    }
+    
+    #passwordResetModal .close {
+        color: #333 !important;
+        background: rgba(0,0,0,0.05) !important;
+    }
+    
+    #passwordResetModal .close:hover {
+        background: rgba(0,0,0,0.1) !important;
+    }
+    
+    /* Ensure Cancel button is visible */
+    #passwordResetModal .btn-secondary {
+        background: #6c757d !important;
+        color: white !important;
+        border: none !important;
+    }
+    
+    #passwordResetModal .btn-secondary:hover {
+        background: #5a6268 !important;
+    }
+    
     /* Password Reset Modal Styles */
     .password-option:has(input[type="radio"]:checked) {
         border-color: #c5a253 !important;
