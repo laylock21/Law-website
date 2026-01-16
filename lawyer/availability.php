@@ -1024,45 +1024,56 @@ $active_page = "availability";
         <div class="schedule-stats-bar" style="margin-bottom: 20px;">
             <div class="stat-item">
                 <i class="fas fa-calendar-week"></i>
-                <span class="stat-number"><?php echo count($weekly_schedules); ?></span>
-                <span class="stat-label">Weekly Schedules</span>
+                <div class="stat-content">
+                    <span class="stat-number"><?php echo count($weekly_schedules); ?></span>
+                    <span class="stat-label">Weekly Schedules</span>
+                </div>
             </div>
             <div class="stat-item">
                 <i class="fas fa-calendar-day"></i>
-                <span class="stat-number"><?php echo count($onetime_schedules); ?></span>
-                <span class="stat-label">One-Time Schedules</span>
+                <div class="stat-content">
+                    <span class="stat-number"><?php echo count($onetime_schedules); ?></span>
+                    <span class="stat-label">One-Time Schedules</span>
+                </div>
             </div>
             <div class="stat-item">
                 <i class="fas fa-ban"></i>
-                <span class="stat-number"><?php echo $blocked_total; ?></span>
-                <span class="stat-label">Blocked Dates</span>
+                <div class="stat-content">
+                    <span class="stat-number"><?php echo $blocked_total; ?></span>
+                    <span class="stat-label">Blocked Dates</span>
+                </div>
             </div>
             <div class="stat-item">
                 <i class="fas fa-calendar-times"></i>
-                <span class="stat-number"><?php echo $blocked_total; ?></span>
-                <span class="stat-label">Unavailable</span>
+                <div class="stat-content">
+                    <span class="stat-number"><?php echo $blocked_total; ?></span>
+                    <span class="stat-label">Unavailable</span>
+                </div>
             </div>
             <div class="stat-item">
                 <i class="fas fa-users"></i>
-                <span class="stat-number">
-                    <?php
-                    $weekly_capacity = 0;
-                    foreach ($weekly_schedules as $s) {
-                        if ($s['is_active']) {
-                            $weekly_capacity += (int)$s['max_appointments'];
+                <div class="stat-content">
+                    <span class="stat-number">
+                        <?php
+                        $weekly_capacity = 0;
+                        foreach ($weekly_schedules as $s) {
+                            if ($s['is_active']) {
+                                $weekly_capacity += (int)$s['max_appointments'];
+                            }
                         }
-                    }
-                    $onetime_capacity = 0;
-                    foreach ($onetime_schedules as $s) {
-                        if ($s['is_active'] && strtotime($s['specific_date']) >= strtotime('today')) {
-                            $onetime_capacity += (int)$s['max_appointments'];
+                        $onetime_capacity = 0;
+                        foreach ($onetime_schedules as $s) {
+                            if ($s['is_active'] && strtotime($s['specific_date']) >= strtotime('today')) {
+                                $onetime_capacity += (int)$s['max_appointments'];
+                            }
                         }
-                    }
-                    echo $weekly_capacity + $onetime_capacity;
-                    ?>
-                </span>
-                <span class="stat-label">Total Potential Slots</span>
+                        echo $weekly_capacity + $onetime_capacity;
+                        ?>
+                    </span>
+                    <span class="stat-label">Total Potential Slots</span>
+                </div>
             </div>
+        </div>
         </div>
 
         <div class="lawyer-availability-section">
@@ -1128,7 +1139,7 @@ $active_page = "availability";
                             <th style="text-align:left; padding: 12px;">Start Time</th>
                             <th style="text-align:left; padding: 12px;">End Time</th>
                             <th style="text-align:left; padding: 12px;">Max Appt</th>
-                            <th style="text-align:left; padding: 12px;">Actions</th>
+                            <th style="text-align:center; padding: 12px; width: 120px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1153,11 +1164,11 @@ $active_page = "availability";
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
                                     <?php echo (int)$s['max_appointments']; ?> / day
                                 </td>
-                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
-                                    <form method="POST" style="display:inline;">
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef; text-align: center;">
+                                    <form method="POST" style="display:inline; width: 88px;">
                                         <input type="hidden" name="availability_id" value="<?php echo $s['id']; ?>">
                                         <input type="hidden" name="action" value="permanent_delete">
-                                        <button type="submit" class="lawyer-btn" onclick="return confirm('Permanently delete this schedule?')">Delete</button>
+                                        <button type="submit" class="lawyer-btn btn-delete-custom" onclick="return confirm('Permanently delete this schedule?')">Delete</button>
                                     </form>
                                 </td>
                             </tr>
@@ -1184,11 +1195,11 @@ $active_page = "availability";
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
                                     <?php echo (int)$s['max_appointments']; ?>
                                 </td>
-                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
-                                    <form method="POST" style="display:inline;">
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef; text-align: center;">
+                                    <form method="POST" style="display:inline; width: 88px;">
                                         <input type="hidden" name="availability_id" value="<?php echo $s['id']; ?>">
                                         <input type="hidden" name="action" value="permanent_delete">
-                                        <button type="submit" class="lawyer-btn" onclick="return confirm('Permanently delete this schedule?')">Delete</button>
+                                        <button type="submit" class="lawyer-btn btn-delete-custom" onclick="return confirm('Permanently delete this schedule?')">Delete</button>
                                     </form>
                                 </td>
                             </tr>
@@ -1215,8 +1226,8 @@ $active_page = "availability";
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">—</td>
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">—</td>
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">—</td>
-                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
-                                    <form method="POST" style="display:inline;">
+                                <td style="padding: 12px; border-bottom: 1px solid #e9ecef; text-align: center;">
+                                    <form method="POST" style="display:inline; width: 88px;">
                                         <input type="hidden" name="availability_id" value="<?php echo $s['id']; ?>">
                                         <input type="hidden" name="action" value="permanent_delete">
                                         <button type="submit" class="lawyer-btn btn-unblock-custom" onclick="return confirm('Unblock this date/range?')">Unblock</button>
@@ -2239,7 +2250,7 @@ $active_page = "availability";
                             <div class="form-group-modern">
                                 <label class="form-label-modern">Status</label>
                                 <select name="schedule_status" id="schedule_status" class="form-select-modern">
-                                    <option value="today">Today</option>
+                                    <option value="today">Weekly</option>
                                     <option value="one_time">One time available</option>
                                     <option value="unavailable">Unavailable</option>
                                 </select>

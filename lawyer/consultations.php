@@ -203,7 +203,7 @@ $active_page = "consultations";
 								<th style="text-align:left; padding: 12px;">Date</th>
 								<th style="text-align:left; padding: 12px;">Status</th>
 								<th style="text-align:left; padding: 12px;">Created</th>
-								<th style="text-align:left; padding: 12px;">Actions</th>
+								<th style="text-align:center; padding: 12px; width: 120px;">Actions</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -234,8 +234,8 @@ $active_page = "consultations";
 										<span class="lawyer-status-badge lawyer-status-<?php echo $row['status']; ?>"><?php echo ucfirst($row['status']); ?></span>
 									</td>
 									<td style="padding: 12px; border-bottom: 1px solid #e9ecef; "><?php echo date('M d, Y H:i', strtotime($row['created_at'])); ?></td>
-									<td style="padding: 12px; border-bottom: 1px solid #e9ecef; ">
-										<div style="display:flex; gap:8px; align-items:center; flex-wrap: wrap;">
+									<td style="padding: 12px; border-bottom: 1px solid #e9ecef; text-align: center;">
+										<div style="display:flex; gap:8px; align-items:center; flex-wrap: wrap; justify-content: center;">
 											<button onclick="openConsultationModal(<?php echo (int)$row['id']; ?>); return false;" class="lawyer-btn btn-view-details" style="text-decoration:none; padding:8px 12px; border: none; cursor: pointer;">View Details</button>
 										</div>
 									</td>
