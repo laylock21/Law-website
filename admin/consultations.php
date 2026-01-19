@@ -344,11 +344,10 @@ $active_page = "consultations";
                         <div class="bulk-actions-section" id="bulk-actions-section">
                             <form method="POST" id="bulk-form" class="bulk-form">
                                 <select name="bulk_action" id="bulk_action" class="admin-dropdown admin-dropdown-primary">
-                                    <option value="">Select Action</option>
-                                    <option value="pending">⏳ Set to Pending</option>
-                                    <option value="confirm">✅ Bulk Confirm</option>
-                                    <option value="complete">✅ Bulk Complete</option>
-                                    <option value="cancelled">❌ Bulk Cancel</option>
+                                    <option value="pending" selected>Pending</option>
+                                    <option value="confirm">Confirm</option>
+                                    <option value="complete">Complete</option>
+                                    <option value="cancelled">Cancel</option>
                                 </select>
                                 <button type="submit" class="admin-btn admin-btn-primary apply-selected" onclick="return confirmBulkAction()">
                                     <i class="fas fa-check-circle"></i> Apply to Selected

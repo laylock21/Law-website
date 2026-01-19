@@ -151,6 +151,9 @@ $active_page = "emails";
             <?php if (($stats['pending'] ?? 0) > 0): ?>
                 <div class="alert alert-info">
                     <strong>📧 Ready to Send:</strong> There are <?php echo $stats['pending']; ?> pending email(s) in the queue.
+                    <a href="#SendAllPendingEmails" class="btn btn-primary" style="margin-left: 15px;">
+                            <i class="fas fa-paper-plane"></i> Send Now
+                    </a>
                 </div>
                 
             <?php else: ?>
@@ -201,7 +204,7 @@ $active_page = "emails";
             <?php endif; ?>
                 <form method="POST" style="text-align: center; margin: 20px 0; padding-top:32px">
                     <input type="hidden" name="action" value="process_emails">
-                    <button type="submit" class="btn btn-primary" style="padding: 15px 30px; font-size: 18px;">
+                    <button type="submit" class="btn btn-primary" style="padding: 15px 30px; font-size: 18px;" id="SendAllPendingEmails">
                         <i class="fas fa-paper-plane"></i> Send All Pending Emails
                     </button>
                 </form>

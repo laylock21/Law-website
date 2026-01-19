@@ -166,6 +166,26 @@ $active_page = "consultations";
 	<link rel="stylesheet" href="../src/lawyer/css/styles.css">
 	<link rel="stylesheet" href="../includes/confirmation-modal.css">
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+	<style>
+		/* Make checkboxes bigger */
+		input[type="checkbox"] {
+			width: 166x;
+			height: 16px;
+			cursor: pointer;
+		}
+		
+		#select-all {
+			width: 16px;
+			height: 16px;
+			cursor: pointer;
+		}
+		
+		.consultation-checkbox {
+			width: 16px;
+			height: 16px;
+			cursor: pointer;
+		}
+	</style>
 </head>
 <body class="lawyer-page">
 	<?php include 'partials/sidebar.php'; ?>
@@ -185,7 +205,6 @@ $active_page = "consultations";
 					<div class="bulk-actions" style="margin: 10px 0;">
 						<form method="POST" id="bulk-form" style="display: flex; gap: 10px; align-items: center;">
 							<select name="bulk_action" id="bulk_action" style="padding: 8px; border-radius: 6px; border: 1px solid #e9ecef;">
-								<option value="">Select Action</option>
 								<option value="confirm">Confirm</option>
 								<option value="complete">Complete</option>
 								<option value="cancel">Cancel</option>
