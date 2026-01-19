@@ -99,7 +99,7 @@ $active_page = "profile";
         }
         
         .btn-edit-toggle {
-            background: #007bff;
+            background: #C5A253;
             color: white;
             border: none;
             padding: 8px 12px;
@@ -113,7 +113,7 @@ $active_page = "profile";
         }
         
         .btn-edit-toggle:hover {
-            background: #0056b3;
+            background: #B08F42;
             transform: translateY(-1px);
         }
         
@@ -308,6 +308,9 @@ $active_page = "profile";
                 <div class="form-card specializations-card large-card">
                     <div class="card-header">
                         <h3><i class="fas fa-gavel"></i> Legal Specializations</h3>
+                        <button type="button" class="btn-edit-toggle btn-edit-specializations" onclick="toggleSpecializationsEditMode()">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
                     </div>
                     <div class="card-body">
                         <?php if (!empty($all_practice_areas)): ?>
@@ -449,12 +452,13 @@ $active_page = "profile";
         
         // Edit mode toggle functionality
         let isEditMode = false;
+        let isSpecializationsEditMode = false;
         
         function toggleEditMode() {
             isEditMode = !isEditMode;
-            const formInputs = document.querySelectorAll('.form-input, .form-textarea, input[name="specializations[]"]');
+            const formInputs = document.querySelectorAll('.form-input, .form-textarea');
             const formActions = document.getElementById('formActions');
-            const editBtn = document.querySelector('.btn-edit-toggle');
+            const editBtn = document.querySelector('.btn-edit-toggle:not(.btn-edit-specializations)');
             
             formInputs.forEach(input => {
                 input.disabled = !isEditMode;
@@ -462,12 +466,38 @@ $active_page = "profile";
             
             if (isEditMode) {
                 formActions.style.display = 'flex';
-                editBtn.innerHTML = '<i class="fas fa-times"></i>';
+                editBtn.innerHTML = '<i class="fas fa-times"></i> Cancel';
                 editBtn.title = 'Cancel Edit';
             } else {
                 formActions.style.display = 'none';
-                editBtn.innerHTML = '<i class="fas fa-pencil-alt"></i>';
+                editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit';
                 editBtn.title = 'Edit Profile';
+            }
+        }
+        
+        function toggleSpecializationsEditMode() {
+            isSpecializationsEditMode = !isSpecializationsEditMode;
+            const specializationInputs = document.querySelectorAll('input[name="specializations[]"]');
+            const formActions = document.getElementById('formActions');
+            const editBtn = document.querySelector('.btn-edit-specializations');
+            
+            specializationInputs.forEach(input => {
+                input.disabled = !isSpecializationsEditMode;
+            });
+            
+            if (isSpecializationsEditMode) {
+                formActions.style.display = 'flex';
+                editBtn.innerHTML = '<i class="fas fa-times"></i> Cancel';
+                editBtn.title = 'Cancel Edit';
+                editBtn.classList.add('active');
+            } else {
+                // Only hide form actions if personal info is also not being edited
+                if (!isEditMode) {
+                    formActions.style.display = 'none';
+                }
+                editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit';
+                editBtn.title = 'Edit Specializations';
+                editBtn.classList.remove('active');
             }
         }
         
@@ -483,9 +513,15 @@ $active_page = "profile";
         
         // Initialize selected count
         document.addEventListener('DOMContentLoaded', function() {
-            // Disable all form fields on page load
-            const formInputs = document.querySelectorAll('.form-input, .form-textarea, input[name="specializations[]"]');
+            // Disable personal info fields on page load
+            const formInputs = document.querySelectorAll('.form-input, .form-textarea');
             formInputs.forEach(input => {
+                input.disabled = true;
+            });
+            
+            // Disable specializations on page load
+            const specializationInputs = document.querySelectorAll('input[name="specializations[]"]');
+            specializationInputs.forEach(input => {
                 input.disabled = true;
             });
             
