@@ -7672,7 +7672,7 @@ button.btn-primary:hover {
     border: none;
     border-radius: 12px;
     width: 90%;
-    max-width: 800px;
+    max-width: 900px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     animation: slideDown 0.3s ease;
     max-height: 85vh;

@@ -67,9 +67,6 @@ $active_page = "queue";
                 <div class="alert alert-warning">
                     <div style="display:flex;align-items:center;">
                         <strong>📧 Action Required:</strong> There are <?php echo $pending_count; ?> pending email(s) waiting to be sent.
-                        <a href="process_emails.php" class="btn btn-primary" style="margin-left: 15px;">
-                            <i class="fas fa-paper-plane"></i> Send Now
-                        </a>
                     </div>
                 </div>
             <?php else: ?>
