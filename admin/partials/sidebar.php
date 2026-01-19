@@ -19,7 +19,7 @@ $active_page = $active_page ?? "";
     <div class="sidebar-header">
         <div class="sidebar-brand">
             <div class="brand-icon">
-                <i class="fas fa-shield-alt"></i>
+                <img src="../src/img/logo.svg" alt="MD Law Logo" style="width: 40px; height: 40px;">
             </div>
             <div class="brand-text">
                 <h2>MD Law</h2>
