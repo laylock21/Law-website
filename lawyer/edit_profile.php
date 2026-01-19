@@ -243,7 +243,7 @@ $active_page = "profile";
                     <div class="card-header">
                         <h3><i class="fas fa-user"></i> Personal Information</h3>
                         <button type="button" class="btn-edit-toggle" onclick="toggleEditMode()" title="Edit Profile">
-                            <i class="fas fa-pencil-alt"></i>
+                            <i class="fas fa-edit"></i> Edit
                         </button>
                     </div>
                     <div class="card-body">
