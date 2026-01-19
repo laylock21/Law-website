@@ -105,18 +105,18 @@
                                 <div id="custom-password-fields-modal" class="custom-password-fields" style="display: none; margin-top: 16px; padding-top: 16px; border-top: 2px solid rgba(197, 162, 83, 0.2);">
                                     <div class="form-group" style="margin-bottom: 12px;">
                                         <label for="custom_password_modal" style="display: block; margin-bottom: 6px; font-weight: 600; color: #000; font-size: 14px;">Password</label>
-                                        <input type="password" id="custom_password_modal" name="custom_password" placeholder="Enter password" style="width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+                                        <input type="password" id="custom_password_modal" name="custom_password" placeholder="Enter password" style="width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; required">
                                         <small style="color: #666; display: block; margin-top: 4px; font-size: 12px;">Minimum 8 characters</small>
                                     </div>
                                     <div class="form-group" style="margin-bottom: 12px;">
                                         <label for="confirm_password_modal" style="display: block; margin-bottom: 6px; font-weight: 600; color: #000; font-size: 14px;">Confirm Password</label>
-                                        <input type="password" id="confirm_password_modal" name="confirm_password" placeholder="Confirm password" style="width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+                                        <input type="password" id="confirm_password_modal" name="confirm_password" placeholder="Confirm password" style="width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; required">
                                         <small id="password-match-modal" style="display: block; margin-top: 4px; font-size: 12px;"></small>
                                     </div>
                                     <div class="form-group">
-                                        <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #333;">
-                                            <input type="checkbox" id="force_change_modal" name="force_change" style="width: 16px; height: 16px; accent-color: #c5a253;">
-                                            Force password change on first login
+                                        <label class="checkbox-label" style="display: flex !important; align-items: center !important; gap: 8px; cursor: pointer; font-size: 13px; color: #333; line-height: 1;">
+                                            <input type="checkbox" id="force_change_modal" name="force_change" style="width: 16px; height: 16px; accent-color: #c5a253; flex-shrink: 0; margin: 0; vertical-align: middle;">
+                                            <span style="line-height: 1.3; display: inline-block;">Force password change on first login</span>
                                         </label>
                                     </div>
                                 </div>
@@ -364,13 +364,14 @@
 }
 
 .checkbox-label {
-    display: flex;
-    align-items: center;
+    display: flex !important;
+    align-items: center !important;
     gap: 8px;
     cursor: pointer;
     font-size: 13px;
     color: #333;
     transition: color 0.3s ease;
+    line-height: 1;
 }
 
 .checkbox-label:hover {
@@ -382,6 +383,14 @@
     height: 16px;
     accent-color: #c5a253;
     cursor: pointer;
+    flex-shrink: 0;
+    margin: 0;
+    vertical-align: middle;
+}
+
+.checkbox-label span {
+    line-height: 1.3;
+    display: inline-block;
 }
 
 .checkbox-item {

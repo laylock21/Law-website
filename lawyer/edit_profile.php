@@ -91,6 +91,44 @@ $active_page = "profile";
     <link rel="stylesheet" href="../src/lawyer/css/styles.css">
     <link rel="stylesheet" href="../includes/confirmation-modal.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .btn-edit-toggle {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        
+        .btn-edit-toggle:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+        
+        .btn-edit-toggle i {
+            font-size: 14px;
+        }
+        
+        .form-input:disabled,
+        .form-textarea:disabled,
+        input[name="specializations[]"]:disabled {
+            background-color: #f8f9fa;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+    </style>
 </head>
 <body class="lawyer-page edit-profile-page">
     <?php include 'partials/sidebar.php'; ?> 
@@ -204,6 +242,9 @@ $active_page = "profile";
                 <div class="form-card personal-info-card large-card">
                     <div class="card-header">
                         <h3><i class="fas fa-user"></i> Personal Information</h3>
+                        <button type="button" class="btn-edit-toggle" onclick="toggleEditMode()" title="Edit Profile">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
                     </div>
                     <div class="card-body">
                         <div class="form-grid-large">
@@ -319,14 +360,14 @@ $active_page = "profile";
             </div>
             
             <!-- Form Actions -->
-            <div class="form-actions" style="display: flex !important; justify-content: center !important; align-items: center !important; width: 100% !important; padding: 30px !important;">
+            <div class="form-actions" id="formActions" style="display: none !important; justify-content: center !important; align-items: center !important; width: 100% !important; padding: 30px !important;">
                 <div style="display: flex; flex-direction: row; gap: 12px; width: 100%;">
                     <button type="submit" class="btn btn-primary" style="flex: 1; justify-content: center;">
                         <i class="fas fa-save"></i> Update Profile
                     </button>
-                    <a href="dashboard.php" class="btn btn-secondary" style="flex: 1; justify-content: center;">
+                    <button type="button" class="btn btn-secondary" onclick="cancelEdit()" style="flex: 1; justify-content: center;">
                         <i class="fas fa-times"></i> Cancel
-                    </a>
+                    </button>
                 </div>
             </div>
         </form>
@@ -406,6 +447,35 @@ $active_page = "profile";
             console.log('ConfirmModal methods:', Object.keys(ConfirmModal));
         }
         
+        // Edit mode toggle functionality
+        let isEditMode = false;
+        
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            const formInputs = document.querySelectorAll('.form-input, .form-textarea, input[name="specializations[]"]');
+            const formActions = document.getElementById('formActions');
+            const editBtn = document.querySelector('.btn-edit-toggle');
+            
+            formInputs.forEach(input => {
+                input.disabled = !isEditMode;
+            });
+            
+            if (isEditMode) {
+                formActions.style.display = 'flex';
+                editBtn.innerHTML = '<i class="fas fa-times"></i>';
+                editBtn.title = 'Cancel Edit';
+            } else {
+                formActions.style.display = 'none';
+                editBtn.innerHTML = '<i class="fas fa-pencil-alt"></i>';
+                editBtn.title = 'Edit Profile';
+            }
+        }
+        
+        function cancelEdit() {
+            // Reload the page to reset all fields
+            window.location.reload();
+        }
+        
         function updateSelectedCount() {
             const checkedBoxes = document.querySelectorAll('input[name="specializations[]"]:checked');
             document.getElementById('selectedCount').textContent = checkedBoxes.length;
@@ -413,6 +483,18 @@ $active_page = "profile";
         
         // Initialize selected count
         document.addEventListener('DOMContentLoaded', function() {
+            // Disable all form fields on page load
+            const formInputs = document.querySelectorAll('.form-input, .form-textarea, input[name="specializations[]"]');
+            formInputs.forEach(input => {
+                input.disabled = true;
+            });
+            
+            // Hide form actions on page load
+            const formActions = document.getElementById('formActions');
+            if (formActions) {
+                formActions.style.display = 'none';
+            }
+            
             updateSelectedCount();
             
             // Add event listeners to all checkboxes

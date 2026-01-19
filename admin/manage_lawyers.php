@@ -581,9 +581,9 @@ $active_page = "lawyer";
                                         </div>
                                     </div>
                                     <div style="margin-top: 10px;">
-                                        <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #333;">
-                                            <input type="checkbox" id="reset_force_change" name="force_change" checked style="width: 16px; height: 16px; accent-color: #c5a253;">
-                                            Force password change on first login
+                                        <label class="checkbox-label" style="display: flex !important; align-items: center !important; gap: 8px; cursor: pointer; font-size: 13px; color: #333; line-height: 1;">
+                                            <input type="checkbox" id="reset_force_change" name="force_change" checked style="width: 16px; height: 16px; accent-color: #c5a253; flex-shrink: 0; margin: 0; vertical-align: middle;">
+                                            <span style="line-height: 1.3; display: inline-block;">Force password change on first login</span>
                                         </label>
                                     </div>
                                 </div>

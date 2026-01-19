@@ -117,7 +117,7 @@ $active_page = "dashboard";
 
             <div class="admin-practice-areas">
                         <div class="admin-section-header">
-                            <h3>Practice Areas</h3>
+                            <h3>Lawyer Practice Areas</h3>
                         </div>
                         
                         <?php if (empty($practice_areas)): ?>

@@ -65,10 +65,12 @@ $active_page = "queue";
             $pending_count = $stats['pending'] ?? 0;
             if ($pending_count > 0): ?>
                 <div class="alert alert-warning">
-                    <strong>📧 Action Required:</strong> There are <?php echo $pending_count; ?> pending email(s) waiting to be sent.
-                    <a href="process_emails.php" class="btn btn-primary" style="margin-left: 15px;">
-                        <i class="fas fa-paper-plane"></i> Send Now
-                    </a>
+                    <div style="display:flex;align-items:center;">
+                        <strong>📧 Action Required:</strong> There are <?php echo $pending_count; ?> pending email(s) waiting to be sent.
+                        <a href="process_emails.php" class="btn btn-primary" style="margin-left: 15px;">
+                            <i class="fas fa-paper-plane"></i> Send Now
+                        </a>
+                    </div>
                 </div>
             <?php else: ?>
                 <div class="alert alert-success">
@@ -76,20 +78,9 @@ $active_page = "queue";
                 </div>
             <?php endif; ?>
             
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number"><?php echo $stats['pending'] ?? 0; ?></div>
-                    <div class="stat-label">Pending</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number"><?php echo $stats['sent'] ?? 0; ?></div>
-                    <div class="stat-label">Sent</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number"><?php echo $stats['failed'] ?? 0; ?></div>
-                    <div class="stat-label">Failed</div>
-                </div>
-            </div>
+
+            
+            
             
             <h2 style="padding:16px 0 16px 0;">Recent Notifications</h2>
             

@@ -202,3 +202,50 @@ For issues or questions:
 ## License
 
 This project is provided as-is for educational and business use.
+
+
+
+<!-- Instructions -->
+<div class="section" style="
+   background: #f8f9fa;
+   border-left: 4px solid #17a2b8;
+   padding: 16px 20px;
+   border-radius: 8px;
+   margin-top: 20px;
+   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+">
+   <h3 style="margin: 0 0 10px 0;"><i class="fas fa-info-circle"></i> How It Works</h3>
+   <ol style="margin: 0 0 0 18px; padding: 0;">
+         <li><strong>Automatic:</strong> Emails are sent automatically when lawyers block dates</li>
+         <li><strong>Manual:</strong> Use this page to send any pending emails manually</li>
+         <li><strong>Monitoring:</strong> Check the notification queue for failed emails</li>
+         <li><strong>Retry:</strong> Failed emails are automatically retried up to 3 times</li>
+   </ol>
+</div>
+
+<!-- Gmail Setup Instructions -->
+<div class="section" style="
+   background: #f8f9fa;
+   border-left: 4px solid #17a2b8;
+   padding: 16px 20px;
+   border-radius: 8px;
+   margin-top: 20px;
+   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+">
+   <h3 style="margin: 0 0 10px 0;"><i class="fas fa-envelope-circle-check"></i> How to Enable Email Notifications</h3>
+   <ol style="margin: 0 0 0 18px; padding: 0;">
+         <li>
+            <strong>Get Gmail App Password:</strong>
+            <ul style="margin-top: 6px; list-style: disc; margin-left: 18px;">
+               <li>Go to Google Account → Security</li>
+               <li>Enable 2-Step Verification</li>
+               <li>Generate App Password for "Mail"</li>
+            </ul>
+         </li>
+         <li>Edit <code>/includes/EmailNotification.php</code></li>
+         <li>Add your Gmail credentials to <code>$smtp_config</code></li>
+         <li>Set <code>$smtp_enabled = true</code></li>
+         <li>Install PHPMailer: <code>composer require phpmailer/phpmailer</code></li>
+         <li><strong>Done:</strong> Notifications will be sent automatically!</li>
+   </ol>
+</div>
