@@ -249,14 +249,22 @@ $active_page = "consultations";
 					</form>
 				</div>
 				<?php if (($total_pages ?? 1) > 1): ?>
-					<div style="display:flex; gap:8px; justify-content:center; margin-top:16px;">
-						<?php for ($i = 1; $i <= $total_pages; $i++): ?>
-							<?php if ($i === $page): ?>
-								<span style="padding:8px 12px; background: var(--navy); color:white; border-radius:6px; "><?php echo $i; ?></span>
-							<?php else: ?>
-								<a href="?page=<?php echo $i; ?>" style="padding:8px 12px; border:1px solid #e9ecef; border-radius:6px; text-decoration:none; color: var(--navy); "><?php echo $i; ?></a>
-							<?php endif; ?>
-						<?php endfor; ?>
+					<div style="display:flex; gap:8px; justify-content:center; align-items:center; margin-top:16px;">
+						<?php if ($page > 1): ?>
+							<a href="?page=<?php echo $page - 1; ?>" class="pagination-btn pagination-prev"><i class="fas fa-chevron-left"></i></a>
+						<?php else: ?>
+							<span class="pagination-btn pagination-prev pagination-disabled"><i class="fas fa-chevron-left"></i></span>
+						<?php endif; ?>
+
+						<span style="font-size:14px; color:#666; font-weight:500;">
+							<?php echo $page; ?>
+						</span>
+
+						<?php if ($page < $total_pages): ?>
+							<a href="?page=<?php echo $page + 1; ?>" class="pagination-btn pagination-next"><i class="fas fa-chevron-right"></i></a>
+						<?php else: ?>
+							<span class="pagination-btn pagination-next pagination-disabled"><i class="fas fa-chevron-right"></i></span>
+						<?php endif; ?>
 					</div>
 				<?php endif; ?>
 			</div>
