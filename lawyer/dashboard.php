@@ -367,85 +367,22 @@ $active_page = "dashboard";
                         
                         <!-- Pagination Navigation -->
                         <?php if ($total_pages > 1): ?>
-                        <div class="pagination-container">
-                            <div class="pagination-info">
-                                Showing <?php echo (($current_page - 1) * $consultations_per_page) + 1; ?> to 
-                                <?php echo min($current_page * $consultations_per_page, $total_consultations); ?> 
-                                of <?php echo $total_consultations; ?> consultations
-                            </div>
-                            <nav class="pagination-nav">
-                                <ul class="pagination">
-                                    <!-- Previous Button -->
-                                    <?php if ($current_page > 1): ?>
-                                        <li class="page-item">
-                                            <a href="?page=<?php echo $current_page - 1; ?>#recent-consultations" class="page-link">
-                                                <i class="fas fa-chevron-left"></i> Previous
-                                            </a>
-                                        </li>
-                                    <?php else: ?>
-                                        <li class="page-item disabled">
-                                            <span class="page-link">
-                                                <i class="fas fa-chevron-left"></i> Previous
-                                            </span>
-                                        </li>
-                                    <?php endif; ?>
-                                    
-                                    <!-- Page Numbers -->
-                                    <?php
-                                    $start_page = max(1, $current_page - 2);
-                                    $end_page = min($total_pages, $current_page + 2);
-                                    
-                                    // Show first page if not in range
-                                    if ($start_page > 1): ?>
-                                        <li class="page-item">
-                                            <a href="?page=1#recent-consultations" class="page-link">1</a>
-                                        </li>
-                                        <?php if ($start_page > 2): ?>
-                                            <li class="page-item disabled">
-                                                <span class="page-link">...</span>
-                                            </li>
-                                        <?php endif; ?>
-                                    <?php endif; ?>
-                                    
-                                    <!-- Current range of pages -->
-                                    <?php for ($i = $start_page; $i <= $end_page; $i++): ?>
-                                        <li class="page-item <?php echo $i == $current_page ? 'active' : ''; ?>">
-                                            <?php if ($i == $current_page): ?>
-                                                <span class="page-link current"><?php echo $i; ?></span>
-                                            <?php else: ?>
-                                                <a href="?page=<?php echo $i; ?>#recent-consultations" class="page-link"><?php echo $i; ?></a>
-                                            <?php endif; ?>
-                                        </li>
-                                    <?php endfor; ?>
-                                    
-                                    <!-- Show last page if not in range -->
-                                    <?php if ($end_page < $total_pages): ?>
-                                        <?php if ($end_page < $total_pages - 1): ?>
-                                            <li class="page-item disabled">
-                                                <span class="page-link">...</span>
-                                            </li>
-                                        <?php endif; ?>
-                                        <li class="page-item">
-                                            <a href="?page=<?php echo $total_pages; ?>#recent-consultations" class="page-link"><?php echo $total_pages; ?></a>
-                                        </li>
-                                    <?php endif; ?>
-                                    
-                                    <!-- Next Button -->
-                                    <?php if ($current_page < $total_pages): ?>
-                                        <li class="page-item">
-                                            <a href="?page=<?php echo $current_page + 1; ?>#recent-consultations" class="page-link">
-                                                Next <i class="fas fa-chevron-right"></i>
-                                            </a>
-                                        </li>
-                                    <?php else: ?>
-                                        <li class="page-item disabled">
-                                            <span class="page-link">
-                                                Next <i class="fas fa-chevron-right"></i>
-                                            </span>
-                                        </li>
-                                    <?php endif; ?>
-                                </ul>
-                            </nav>
+                        <div style="display:flex; gap:8px; justify-content:center; align-items:center; margin-top:16px;">
+                            <?php if ($current_page > 1): ?>
+                                <a href="?page=<?php echo $current_page - 1; ?>#recent-consultations" class="pagination-btn pagination-prev"><i class="fas fa-chevron-left"></i></a>
+                            <?php else: ?>
+                                <span class="pagination-btn pagination-prev pagination-disabled"><i class="fas fa-chevron-left"></i></span>
+                            <?php endif; ?>
+
+                            <span style="font-size:14px; color:#666; font-weight:500;">
+                                <?php echo $current_page; ?>
+                            </span>
+
+                            <?php if ($current_page < $total_pages): ?>
+                                <a href="?page=<?php echo $current_page + 1; ?>#recent-consultations" class="pagination-btn pagination-next"><i class="fas fa-chevron-right"></i></a>
+                            <?php else: ?>
+                                <span class="pagination-btn pagination-next pagination-disabled"><i class="fas fa-chevron-right"></i></span>
+                            <?php endif; ?>
                         </div>
                         <?php endif; ?>
                     <?php endif; ?>
