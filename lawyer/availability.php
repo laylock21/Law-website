@@ -1086,6 +1086,18 @@ $active_page = "availability";
                         <option value="onetime">One Time</option>
                         <option value="unavailable">Unavailable</option>
                     </select>
+                    <select id="page-jump" onchange="jumpToPage(this.value)" 
+                            style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; min-width:100px;">
+                        <?php if (isset($blocked_total_pages) && $blocked_total_pages > 1): ?>
+                            <?php for ($i = 1; $i <= $blocked_total_pages; $i++): ?>
+                                <option value="<?php echo $i; ?>" <?php echo ($i == $blocked_page) ? 'selected' : ''; ?>>
+                                    Page <?php echo $i; ?>
+                                </option>
+                            <?php endfor; ?>
+                        <?php else: ?>
+                            <option value="1">Page 1</option>
+                        <?php endif; ?>
+                    </select>
                     <button type="button" class="lawyer-btn btn-create-custom" onclick="openScheduleModal()">
                         <i class="fas fa-plus-circle"></i> Create
                     </button>
@@ -1093,6 +1105,12 @@ $active_page = "availability";
             </div>
 
             <script>
+            function jumpToPage(pageNum) {
+                if (pageNum) {
+                    window.location.href = '?blocked_page=' + pageNum;
+                }
+            }
+            
             function filterSchedules() {
                 const filter = document.getElementById('status-filter').value;
                 
@@ -1104,6 +1122,12 @@ $active_page = "availability";
                 if (weeklySection) weeklySection.style.display = (filter === 'all' || filter === 'weekly') ? 'block' : 'none';
                 if (onetimeSection) onetimeSection.style.display = (filter === 'all' || filter === 'onetime') ? 'block' : 'none';
                 if (blockedSection) blockedSection.style.display = (filter === 'all' || filter === 'unavailable') ? 'block' : 'none';
+                
+                // Show all schedule cards when status filter changes
+                const scheduleCards = document.querySelectorAll('.schedule-card-modern');
+                scheduleCards.forEach(card => {
+                    card.style.display = 'block';
+                });
                 
                 // Filter Table Rows
                 const rows = document.querySelectorAll('.admin-consultations-table tbody tr');
@@ -1240,12 +1264,16 @@ $active_page = "availability";
             </div>
 
             <?php if ($blocked_total_pages > 1): ?>
-                <div style="display:flex; gap:8px; justify-content:center; margin-top:16px;">
+                <div style="display:flex; gap:8px; justify-content:center; align-items:center; margin-top:16px;">
                     <?php if ($blocked_page > 1): ?>
                         <a href="?blocked_page=<?php echo $blocked_page - 1; ?>" class="pagination-btn pagination-prev"><i class="fas fa-chevron-left"></i></a>
                     <?php else: ?>
                         <span class="pagination-btn pagination-prev pagination-disabled"><i class="fas fa-chevron-left"></i></span>
                     <?php endif; ?>
+
+                    <span style="font-size:14px; color:#666; font-weight:500;">
+                        <?php echo $blocked_page; ?>
+                    </span>
 
                     <?php if ($blocked_page < $blocked_total_pages): ?>
                         <a href="?blocked_page=<?php echo $blocked_page + 1; ?>" class="pagination-btn pagination-next"><i class="fas fa-chevron-right"></i></a>
