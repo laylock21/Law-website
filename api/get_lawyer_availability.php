@@ -267,11 +267,135 @@ try {
         // Extract just the date strings for backward compatibility
         $date_list = array_keys($available_dates);
         
+        // Build comprehensive date status map including blocked and fully booked dates
+        $date_status_map = [];
+        
+        // Add available dates
+        foreach ($available_dates as $date_str => $details) {
+            $date_status_map[$date_str] = [
+                'status' => 'available',
+                'type' => $details['type'],
+                'start_time' => $details['start_time'],
+                'end_time' => $details['end_time'],
+                'max_appointments' => $details['max_appointments'],
+                'booked' => $details['booked'],
+                'slots_remaining' => $details['max_appointments'] - $details['booked']
+            ];
+        }
+        
+        // Add blocked dates (single dates and ranges)
+        foreach ($blocked_dates as $date_str => $reason) {
+            if (!isset($date_status_map[$date_str])) {
+                $date_status_map[$date_str] = [
+                    'status' => 'blocked',
+                    'reason' => $reason
+                ];
+            }
+        }
+        
+        // Add blocked date ranges
+        foreach ($blocked_ranges as $range) {
+            $current = clone $range['start'];
+            while ($current <= $range['end']) {
+                $date_str = $current->format('Y-m-d');
+                if (!isset($date_status_map[$date_str])) {
+                    $date_status_map[$date_str] = [
+                        'status' => 'blocked',
+                        'reason' => $range['reason']
+                    ];
+                }
+                $current->modify('+1 day');
+            }
+        }
+        
+        // Add fully booked dates (dates that are in schedule but have no slots)
+        // Check weekly schedules for fully booked dates
+        foreach ($weekly_schedules as $weekly) {
+            $weekdays = explode(',', $weekly['weekdays']);
+            $max_appointments = $weekly['max_appointments'];
+            
+            $current_date = clone $start_date;
+            while ($current_date <= $end_date) {
+                $weekday_name = $current_date->format('l');
+                $date_str = $current_date->format('Y-m-d');
+                
+                // Skip if already in map or blocked
+                if (isset($date_status_map[$date_str]) || $isDateBlocked($date_str)) {
+                    $current_date->modify('+1 day');
+                    continue;
+                }
+                
+                // Skip if one-time override exists
+                if (isset($one_time_dates[$date_str])) {
+                    $current_date->modify('+1 day');
+                    continue;
+                }
+                
+                // Check if this weekday is in schedule and fully booked
+                if (in_array($weekday_name, $weekdays)) {
+                    $count_stmt = $pdo->prepare("
+                        SELECT COUNT(*) as appointment_count 
+                        FROM consultations 
+                        WHERE lawyer_id = ? 
+                        AND consultation_date = ? 
+                        AND status IN ('pending', 'confirmed')
+                    ");
+                    $count_stmt->execute([$lawyer['id'], $date_str]);
+                    $current_count = $count_stmt->fetch()['appointment_count'];
+                    
+                    // If fully booked, add to map
+                    if ($current_count >= $max_appointments) {
+                        $date_status_map[$date_str] = [
+                            'status' => 'fully_booked',
+                            'type' => 'weekly',
+                            'max_appointments' => $max_appointments,
+                            'booked' => $current_count
+                        ];
+                    }
+                }
+                $current_date->modify('+1 day');
+            }
+        }
+        
+        // Check one-time dates for fully booked
+        foreach ($one_time_dates as $date_str => $one_time) {
+            $schedule_date = new DateTime($date_str);
+            
+            // Skip if already in map or blocked or outside range
+            if (isset($date_status_map[$date_str]) || $isDateBlocked($date_str) || 
+                $schedule_date < $start_date || $schedule_date > $end_date) {
+                continue;
+            }
+            
+            $max_appointments = $one_time['max_appointments'];
+            
+            $count_stmt = $pdo->prepare("
+                SELECT COUNT(*) as appointment_count 
+                FROM consultations 
+                WHERE lawyer_id = ? 
+                AND consultation_date = ? 
+                AND status IN ('pending', 'confirmed')
+            ");
+            $count_stmt->execute([$lawyer['id'], $date_str]);
+            $current_count = $count_stmt->fetch()['appointment_count'];
+            
+            // If fully booked, add to map
+            if ($current_count >= $max_appointments) {
+                $date_status_map[$date_str] = [
+                    'status' => 'fully_booked',
+                    'type' => 'one_time',
+                    'max_appointments' => $max_appointments,
+                    'booked' => $current_count
+                ];
+            }
+        }
+        
         echo json_encode([
             'success' => true,
             'lawyer' => $lawyer_name,
             'available_dates' => $date_list,
             'detailed_availability' => array_values($available_dates),
+            'date_status_map' => $date_status_map, // NEW: Complete status map
             'date_range' => [
                 'start_date' => $start_date->format('Y-m-d'),
                 'end_date' => $end_date->format('Y-m-d'),
@@ -288,7 +412,9 @@ try {
                 'one_time_schedules' => count($one_time_dates),
                 'blocked_dates' => count($blocked_dates),
                 'blocked_ranges' => count($blocked_ranges),
-                'total_available_dates' => count($available_dates)
+                'total_available_dates' => count($available_dates),
+                'fully_booked_dates' => count(array_filter($date_status_map, function($d) { return $d['status'] === 'fully_booked'; })),
+                'blocked_dates_total' => count(array_filter($date_status_map, function($d) { return $d['status'] === 'blocked'; }))
             ]
         ]);
     } else {

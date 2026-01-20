@@ -39,7 +39,7 @@ if (!$input) {
 }
 
 // Feature: Updated required fields for new form structure
-$required_fields = ['lastName', 'firstName', 'email', 'phone', 'service', 'lawyer', 'message'];
+$required_fields = ['fullName', 'email', 'phone', 'service', 'lawyer', 'message'];
 $missing_fields = [];
 
 foreach ($required_fields as $field) {
@@ -57,10 +57,6 @@ function sanitizeInput($input) {
     return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
 }
 
-function validateName($name) {
-    return preg_match('/^[a-zA-Z\s\'-]{2,50}$/', $name);
-}
-
 function validateEmail($email) {
     return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
 }
@@ -69,10 +65,7 @@ function validatePhone($phone) {
     return preg_match('/^[0-9]{11}$/', $phone);
 }
 
-$last_name = sanitizeInput($input['lastName']);
-$first_name = sanitizeInput($input['firstName']);
-$middle_name = sanitizeInput($input['middleName'] ?? '');
-$full_name = trim($first_name . ' ' . $middle_name . ' ' . $last_name);
+$full_name = sanitizeInput($input['fullName']);
 $email = trim($input['email']);
 $phone = trim($input['phone']);
 // Server-side enforcement: keep digits only and validate exact length (11)
@@ -85,14 +78,8 @@ $selected_date = !empty($input['date']) ? $input['date'] : null;
 // Enhanced validation
 $validation_errors = [];
 
-if (!validateName($first_name)) {
-    $validation_errors[] = 'First name must be 2-50 characters, letters only';
-}
-if (!validateName($last_name)) {
-    $validation_errors[] = 'Last name must be 2-50 characters, letters only';
-}
-if (!empty($middle_name) && !validateName($middle_name)) {
-    $validation_errors[] = 'Middle name must be 2-50 characters, letters only';
+if (strlen($full_name) < 3) {
+    $validation_errors[] = 'Full name must be at least 3 characters';
 }
 if (!validateEmail($email)) {
     $validation_errors[] = 'Invalid email address';

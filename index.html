@@ -754,144 +754,199 @@
 					<h2>Book Your Consultation</h2>
 					<p>Tell us about your case and schedule a consultation. We'll confirm via email or phone.</p>
 				</header>
-				<div class="appointment-content">
-					<div class="appointment-calendar">
-						<div class="calendar" aria-label="Monthly calendar">
-							<div class="calendar-header">
-								<button class="cal-nav" data-dir="prev" aria-label="Previous month">&#10094;</button>
-								<h3 class="cal-title" id="calendar-title">March 2025</h3>
-								<button class="cal-nav" data-dir="next" aria-label="Next month">&#10095;</button>
-							</div>
-							<div class="calendar-grid" role="grid" aria-labelledby="calendar-title">
-								<div class="calendar-row calendar-weekdays" role="row">
-									<span role="columnheader">Sun</span>
-									<span role="columnheader">Mon</span>
-									<span role="columnheader">Tue</span>
-									<span role="columnheader">Wed</span>
-									<span role="columnheader">Thu</span>
-									<span role="columnheader">Fri</span>
-									<span role="columnheader">Sat</span>
-								</div>
-								<div class="calendar-body" role="rowgroup" id="calendar-body"></div>
-							</div>
-							                <p class="calendar-note">Selected date: <span id="selected-date-display">None</span></p>
-                <p class="calendar-required">* Date selection is required to schedule consultation</p>
-                
-                <!-- Calendar Legend -->
-                <div class="calendar-legend">
-                    <div class="legend-item">
-                        <div class="legend-color available"></div>
-                        <span>Available</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color unavailable"></div>
-                        <span>Unavailable</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color past"></div>
-                        <span>Past Date</span>
-                    </div>
-                </div>
+				
+				<!-- Single Column Layout -->
+				<div class="appointment-single-column">
+					<!-- Multi-step Progress Indicator -->
+					<div class="form-progress">
+						<div class="progress-step active" data-step="1">
+							<div class="step-number">1</div>
+							<div class="step-label">Personal Info</div>
+						</div>
+						<div class="progress-line"></div>
+						<div class="progress-step" data-step="2">
+							<div class="step-number">2</div>
+							<div class="step-label">Lawyer & Date</div>
+						</div>
+						<div class="progress-line"></div>
+						<div class="progress-step" data-step="3">
+							<div class="step-number">3</div>
+							<div class="step-label">Review & Submit</div>
 						</div>
 					</div>
-					<div class="appointment-form-container">
-						<!-- Multi-step Progress Indicator -->
-						<div class="form-progress">
-							<div class="progress-step active" data-step="1">
-								<div class="step-number">1</div>
-								<div class="step-label">Personal Info</div>
-							</div>
-							<div class="progress-line"></div>
-							<div class="progress-step" data-step="2">
-								<div class="step-number">2</div>
-								<div class="step-label">Contact</div>
-							</div>
-							<div class="progress-line"></div>
-							<div class="progress-step" data-step="3">
-								<div class="step-number">3</div>
-								<div class="step-label">Lawyer & Case</div>
-							</div>
-							<div class="progress-line"></div>
-							<div class="progress-step" data-step="4">
-								<div class="step-number">4</div>
-								<div class="step-label">Date & Submit</div>
+
+					<form id="appointment-form" class="form multi-step-form" novalidate>
+						<!-- Step 1: Personal Information (Grid Layout) -->
+						<div class="form-step active" data-step="1">
+							<h3 class="step-title">Personal Information</h3>
+							
+							<!-- Grid Layout for Step 1 -->
+							<div class="step-grid">
+								<!-- Left Column: Form Fields -->
+								<div class="step-left">
+									<div class="form-row">
+										<label for="fullName">Full Name<span class="required-asterisk" aria-label="required">*</span></label>
+										<input id="fullName" name="fullName" type="text" placeholder="Juan Dela Cruz" required aria-describedby="fullName-help" />
+										<div id="fullName-help" class="sr-only">Enter your full name</div>
+									</div>
+									<div class="form-row">
+										<label for="email">Email Address <span class="required-asterisk" aria-label="required">*</span></label>
+										<input id="email" name="email" type="email" placeholder="you@example.com" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" required aria-describedby="email-help" />
+										<div id="email-help" class="sr-only">Enter a valid email address for consultation confirmation</div>
+									</div>
+									<div class="form-row">
+										<label for="phone">Phone Number <span class="required-asterisk" aria-label="required">*</span></label>
+										<input id="phone" name="phone" type="tel" placeholder="09171234567" pattern="[0-9]{11}" maxlength="11" inputmode="numeric" autocomplete="tel" aria-describedby="phone-help" required />
+										<div id="phone-help" class="sr-only">Enter your 11-digit mobile phone number</div>
+									</div>
+								</div>
+								
+								<!-- Right Column: Empty -->
+								<div class="step-right">
+									<!-- Case description moved to Step 2 -->
+								</div>
 							</div>
 						</div>
 
-						<form id="appointment-form" class="form multi-step-form" novalidate>
-							<!-- Step 1: Personal Information -->
-							<div class="form-step active" data-step="1">
-								<h3 class="step-title">Personal Information</h3>
-								<div class="form-row">
-									<label for="firstName">First Name <span class="required-asterisk" aria-label="required">*</span></label>
-									<input id="firstName" name="firstName" type="text" placeholder="Juan" required aria-describedby="firstName-help" />
-									<div id="firstName-help" class="sr-only">Enter your given name</div>
-								</div>
-								<div class="form-row">
-									<label for="middleName">Middle Name</label>
-									<input id="middleName" name="middleName" type="text" placeholder="Santos" aria-describedby="middleName-help" />
-									<div id="middleName-help" class="sr-only">Enter your middle name (optional)</div>
-								</div>
-																<div class="form-row">
-									<label for="lastName">Last Name <span class="required-asterisk" aria-label="required">*</span></label>
-									<input id="lastName" name="lastName" type="text" placeholder="Dela Cruz" required aria-describedby="lastName-help" />
-									<div id="lastName-help" class="sr-only">Enter your family name or surname</div>
-								</div>
-							</div>
-
-							<!-- Step 2: Contact Information -->
-							<div class="form-step" data-step="2">
-								<h3 class="step-title">Contact Information</h3>
-								<div class="form-row">
-									<label for="email">Email Address <span class="required-asterisk" aria-label="required">*</span></label>
-									<input id="email" name="email" type="email" placeholder="you@example.com" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" required aria-describedby="email-help" />
-									<div id="email-help" class="sr-only">Enter a valid email address for consultation confirmation</div>
-								</div>
-								<div class="form-row">
-									<label for="phone">Phone Number <span class="required-asterisk" aria-label="required">*</span></label>
-									<input id="phone" name="phone" type="tel" placeholder="09171234567" pattern="[0-9]{11}" maxlength="11" inputmode="numeric" autocomplete="tel" aria-describedby="phone-help" required />
-									<div id="phone-help" class="sr-only">Enter your 11-digit mobile phone number</div>
-								</div>
-							</div>
-
-							<!-- Step 3: Lawyer & Case Details -->
-							<div class="form-step" data-step="3">
-								<h3 class="step-title">Lawyer & Case Details</h3>
-								<div class="form-row">
-									<label for="lawyer">Select Lawyer <span class="required-asterisk" aria-label="required">*</span></label>
-									<select id="lawyer" name="lawyer" required>
-										<option value="">Select a lawyer</option>
-									</select>
-								</div>
-								<div class="form-row">
-									<label for="service">Practice Area <span class="required-asterisk" aria-label="required">*</span></label>
-									<button type="button" id="practiceAreaBtn" class="form-control text-start practice-area-btn" disabled>
-										<span id="practiceAreaDisplay">First select a lawyer</span>
-										<i class="fas fa-search" style="float: right; margin-top: 3px;"></i>
-									</button>
-									<input type="hidden" id="service" name="service" required />
-								</div>
-								<div class="form-row">
-									<label for="message">Case Description <span class="required-asterisk" aria-label="required">*</span></label>
-									<textarea id="message" name="message" rows="4" placeholder="Briefly describe your legal matter..." required></textarea>
-								</div>
-							</div>
-
-							<!-- Step 4: Date Selection & Submit -->
-							<div class="form-step" data-step="4">
-								<h3 class="step-title">Select Consultation Date</h3>
-								<div class="form-row">
-									<label>Consultation Date <span class="required-asterisk">*</span></label>
-									<div class="date-selection-info">
-										<p><strong>Click on an available date</strong> from the calendar on the left to select your consultation time slot.</p>
-										<p class="text-muted" style="font-size: 0.9em; margin-top: 8px;">After selecting a date, you'll be able to choose your preferred time and confirm your appointment.</p>
+						<!-- Step 2: Calendar & Lawyer Selection (Grid Layout) -->
+						<div class="form-step" data-step="2">
+							<h3 class="step-title">Select Date & Lawyer</h3>
+							
+							<!-- Grid Layout for Step 2 -->
+							<div class="step-grid">
+								<!-- Left Column: Calendar -->
+								<div class="step-left">
+									<div class="calendar" aria-label="Monthly calendar">
+										<div class="calendar-header">
+											<button class="cal-nav" data-dir="prev" aria-label="Previous month">&#10094;</button>
+											<h3 class="cal-title" id="calendar-title">March 2025</h3>
+											<button class="cal-nav" data-dir="next" aria-label="Next month">&#10095;</button>
+										</div>
+										<div class="calendar-grid" role="grid" aria-labelledby="calendar-title">
+											<div class="calendar-row calendar-weekdays" role="row">
+												<span role="columnheader">Sun</span>
+												<span role="columnheader">Mon</span>
+												<span role="columnheader">Tue</span>
+												<span role="columnheader">Wed</span>
+												<span role="columnheader">Thu</span>
+												<span role="columnheader">Fri</span>
+												<span role="columnheader">Sat</span>
+											</div>
+											<div class="calendar-body" role="rowgroup" id="calendar-body"></div>
+										</div>
+										<p class="calendar-note">Selected date: <span id="selected-date-display">None</span></p>
+										<p class="calendar-required">* Date selection is required</p>
+										
+										<!-- Calendar Legend -->
+										<div class="calendar-legend">
+											<div class="legend-item">
+												<div class="legend-color available"></div>
+												<span>Available</span>
+											</div>
+											<div class="legend-item">
+												<div class="legend-color fully-booked"></div>
+												<span>Fully Booked</span>
+											</div>
+											<div class="legend-item">
+												<div class="legend-color blocked"></div>
+												<span>Blocked</span>
+											</div>
+											<div class="legend-item">
+												<div class="legend-color past"></div>
+												<span>Past Date</span>
+											</div>
+										</div>
 									</div>
 								</div>
-								<p class="form-note" id="appointment-status" role="status" aria-live="polite"></p>
+								
+								<!-- Right Column: Lawyer, Case Description, Date & Time -->
+								<div class="step-right">
+									<div class="form-row">
+										<label for="service">Practice Area <span class="required-asterisk" aria-label="required">*</span></label>
+										<button type="button" id="practiceAreaBtn" class="form-control text-start practice-area-btn">
+											<span id="practiceAreaDisplay">Click to select practice area</span>
+											<i class="fas fa-search" style="float: right; margin-top: 3px;"></i>
+										</button>
+										<input type="hidden" id="service" name="service" required />
+									</div>
+									<div class="form-row">
+										<label for="lawyer">Select Lawyer <span class="required-asterisk" aria-label="required">*</span></label>
+										<select id="lawyer" name="lawyer" required disabled>
+											<option value="">First select a practice area</option>
+										</select>
+									</div>
+									<div class="form-row">
+										<label for="message">Case Description <span class="required-asterisk" aria-label="required">*</span></label>
+										<textarea id="message" name="message" rows="4" placeholder="Briefly describe your legal matter..." required></textarea>
+									</div>
+									<div class="form-row">
+										<label for="consultation-date">Consultation Date <span class="required-asterisk" aria-label="required">*</span></label>
+										<input type="date" id="consultation-date" name="date" required aria-describedby="date-help" />
+										<div id="date-help" class="sr-only">Select your preferred consultation date</div>
+									</div>
+									<div class="form-row">
+										<label for="consultation-time">Consultation Time <span class="required-asterisk" aria-label="required">*</span></label>
+										<input type="time" id="consultation-time" name="selected_time" required aria-describedby="time-help" />
+										<div id="time-help" class="sr-only">Select your preferred consultation time</div>
+									</div>
+								</div>
 							</div>
+						</div>
 
-							<input type="hidden" id="selected-lawyer" name="lawyer" />
-							<input type="hidden" id="selected-date" name="date" />
+						<!-- Step 3: Review & Submit (Grid Layout) -->
+						<div class="form-step" data-step="3">
+							<h3 class="step-title">Review Your Information</h3>
+							
+							<!-- Grid Layout for Step 3 -->
+							<div class="step-grid">
+								<!-- Left Column: Personal & Contact Info -->
+								<div class="step-left">
+									<div class="review-card">
+										<h4><i class="fas fa-user"></i> Personal Information</h4>
+										<div class="review-item">
+											<span class="review-label">Full Name:</span>
+											<span class="review-value" id="review-name">-</span>
+										</div>
+										<div class="review-item">
+											<span class="review-label">Email:</span>
+											<span class="review-value" id="review-email">-</span>
+										</div>
+										<div class="review-item">
+											<span class="review-label">Phone:</span>
+											<span class="review-value" id="review-phone">-</span>
+										</div>
+									</div>
+								</div>
+								
+								<!-- Right Column: Consultation Details -->
+								<div class="step-right">
+									<div class="review-card">
+										<h4><i class="fas fa-briefcase"></i> Consultation Details</h4>
+										<div class="review-item">
+											<span class="review-label">Lawyer:</span>
+											<span class="review-value" id="review-lawyer">-</span>
+										</div>
+										<div class="review-item">
+											<span class="review-label">Practice Area:</span>
+											<span class="review-value" id="review-practice">-</span>
+										</div>
+										<div class="review-item">
+											<span class="review-label">Date:</span>
+											<span class="review-value" id="review-date">-</span>
+										</div>
+										<div class="review-item">
+											<span class="review-label">Case Description:</span>
+											<span class="review-value" id="review-message">-</span>
+										</div>
+									</div>
+								</div>
+							</div>
+							
+							<p class="form-note" id="appointment-status" role="status" aria-live="polite"></p>
+						</div>
+
+						<input type="hidden" id="selected-lawyer" name="lawyer" />
+						<input type="hidden" id="selected-date" name="date" />
 							
 							<!-- Form Navigation Buttons -->
 							<div class="form-navigation">

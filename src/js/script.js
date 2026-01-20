@@ -669,23 +669,35 @@ async function handleBookConsultation(lawyer, lawyerId) {
     // RESET FORM TO STEP 1 FIRST
     resetForm();
     
-    // NEW LOGIC: Select lawyer first, practice area becomes available for selection
+    // NEW LOGIC: With practice area first flow, we need to get lawyer's practice areas
     try {
         const lawyerSelect = document.getElementById('lawyer');
         const serviceSelect = document.getElementById('service');
         const practiceAreaBtn = document.getElementById('practiceAreaBtn');
         const practiceAreaDisplay = document.getElementById('practiceAreaDisplay');
         
-        if (lawyerSelect) {
-            // Ensure lawyers are loaded first
-            await loadAllLawyers();
+        // Load all lawyers data to get this lawyer's specializations
+        await loadAllLawyers();
+        
+        // Find the lawyer's primary practice area
+        const lawyerData = allLawyersData.find(l => l.name === lawyer);
+        
+        if (lawyerData && lawyerData.primary_specialization) {
+            // Auto-select the lawyer's primary practice area
+            const primaryArea = lawyerData.primary_specialization;
+            
+            // Set practice area
+            serviceSelect.value = primaryArea;
+            practiceAreaDisplay.textContent = primaryArea;
+            
+            // Filter lawyers by this practice area
+            await filterLawyersByPracticeArea(primaryArea);
             
             // Wait a moment for DOM to update
             setTimeout(() => {
-                // Select the lawyer (this will enable practice area selection)
+                // Select the lawyer
                 lawyerSelect.value = lawyer;
                 lawyerSelect.dispatchEvent(new Event('change'));
-                
             }, 300);
         }
     } catch (error) {
@@ -706,7 +718,7 @@ async function handleBookConsultation(lawyer, lawyerId) {
     // Update status message
     const appointmentStatus = document.getElementById('appointment-status');
     if (appointmentStatus) {
-        appointmentStatus.textContent = `✓ ${lawyer} selected. Click to select practice area, then complete the form and select an available date.`;
+        appointmentStatus.textContent = `✓ ${lawyer} pre-selected. Complete the form and select an available date.`;
         appointmentStatus.style.color = '#28a745'; // Green color for success
     }
 }
@@ -844,10 +856,8 @@ if (appointmentForm && appointmentStatus) {
 	appointmentForm.addEventListener('submit', async (e) => {
 		e.preventDefault();
 		const formData = new FormData(appointmentForm);
-		// Feature: Updated field names for separate name fields
-		const lastName = formData.get('lastName');
-		const firstName = formData.get('firstName');
-		const middleName = formData.get('middleName');
+		// Feature: Using single full name field
+		const fullName = formData.get('fullName');
 		const email = formData.get('email');
 		const phone = formData.get('phone');
 		const service = formData.get('service');
@@ -858,7 +868,7 @@ if (appointmentForm && appointmentStatus) {
 		
 		
 		// Feature: Enhanced validation for all required fields
-		if (!lastName || !firstName || !email || !phone || !service || !lawyer || !message) {
+		if (!fullName || !email || !phone || !service || !lawyer || !message) {
 			openStatusModal('Please fill out all required fields.');
 			return;
 		}
@@ -866,14 +876,8 @@ if (appointmentForm && appointmentStatus) {
 		// Enhanced validation with detailed error messages
 		const validationErrors = [];
 		
-		if (!validateName(firstName)) {
-			validationErrors.push('First name must be 2-50 characters, letters only');
-		}
-		if (!validateName(lastName)) {
-			validationErrors.push('Last name must be 2-50 characters, letters only');
-		}
-		if (middleName && !validateName(middleName)) {
-			validationErrors.push('Middle name must be 2-50 characters, letters only');
+		if (fullName.trim().length < 3) {
+			validationErrors.push('Full name must be at least 3 characters');
 		}
 		if (!validateEmail(email)) {
 			validationErrors.push('Please enter a valid email address');
@@ -909,11 +913,9 @@ if (appointmentForm && appointmentStatus) {
 		}
 		
 		try {
-			// Feature: Prepare data with separate name fields and selected time
+			// Feature: Prepare data with full name field and selected time
 			const submissionData = {
-				lastName: lastName,
-				firstName: firstName,
-				middleName: middleName,
+				fullName: fullName,
 				email: email,
 				phone: phone,
 				service: service,
@@ -936,8 +938,8 @@ if (appointmentForm && appointmentStatus) {
 			const result = await response.json();
 			
 			if (result.success) {
-				// Feature: Updated success message with first name
-				openStatusModal(`Thank you, ${firstName}! We've received your consultation request for ${service}. We'll contact you within 24 hours to confirm your appointment with ${lawyer} on ${date || 'a date to be determined'}.`);
+				// Feature: Updated success message with full name
+				openStatusModal(`Thank you, ${fullName}! We've received your consultation request for ${service}. We'll contact you within 24 hours to confirm your appointment with ${lawyer} on ${date || 'a date to be determined'}.`);
 				
 				// Trigger email processing if emails were queued
 				if (result.email_queued) {
@@ -948,31 +950,28 @@ if (appointmentForm && appointmentStatus) {
 				document.getElementById('selected-date-display').textContent = 'None';
 				document.getElementById('selected-date').value = '';
 				
-				// Reset lawyer and practice area dropdowns (NEW LOGIC: lawyer first, then practice area)
+				// Reset practice area and lawyer dropdowns (NEW LOGIC: practice area first, then lawyer)
 				const lawyerSelect = document.getElementById('lawyer');
 				const serviceSelect = document.getElementById('service');
 				const practiceAreaBtn = document.getElementById('practiceAreaBtn');
 				const practiceAreaDisplay = document.getElementById('practiceAreaDisplay');
 				
 				if (lawyerSelect) {
-					// Reload all lawyers
-					loadAllLawyers();
+					lawyerSelect.innerHTML = '<option value="">First select a practice area</option>';
+					lawyerSelect.disabled = true;
 				}
 				
 				if (serviceSelect) {
-					// Reset practice area to disabled state
 					serviceSelect.value = '';
 				}
 				
 				if (practiceAreaBtn) {
-					practiceAreaBtn.disabled = true;
+					practiceAreaBtn.disabled = false;
 				}
 				
 				if (practiceAreaDisplay) {
-					practiceAreaDisplay.textContent = 'First select a lawyer';
+					practiceAreaDisplay.textContent = 'Click to select practice area';
 				}
-				
-				availablePracticeAreas = [];
 				
 				// Clear calendar
 				clearSelectedDate();
@@ -1149,13 +1148,14 @@ function ensureFormInteractivity() {
     
 }
 
-// Feature: REVERSED - Lawyer to practice area selection logic with database integration
+// Feature: PRACTICE AREA FIRST - Practice area to lawyer selection logic with database integration
 const serviceSelect = document.getElementById('service');
 const lawyerSelect = document.getElementById('lawyer');
 const practiceAreaBtn = document.getElementById('practiceAreaBtn');
 const practiceAreaDisplay = document.getElementById('practiceAreaDisplay');
 let practiceAreaModal;
 let availablePracticeAreas = [];
+let allLawyersData = []; // Store all lawyers data for filtering
 
 // Initialize practice area modal
 document.addEventListener('DOMContentLoaded', () => {
@@ -1169,6 +1169,9 @@ document.addEventListener('DOMContentLoaded', () => {
 			searchInput.addEventListener('input', filterPracticeAreas);
 		}
 	}
+	
+	// Load all practice areas on page load
+	loadAllPracticeAreas();
 });
 
 // Open practice area modal
@@ -1179,6 +1182,25 @@ if (practiceAreaBtn) {
 			practiceAreaModal.show();
 		}
 	});
+}
+
+// Load all practice areas from database
+async function loadAllPracticeAreas() {
+	try {
+		const response = await fetch('api/get_all_practice_areas.php');
+		const result = await response.json();
+		
+		if (result.success && result.practice_areas.length > 0) {
+			availablePracticeAreas = result.practice_areas.map(area => area.area_name);
+			console.log('Loaded practice areas:', availablePracticeAreas);
+		} else {
+			availablePracticeAreas = [];
+			console.error('No practice areas found');
+		}
+	} catch (error) {
+		console.error('Error loading practice areas:', error);
+		availablePracticeAreas = [];
+	}
 }
 
 // Populate practice area modal with available areas
@@ -1246,8 +1268,8 @@ function filterPracticeAreas() {
 	}
 }
 
-// Select a practice area
-function selectPracticeArea(area) {
+// Select a practice area and filter lawyers
+async function selectPracticeArea(area) {
 	serviceSelect.value = area;
 	practiceAreaDisplay.textContent = area;
 	
@@ -1263,63 +1285,162 @@ function selectPracticeArea(area) {
 	
 	// Close modal
 	practiceAreaModal.hide();
+	
+	// Filter lawyers by selected practice area
+	await filterLawyersByPracticeArea(area);
+	
+	// Clear calendar and date selection
+	clearSelectedDate();
+	
+	// Update calendar to show combined availability of filtered lawyers
+	await updateCalendarForPracticeArea(area);
 }
 
-// Load all lawyers on page load
-async function loadAllLawyers() {
+// Filter lawyers by practice area
+async function filterLawyersByPracticeArea(practiceArea) {
 	if (!lawyerSelect) return;
 	
 	try {
 		lawyerSelect.innerHTML = '<option value="">Loading lawyers...</option>';
+		lawyerSelect.disabled = true;
 		
-		const response = await fetch('api/get_all_lawyers.php');
+		const response = await fetch(`api/get_lawyers_by_specialization.php?specialization=${encodeURIComponent(practiceArea)}`);
 		const result = await response.json();
 		
 		if (result.success && result.lawyers.length > 0) {
 			lawyerSelect.innerHTML = '<option value="">Select a lawyer</option>';
 			
-			result.lawyers.forEach(lawyer => {
+			// Fetch full lawyer details for each lawyer
+			const lawyerDetailsPromises = result.lawyers.map(async (lawyer) => {
+				try {
+					const detailResponse = await fetch('api/get_all_lawyers.php');
+					const detailResult = await detailResponse.json();
+					if (detailResult.success) {
+						return detailResult.lawyers.find(l => l.id === lawyer.id);
+					}
+				} catch (error) {
+					console.error('Error fetching lawyer details:', error);
+				}
+				return null;
+			});
+			
+			const lawyerDetails = await Promise.all(lawyerDetailsPromises);
+			
+			result.lawyers.forEach((lawyer, index) => {
 				const option = document.createElement('option');
-				option.value = lawyer.name;
-				option.textContent = lawyer.name;
-				option.dataset.lawyerId = lawyer.id; // attach ID for precise API calls
-				option.dataset.specialization = lawyer.primary_specialization;
-				option.dataset.specializations = JSON.stringify(lawyer.specializations || [lawyer.primary_specialization]);
+				const fullName = 'Atty. ' + lawyer.name;
+				option.value = fullName;
+				option.textContent = fullName;
+				option.dataset.lawyerId = lawyer.id;
+				
+				// Add specialization data if available
+				const details = lawyerDetails[index];
+				if (details) {
+					option.dataset.specialization = details.primary_specialization;
+					option.dataset.specializations = JSON.stringify(details.specializations || [details.primary_specialization]);
+				}
+				
 				lawyerSelect.appendChild(option);
 			});
+			
+			lawyerSelect.disabled = false;
 		} else {
-			lawyerSelect.innerHTML = '<option value="">No lawyers available</option>';
+			lawyerSelect.innerHTML = '<option value="">No lawyers available for this practice area</option>';
+			lawyerSelect.disabled = true;
 		}
 	} catch (error) {
-		console.error('Error loading lawyers:', error);
+		console.error('Error filtering lawyers:', error);
 		lawyerSelect.innerHTML = '<option value="">Error loading lawyers</option>';
+		lawyerSelect.disabled = true;
 	}
 }
 
-// UNIFIED: When lawyer is selected, auto-fill practice areas AND update calendar
-if (serviceSelect && lawyerSelect) {
+// Update calendar to show combined availability for practice area
+async function updateCalendarForPracticeArea(practiceArea) {
+	try {
+		// Get all lawyers for this practice area
+		const response = await fetch(`api/get_lawyers_by_specialization.php?specialization=${encodeURIComponent(practiceArea)}`);
+		const result = await response.json();
+		
+		if (result.success && result.lawyers.length > 0) {
+			// Fetch availability for all lawyers
+			const availabilityPromises = result.lawyers.map(async (lawyer) => {
+				try {
+					const lawyerName = lawyer.name;
+					const availResponse = await fetch(`api/get_lawyer_availability.php?lawyer=${encodeURIComponent(lawyerName)}&lawyer_id=${encodeURIComponent(lawyer.id)}`);
+					const availResult = await availResponse.json();
+					
+					if (availResult.success) {
+						return {
+							lawyer: 'Atty. ' + lawyerName,
+							dates: availResult.available_dates,
+							dateStatusMap: availResult.date_status_map || {}
+						};
+					}
+				} catch (error) {
+					console.error('Error fetching availability for lawyer:', lawyer.name, error);
+				}
+				return null;
+			});
+			
+			const availabilities = await Promise.all(availabilityPromises);
+			
+			// Combine all available dates from all lawyers
+			const combinedDates = new Set();
+			availabilities.forEach(avail => {
+				if (avail && avail.dates) {
+					avail.dates.forEach(date => combinedDates.add(date));
+				}
+			});
+			
+			// Store availability for each lawyer with their status maps
+			availabilities.forEach(avail => {
+				if (avail) {
+					lawyerAvailability[avail.lawyer] = {
+						availableDays: avail.dates,
+						dateStatusMap: avail.dateStatusMap
+					};
+				}
+			});
+			
+			// Store combined availability for the practice area
+			lawyerAvailability['_practiceArea_' + practiceArea] = {
+				availableDays: Array.from(combinedDates),
+				dateStatusMap: {} // Combined view doesn't show detailed status
+			};
+			
+			console.log('Combined availability for', practiceArea, ':', Array.from(combinedDates));
+			
+			// Re-render calendar with combined availability
+			window.renderCalendar();
+		}
+	} catch (error) {
+		console.error('Error updating calendar for practice area:', error);
+	}
+}
+
+// Load all lawyers on page load (for reference, not displayed initially)
+async function loadAllLawyers() {
+	try {
+		const response = await fetch('api/get_all_lawyers.php');
+		const result = await response.json();
+		
+		if (result.success && result.lawyers.length > 0) {
+			allLawyersData = result.lawyers;
+			console.log('Loaded all lawyers data:', allLawyersData.length);
+		}
+	} catch (error) {
+		console.error('Error loading lawyers:', error);
+	}
+}
+
+// When lawyer is selected, update calendar with that specific lawyer's availability
+if (lawyerSelect) {
 	lawyerSelect.addEventListener('change', async () => {
 		const selectedOption = lawyerSelect.options[lawyerSelect.selectedIndex];
 		const selectedLawyer = lawyerSelect.value;
 		
 		if (selectedOption && selectedLawyer) {
-			// PART 1: Populate practice areas for modal selection
-			const primarySpec = selectedOption.dataset.specialization;
-			const allSpecs = JSON.parse(selectedOption.dataset.specializations || '[]');
-			
-			// Store available practice areas
-			availablePracticeAreas = allSpecs.length > 0 ? allSpecs : [primarySpec];
-			
-			// Enable practice area button
-			if (practiceAreaBtn) {
-				practiceAreaBtn.disabled = false;
-				practiceAreaDisplay.textContent = 'Click to select practice area';
-			}
-			
-			// Clear previous selection
-			serviceSelect.value = '';
-			
-			// PART 2: Update calendar with lawyer's availability
 			// Clear previous date selection
 			clearSelectedDate();
 			
@@ -1331,9 +1452,8 @@ if (serviceSelect && lawyerSelect) {
 				// Remove "Atty. " prefix for API call (database stores without prefix)
 				const lawyerNameForAPI = selectedLawyer.replace(/^Atty\.\s*/i, '');
 				
-				// Feature: Fetch lawyer availability from database
-				const selectedOpt = lawyerSelect.options[lawyerSelect.selectedIndex];
-				const lawyerIdForAPI = selectedOpt?.dataset?.lawyerId || '';
+				// Fetch lawyer availability from database
+				const lawyerIdForAPI = selectedOption.dataset.lawyerId || '';
 				
 				console.log('Fetching availability for:', lawyerNameForAPI, 'ID:', lawyerIdForAPI);
 				
@@ -1344,9 +1464,10 @@ if (serviceSelect && lawyerSelect) {
 				loadingManager.hide(loaderId);
 				
 				if (result.success) {
-					// Update lawyer availability data
+					// Update lawyer availability data with detailed status map
 					lawyerAvailability[selectedLawyer] = {
-						availableDays: result.available_dates
+						availableDays: result.available_dates,
+						dateStatusMap: result.date_status_map || {} // NEW: Store complete status map
 					};
 					
 					console.log('Stored availability for', selectedLawyer, ':', lawyerAvailability[selectedLawyer]);
@@ -1356,32 +1477,34 @@ if (serviceSelect && lawyerSelect) {
 				} else {
 					console.error('Error fetching availability:', result.message);
 					// Re-render calendar with no availability
-					lawyerAvailability[selectedLawyer] = { availableDays: [] };
+					lawyerAvailability[selectedLawyer] = { 
+						availableDays: [],
+						dateStatusMap: {}
+					};
 					window.renderCalendar();
 				}
 			} catch (error) {
 				console.error('Error fetching lawyer availability:', error);
 				// Re-render calendar with no availability
-				lawyerAvailability[selectedLawyer] = { availableDays: [] };
+				lawyerAvailability[selectedLawyer] = { 
+					availableDays: [],
+					dateStatusMap: {}
+				};
 				window.renderCalendar();
 			}
 		} else {
-			// No lawyer selected, reset everything
-			availablePracticeAreas = [];
-			if (practiceAreaBtn) {
-				practiceAreaBtn.disabled = true;
-				practiceAreaDisplay.textContent = 'First select a lawyer';
+			// No lawyer selected, show practice area availability
+			const selectedPracticeArea = serviceSelect.value;
+			if (selectedPracticeArea) {
+				// Show combined availability for practice area
+				window.renderCalendar();
 			}
-			serviceSelect.value = '';
-			clearSelectedDate();
 		}
 	});
 }
 
-// Load all lawyers when page loads
-if (lawyerSelect) {
-	loadAllLawyers();
-}
+// Load all lawyers data when page loads (for filtering)
+loadAllLawyers();
 
 // Note: Lawyer booking buttons are now handled dynamically in initializeBookButtons() function
 
@@ -1405,7 +1528,7 @@ window.renderCalendar = function() {
 		const firstDay = new Date(year, month, 1).getDay();
 		const daysInMonth = new Date(year, month + 1, 0).getDate();
 		const selectedLawyer = document.getElementById('lawyer')?.value;
-
+		const selectedPracticeArea = document.getElementById('service')?.value;
 
 		const fragments = [];
 		for (let i = 0; i < firstDay; i++) {
@@ -1414,12 +1537,39 @@ window.renderCalendar = function() {
 		
 		for (let d = 1; d <= daysInMonth; d++) {
 			const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-			const isAvailable = selectedLawyer && lawyerAvailability[selectedLawyer]?.availableDays.includes(dateStr);
+			
+			// Check date status based on selection
+			let dateStatus = 'unavailable'; // Default status
+			let isClickable = false;
+			
 			const isPast = new Date(dateStr) < new Date().setHours(0,0,0,0);
 			
-			// Feature: Highlight available days for selected lawyer
-			const buttonClass = isAvailable ? 'available' : (isPast ? 'past' : 'unavailable');
-			const disabled = !isAvailable || isPast;
+			if (isPast) {
+				dateStatus = 'past';
+			} else if (selectedLawyer) {
+				// If lawyer is selected, use their specific date status map
+				const lawyerData = lawyerAvailability[selectedLawyer];
+				if (lawyerData && lawyerData.dateStatusMap && lawyerData.dateStatusMap[dateStr]) {
+					const status = lawyerData.dateStatusMap[dateStr].status;
+					dateStatus = status;
+					isClickable = (status === 'available');
+				} else if (lawyerData && lawyerData.availableDays && lawyerData.availableDays.includes(dateStr)) {
+					// Fallback to old logic if status map not available
+					dateStatus = 'available';
+					isClickable = true;
+				}
+			} else if (selectedPracticeArea) {
+				// If only practice area is selected, show combined availability
+				const practiceAreaKey = '_practiceArea_' + selectedPracticeArea;
+				if (lawyerAvailability[practiceAreaKey]?.availableDays.includes(dateStr)) {
+					dateStatus = 'available';
+					isClickable = true;
+				}
+			}
+			
+			// Feature: Highlight dates with different colors based on status
+			const buttonClass = dateStatus;
+			const disabled = !isClickable;
 			
 			fragments.push(
 				`<div class="calendar-day ${buttonClass}" role="gridcell">
@@ -2027,8 +2177,7 @@ document.getElementById('confirmTimeSlot').addEventListener('click', async () =>
         
         // Get form values
         const lastName = formData.get('lastName');
-        const firstName = formData.get('firstName');
-        const middleName = formData.get('middleName');
+        const fullName = formData.get('fullName');
         const email = formData.get('email');
         const phone = formData.get('phone');
         const service = formData.get('service');
@@ -2038,7 +2187,7 @@ document.getElementById('confirmTimeSlot').addEventListener('click', async () =>
         const selectedTime = hiddenTimeInput.value;
         
         // Validate all required fields
-        if (!lastName || !firstName || !email || !phone || !service || !lawyer || !message) {
+        if (!fullName || !email || !phone || !service || !lawyer || !message) {
             openStatusModal('Please fill out all required fields.');
             return;
         }
@@ -2046,14 +2195,8 @@ document.getElementById('confirmTimeSlot').addEventListener('click', async () =>
         // Enhanced validation with detailed error messages
         const validationErrors = [];
         
-        if (!validateName(firstName)) {
-            validationErrors.push('First name must be 2-50 characters, letters only');
-        }
-        if (!validateName(lastName)) {
-            validationErrors.push('Last name must be 2-50 characters, letters only');
-        }
-        if (middleName && !validateName(middleName)) {
-            validationErrors.push('Middle name must be 2-50 characters, letters only');
+        if (fullName.trim().length < 3) {
+            validationErrors.push('Full name must be at least 3 characters');
         }
         if (!validateEmail(email)) {
             validationErrors.push('Please enter a valid email address');
@@ -2077,11 +2220,9 @@ document.getElementById('confirmTimeSlot').addEventListener('click', async () =>
         }
         
         try {
-            // Prepare data with separate name fields and selected time
+            // Prepare data with full name field and selected time
             const submissionData = {
-                lastName: lastName,
-                firstName: firstName,
-                middleName: middleName,
+                fullName: fullName,
                 email: email,
                 phone: phone,
                 service: service,
@@ -2104,7 +2245,7 @@ document.getElementById('confirmTimeSlot').addEventListener('click', async () =>
             
             if (result.success) {
                 // Show success message
-                openStatusModal(`Thank you, ${firstName}! We've received your consultation request for ${service}. We'll contact you within 24 hours to confirm your appointment with ${lawyer} on ${date}.`);
+                openStatusModal(`Thank you, ${fullName}! We've received your consultation request for ${service}. We'll contact you within 24 hours to confirm your appointment with ${lawyer} on ${date}.`);
                 
                 // Trigger email processing if emails were queued
                 if (result.email_queued) {
@@ -2120,15 +2261,24 @@ document.getElementById('confirmTimeSlot').addEventListener('click', async () =>
                 currentStep = 1;
                 showStep(currentStep);
                 
-                // Reset lawyer and practice area dropdowns
+                // Reset practice area and lawyer dropdowns
                 const lawyerSelect = document.getElementById('lawyer');
                 const serviceSelect = document.getElementById('service');
+                const practiceAreaBtn = document.getElementById('practiceAreaBtn');
+                const practiceAreaDisplay = document.getElementById('practiceAreaDisplay');
+                
                 if (lawyerSelect) {
-                    lawyerSelect.value = '';
+                    lawyerSelect.innerHTML = '<option value="">First select a practice area</option>';
+                    lawyerSelect.disabled = true;
                 }
                 if (serviceSelect) {
-                    serviceSelect.innerHTML = '<option value="">First select a lawyer</option>';
-                    serviceSelect.disabled = true;
+                    serviceSelect.value = '';
+                }
+                if (practiceAreaBtn) {
+                    practiceAreaBtn.disabled = false;
+                }
+                if (practiceAreaDisplay) {
+                    practiceAreaDisplay.textContent = 'Click to select practice area';
                 }
                 
                 // Clear calendar selection
@@ -2219,7 +2369,7 @@ function triggerEmailProcessing() {
 // ============================================
 
 let currentStep = 1;
-const totalSteps = 4;
+const totalSteps = 3; // Changed from 4 to 3
 
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
@@ -2233,7 +2383,7 @@ function resetForm() {
 	showStep(1);
 	
 	// Clear all form inputs
-	const form = document.getElementById('appointmentForm');
+	const form = document.getElementById('appointment-form');
 	if (form) {
 		form.reset();
 	}
@@ -2245,13 +2395,13 @@ function resetForm() {
 	
 	// Reset validation note
 	if (validationNote) {
-		validationNote.textContent = 'Please select a date to enable form submission';
+		validationNote.textContent = 'Please complete all required fields';
 		validationNote.style.color = '#666666';
 		validationNote.classList.remove('valid');
 	}
 	
 	// Scroll to top of form
-	const formContainer = document.querySelector('.appointment-form-container');
+	const formContainer = document.querySelector('.appointment-single-column');
 	if (formContainer) {
 		formContainer.scrollIntoView({ 
 			behavior: 'smooth', 
@@ -2264,6 +2414,38 @@ function resetForm() {
 function initMultiStepForm() {
 	showStep(currentStep);
 	updateButtons();
+}
+
+// Update review section with form data
+function updateReviewSection() {
+	// Personal Information
+	const fullName = document.getElementById('fullName')?.value || '';
+	
+	document.getElementById('review-name').textContent = fullName || '-';
+	document.getElementById('review-email').textContent = document.getElementById('email')?.value || '-';
+	document.getElementById('review-phone').textContent = document.getElementById('phone')?.value || '-';
+	
+	// Consultation Details
+	document.getElementById('review-lawyer').textContent = document.getElementById('lawyer')?.value || '-';
+	document.getElementById('review-practice').textContent = document.getElementById('service')?.value || '-';
+	
+	const selectedDate = document.getElementById('selected-date')?.value;
+	if (selectedDate) {
+		const date = new Date(selectedDate);
+		document.getElementById('review-date').textContent = date.toLocaleDateString('en-US', { 
+			weekday: 'long', 
+			year: 'numeric', 
+			month: 'long', 
+			day: 'numeric' 
+		});
+	} else {
+		document.getElementById('review-date').textContent = '-';
+	}
+	
+	const message = document.getElementById('message')?.value || '';
+	document.getElementById('review-message').textContent = message.length > 100 
+		? message.substring(0, 100) + '...' 
+		: message || '-';
 }
 
 // Show specific step
@@ -2292,6 +2474,11 @@ function showStep(step) {
 		}
 	});
 	
+	// If moving to step 3 (review), update review section
+	if (step === 3) {
+		updateReviewSection();
+	}
+	
 	currentStep = step;
 	updateButtons();
 }
@@ -2307,10 +2494,10 @@ function updateButtons() {
 		prevBtn.style.opacity = '1';
 	}
 	
-	// Next/Submit buttons - Submit button is now always hidden since submission happens via Confirm button in time slot modal
+	// Next/Submit buttons
 	if (currentStep === totalSteps) {
 		nextBtn.style.display = 'none';
-		submitBtn.style.display = 'none'; // Keep hidden - submission happens via time slot modal
+		submitBtn.style.display = 'inline-flex';
 	} else {
 		nextBtn.style.display = 'inline-flex';
 		submitBtn.style.display = 'none';
@@ -2327,8 +2514,8 @@ function validateStep(step) {
 	let errorMessages = [];
 	
 	inputs.forEach(input => {
-		// Skip disabled inputs
-		if (input.disabled) return;
+		// Skip disabled inputs and hidden inputs
+		if (input.disabled || input.type === 'hidden') return;
 		
 		// Check if empty
 		if (!input.value.trim()) {
@@ -2354,6 +2541,15 @@ function validateStep(step) {
 		}
 	});
 	
+	// Special validation for step 2 - check if date is selected
+	if (step === 2) {
+		const selectedDate = document.getElementById('selected-date')?.value;
+		if (!selectedDate || selectedDate.trim() === '') {
+			isValid = false;
+			errorMessages.push('Consultation Date');
+		}
+	}
+	
 	// Update validation note
 	if (!isValid) {
 		validationNote.textContent = `Please complete: ${errorMessages.join(', ')}`;
@@ -2375,16 +2571,21 @@ if (nextBtn) {
 			if (currentStep < totalSteps) {
 				showStep(currentStep + 1);
 				// Scroll to top of form
-				document.querySelector('.appointment-form-container').scrollIntoView({ 
-					behavior: 'smooth', 
-					block: 'start' 
-				});
+				const container = document.querySelector('.appointment-single-column');
+				if (container) {
+					container.scrollIntoView({ 
+						behavior: 'smooth', 
+						block: 'start' 
+					});
+				}
 			}
 		} else {
 			// Shake the form to indicate error
-			const formContainer = document.querySelector('.appointment-form-container');
-			formContainer.classList.add('shake');
-			setTimeout(() => formContainer.classList.remove('shake'), 500);
+			const formContainer = document.querySelector('.appointment-single-column');
+			if (formContainer) {
+				formContainer.classList.add('shake');
+				setTimeout(() => formContainer.classList.remove('shake'), 500);
+			}
 		}
 	});
 }
@@ -2395,10 +2596,13 @@ if (prevBtn) {
 		if (currentStep > 1) {
 			showStep(currentStep - 1);
 			// Scroll to top of form
-			document.querySelector('.appointment-form-container').scrollIntoView({ 
-				behavior: 'smooth', 
-				block: 'start' 
-			});
+			const container = document.querySelector('.appointment-single-column');
+			if (container) {
+				container.scrollIntoView({ 
+					behavior: 'smooth', 
+					block: 'start' 
+					});
+			}
 		}
 	});
 }
@@ -2426,9 +2630,9 @@ document.querySelectorAll('.form-step input, .form-step select, .form-step texta
 document.addEventListener('DOMContentLoaded', () => {
 	initMultiStepForm();
 	
-	// Reset form when navigating to book consultation section
-	const bookConsultationSection = document.getElementById('book-consultation');
-	if (bookConsultationSection) {
+	// Reset form when navigating to appointment section
+	const appointmentSection = document.getElementById('appointment');
+	if (appointmentSection) {
 		// Create an intersection observer to detect when section is visible
 		const observer = new IntersectionObserver((entries) => {
 			entries.forEach(entry => {
@@ -2441,11 +2645,11 @@ document.addEventListener('DOMContentLoaded', () => {
 			threshold: 0.3 // Trigger when 30% of section is visible
 		});
 		
-		observer.observe(bookConsultationSection);
+		observer.observe(appointmentSection);
 	}
 	
 	// Also reset when clicking "Book Consultation" links
-	document.querySelectorAll('a[href="#book-consultation"]').forEach(link => {
+	document.querySelectorAll('a[href="#appointment"]').forEach(link => {
 		link.addEventListener('click', () => {
 			setTimeout(() => {
 				resetForm();
