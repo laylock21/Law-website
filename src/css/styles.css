@@ -880,8 +880,189 @@ html {
 }
 
 /* ============================================================================
-   APPOINTMENT SECTION - Compact & Balanced Design
+   APPOINTMENT SECTION - Single Column with Grid on All Steps
    ============================================================================ */
+
+/* Single Column Container */
+.appointment-single-column {
+	max-width: 1200px;
+	margin: 50px auto 0;
+	background: #ffffff;
+	border-radius: 16px;
+	padding: 40px;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+	border: 2px solid rgba(197, 162, 83, 0.2);
+}
+
+/* Universal Grid Layout for All Steps */
+.step-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 32px;
+	align-items: start;
+	margin-top: 20px;
+}
+
+.step-left,
+.step-right {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+}
+
+/* Info Box Styles (Step 1 Right Side) */
+.info-box {
+	background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
+	border: 2px solid rgba(197, 162, 83, 0.2);
+	border-radius: 12px;
+	padding: 24px;
+	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+	height: 100%;
+}
+
+.info-box-header {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 20px;
+	padding-bottom: 16px;
+	border-bottom: 2px solid rgba(197, 162, 83, 0.2);
+}
+
+.info-box-header i {
+	color: #C5A253;
+	font-size: 24px;
+}
+
+.info-box-header h4 {
+	color: #000000;
+	font-size: 18px;
+	font-weight: 700;
+	margin: 0;
+}
+
+.info-box-content {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.info-item {
+	display: flex;
+	gap: 12px;
+	align-items: start;
+}
+
+.info-item i {
+	color: #C5A253;
+	font-size: 20px;
+	margin-top: 2px;
+	flex-shrink: 0;
+}
+
+.info-item strong {
+	display: block;
+	color: #000000;
+	font-size: 14px;
+	font-weight: 700;
+	margin-bottom: 4px;
+}
+
+.info-item p {
+	color: #666666;
+	font-size: 13px;
+	line-height: 1.5;
+	margin: 0;
+}
+
+/* Calendar in Step 2 */
+.step-left .calendar {
+	margin: 0;
+	padding: 24px;
+	background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
+	border-radius: 12px;
+	border: 2px solid rgba(197, 162, 83, 0.15);
+	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Review Cards (Step 3) */
+.review-card {
+	background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
+	border: 2px solid rgba(197, 162, 83, 0.2);
+	border-radius: 12px;
+	padding: 24px;
+	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+	height: 100%;
+}
+
+.review-card h4 {
+	color: #000000;
+	font-size: 16px;
+	font-weight: 700;
+	margin: 0 0 16px 0;
+	padding-bottom: 12px;
+	border-bottom: 2px solid rgba(197, 162, 83, 0.2);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.review-card h4 i {
+	color: #C5A253;
+	font-size: 18px;
+}
+
+.review-item {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 12px 0;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.review-item:last-child {
+	border-bottom: none;
+}
+
+.review-label {
+	font-weight: 600;
+	color: #666666;
+	font-size: 13px;
+}
+
+.review-value {
+	color: #000000;
+	font-weight: 500;
+	font-size: 14px;
+	word-break: break-word;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+	.appointment-single-column {
+		padding: 24px;
+	}
+	
+	.step-grid {
+		grid-template-columns: 1fr;
+		gap: 24px;
+	}
+	
+	.info-box {
+		order: -1; /* Show info box first on mobile */
+	}
+}
+
+/* Shake animation for validation errors */
+@keyframes shake {
+	0%, 100% { transform: translateX(0); }
+	10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+	20%, 40%, 60%, 80% { transform: translateX(10px); }
+}
+
+.shake {
+	animation: shake 0.5s;
+}
 
 .appointment-content {
 	display: grid;
@@ -1223,26 +1404,53 @@ html {
 	font-weight: 700;
 }
 
-/* Feature: Calendar availability states - Black, Gold & White Theme */
+/* Feature: Calendar availability states - Solid Background Colors */
 .calendar-day.available button {
-	background: linear-gradient(135deg, #faf7f0 0%, #f5f1e8 100%);
+	background: #90EE90;
 	color: #000000;
-	border: 2px solid rgba(197, 162, 83, 0.4);
+	border: 2px solid #90EE90;
+	font-weight: 600;
 }
 
 .calendar-day.available button:hover {
-	background: linear-gradient(135deg, #C5A253 0%, #d4b36a 100%);
+	background: #7CCD7C;
 	color: #000000;
-	border-color: #C5A253;
-	box-shadow: 0 4px 12px rgba(197, 162, 83, 0.5);
+	border-color: #7CCD7C;
+	box-shadow: 0 4px 12px rgba(124, 205, 124, 0.5);
+	transform: scale(1.05);
+}
+
+.calendar-day.fully-booked button {
+	background: #FFB6B6;
+	color: #8B0000;
+	border: 2px solid #FFB6B6;
+	cursor: not-allowed;
+	font-weight: 600;
+}
+
+.calendar-day.fully-booked button:hover {
+	transform: none;
+	box-shadow: none;
+}
+
+.calendar-day.blocked button {
+	background: #D3D3D3;
+	color: #4A4A4A;
+	border: 2px solid #D3D3D3;
+	cursor: not-allowed;
+	font-weight: 600;
+}
+
+.calendar-day.blocked button:hover {
+	transform: none;
+	box-shadow: none;
 }
 
 .calendar-day.unavailable button {
-	background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
-	color: #666666;
-	border: 2px solid #d0d0d0;
+	background: #F5F5F5;
+	color: #888888;
+	border: 2px solid #F5F5F5;
 	cursor: not-allowed;
-	opacity: 0.6;
 }
 
 .calendar-day.unavailable button:hover {
@@ -1251,11 +1459,11 @@ html {
 }
 
 .calendar-day.past button {
-	background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
-	color: #999999;
-	border: 2px solid #e0e0e0;
+	background: #FAFAFA;
+	color: #BBBBBB;
+	border: 2px solid #FAFAFA;
 	cursor: not-allowed;
-	opacity: 0.5;
+	opacity: 0.7;
 }
 
 .calendar-day.past button:hover {
@@ -2407,11 +2615,29 @@ html {
 }
 
 .legend-color.available {
-    background: linear-gradient(135deg, #faf7f0 0%, #f5f1e8 100%);
-    border-color: rgba(197, 162, 83, 0.5);
+    background: #90EE90;
+    border-color: #90EE90;
+}
+
+.legend-color.fully-booked {
+    background: #FFB6B6;
+    border-color: #FFB6B6;
+}
+
+.legend-color.blocked {
+    background: #D3D3D3;
+    border-color: #D3D3D3;
 }
 
 .legend-color.unavailable {
+    background: #F5F5F5;
+    border-color: #F5F5F5;
+}
+
+.legend-color.past {
+    background: #FAFAFA;
+    border-color: #FAFAFA;
+}.legend-color.unavailable {
     background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
     border-color: #d0d0d0;
 }
