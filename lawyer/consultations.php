@@ -169,7 +169,7 @@ $active_page = "consultations";
 	<style>
 		/* Make checkboxes bigger */
 		input[type="checkbox"] {
-			width: 166x;
+			width: 16px;
 			height: 16px;
 			cursor: pointer;
 		}
@@ -184,6 +184,58 @@ $active_page = "consultations";
 			width: 16px;
 			height: 16px;
 			cursor: pointer;
+		}
+		
+		/* Bulk action select styling */
+		#bulk_action {
+			padding: 10px 16px;
+			border: 2px solid #e9ecef;
+			border-radius: 6px;
+			font-family: var(--font-sans);
+			font-size: 14px;
+			font-weight: 500;
+			background: white;
+			color: var(--text-dark);
+			cursor: pointer;
+			display: inline-block;
+			transition: all 0.3s ease;
+			appearance: none;
+			-webkit-appearance: none;
+			-moz-appearance: none;
+			background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
+			background-repeat: no-repeat;
+			background-position: right 12px center;
+			background-size: 16px 12px;
+			padding-right: 40px;
+			height: 42px;
+			min-width: 150px;
+		}
+		
+		#bulk_action:hover {
+			border-color: var(--gold);
+			transform: translateY(-1px);
+			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+		}
+		
+		#bulk_action:focus {
+			outline: none;
+			border-color: var(--gold);
+			box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.1);
+		}
+		
+		/* Bulk actions container animation */
+		#bulk-actions-container {
+			opacity: 0;
+			transform: translateY(-10px);
+			transition: all 0.3s ease;
+			max-height: 0;
+			overflow: hidden;
+		}
+		
+		#bulk-actions-container.show {
+			opacity: 1;
+			transform: translateY(0);
+			max-height: 100px;
 		}
 	</style>
 </head>
@@ -202,16 +254,16 @@ $active_page = "consultations";
 			<div class="lawyer-availability-section">
 				<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
 					<h3>Consultation Requests</h3>
-					<div class="bulk-actions" style="margin: 10px 0;">
+					<div class="bulk-actions" id="bulk-actions-container" style="margin: 10px 0; display: none;">
 						<form method="POST" id="bulk-form" style="display: flex; gap: 10px; align-items: center;">
-							<select name="bulk_action" id="bulk_action" style="padding: 8px; border-radius: 6px; border: 1px solid #e9ecef;">
+							<select name="bulk_action" id="bulk_action">
 								<option value="confirm">Confirm</option>
 								<option value="complete">Complete</option>
 								<option value="cancel">Cancel</option>
 							</select>
 							<button type="submit" class="lawyer-btn btn-apply-selected">Apply to Selected</button>
+						</form>
 					</div>
-					</form>
 				</div>
 				<div style="overflow-x: auto;">
 					<form method="POST" id="consultations-form">
@@ -314,10 +366,39 @@ $active_page = "consultations";
 		consultationCheckboxes.forEach(checkbox => {
 			checkbox.checked = selectAllCheckbox.checked;
 		});
+		
+		// Update bulk actions visibility
+		updateBulkActionsVisibility();
+	}
+	
+	function updateBulkActionsVisibility() {
+		const checkedBoxes = document.querySelectorAll('.consultation-checkbox:checked');
+		const bulkActionsContainer = document.getElementById('bulk-actions-container');
+		
+		if (checkedBoxes.length > 0) {
+			bulkActionsContainer.style.display = 'block';
+			// Trigger reflow to ensure transition works
+			bulkActionsContainer.offsetHeight;
+			bulkActionsContainer.classList.add('show');
+		} else {
+			bulkActionsContainer.classList.remove('show');
+			// Hide after animation completes
+			setTimeout(() => {
+				if (!bulkActionsContainer.classList.contains('show')) {
+					bulkActionsContainer.style.display = 'none';
+				}
+			}, 300);
+		}
 	}
 	
 	// Wrap event listeners in DOMContentLoaded to ensure elements exist
 	document.addEventListener('DOMContentLoaded', function() {
+		// Add change event listeners to all consultation checkboxes
+		const consultationCheckboxes = document.querySelectorAll('.consultation-checkbox');
+		consultationCheckboxes.forEach(checkbox => {
+			checkbox.addEventListener('change', updateBulkActionsVisibility);
+		});
+		
 		// Bulk action confirmation using unified modal system
 		const bulkForm = document.getElementById('bulk-form');
 		if (bulkForm) {

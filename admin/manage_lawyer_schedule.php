@@ -48,8 +48,9 @@ try {
             $redirect_after_post = true; // Flag to redirect after successful POST
             
             switch ($_POST['action']) {
-                case 'block_date':
+                case 'block_dates':
                     $block_date = $_POST['block_date'] ?? '';
+                    $end_date = $_POST['end_date'] ?? '';
                     $reason = trim($_POST['reason'] ?? '');
                     
                     // Validate reason is selected
@@ -66,85 +67,216 @@ try {
                         throw new Exception('Cannot block past dates');
                     }
                     
-                    // Check if date is already blocked (max_appointments = 0 means blocked)
-                    $check_stmt = $pdo->prepare("
-                        SELECT id FROM lawyer_availability 
-                        WHERE user_id = ? AND specific_date = ? AND max_appointments = 0
-                    ");
-                    $check_stmt->execute([$lawyer_id, $block_date]);
+                    // Check if end_date is provided (range blocking)
+                    $is_range = !empty($end_date);
                     
-                    if ($check_stmt->fetch()) {
-                        throw new Exception('This date is already blocked');
-                    }
-                    
-                    // Insert blocked date (one-time schedule with 0 max appointments)
-                    $insert_stmt = $pdo->prepare("
-                        INSERT INTO lawyer_availability 
-                        (user_id, schedule_type, specific_date, start_time, end_time, max_appointments, is_active, weekdays)
-                        VALUES (?, 'one_time', ?, '00:00:00', '23:59:59', 0, 1, ?)
-                    ");
-                    
-                    $weekdays = $reason . ' (Blocked by Admin)';
-                    $insert_stmt->execute([$lawyer_id, $block_date, $weekdays]);
-                    
-                    // Check for affected appointments and send notifications
-                    require_once '../includes/EmailNotification.php';
-                    $emailNotification = new EmailNotification($pdo);
-                    $affected_appointments = $emailNotification->getAffectedAppointments($lawyer_id, $block_date);
-                    
-                    // Queue notifications BEFORE cancelling appointments
-                    $notification_count = 0;
-                    foreach ($affected_appointments as $appointment) {
-                        $queued = $emailNotification->notifyAppointmentCancelled($appointment['id'], $reason);
-                        if ($queued) {
-                            $notification_count++;
+                    if ($is_range) {
+                        // Validate end date
+                        if (strtotime($block_date) > strtotime($end_date)) {
+                            throw new Exception('Start date must be before end date');
                         }
-                    }
-                    
-                    // Cancel all affected appointments AFTER queuing notifications (BATCH OPERATION)
-                    $cancelled_count = 0;
-                    if (!empty($affected_appointments)) {
-                        // Batch cancel all appointments in single query (FASTER)
-                        $appointment_ids = array_column($affected_appointments, 'id');
-                        $placeholders = str_repeat('?,', count($appointment_ids) - 1) . '?';
                         
-                        $cancel_stmt = $pdo->prepare("
-                            UPDATE consultations 
-                            SET status = 'cancelled'
-                            WHERE id IN ($placeholders)
-                            AND lawyer_id = ?
+                        if (strtotime($end_date) < strtotime('today')) {
+                            throw new Exception('Cannot block past dates');
+                        }
+                        
+                        // Start transaction for data integrity
+                        $pdo->beginTransaction();
+                        
+                        try {
+                            // Block each date in the range
+                            $current_date = $block_date;
+                            $blocked_count = 0;
+                            $skipped_count = 0;
+                            $total_cancelled = 0;
+                            $notification_count = 0;
+                            $all_affected_ids = [];
+                            $weekdays_text = $reason . ' (Blocked by Admin)';
+                            
+                            require_once '../includes/EmailNotification.php';
+                            $emailNotification = new EmailNotification($pdo);
+                        
+                            // Prepare check statement
+                            $check_stmt = $pdo->prepare("
+                                SELECT id FROM lawyer_availability 
+                                WHERE user_id = ? AND specific_date = ? AND max_appointments = 0
+                            ");
+                            
+                            // Prepare insert statement
+                            $insert_stmt = $pdo->prepare("
+                                INSERT INTO lawyer_availability 
+                                (user_id, schedule_type, specific_date, start_time, end_time, max_appointments, is_active, weekdays)
+                                VALUES (?, 'blocked', ?, '00:00:00', '23:59:59', 0, 1, ?)
+                            ");
+                            
+                            while (strtotime($current_date) <= strtotime($end_date)) {
+                                // Check if date is already blocked
+                                $check_stmt->execute([$lawyer_id, $current_date]);
+                                
+                                if (!$check_stmt->fetch()) {
+                                    // Date not blocked, insert it
+                                    $insert_stmt->execute([$lawyer_id, $current_date, $weekdays_text]);
+                                    $blocked_count++;
+                                    
+                                    // Check for affected appointments on this date
+                                    $affected_appointments = $emailNotification->getAffectedAppointments($lawyer_id, $current_date);
+                                    
+                                    // Queue notifications BEFORE cancelling appointments
+                                    if (!empty($affected_appointments)) {
+                                        foreach ($affected_appointments as $appointment) {
+                                            $queued = $emailNotification->notifyAppointmentCancelled($appointment['id'], $reason);
+                                            if ($queued) {
+                                                $notification_count++;
+                                            }
+                                            $all_affected_ids[] = $appointment['id'];
+                                        }
+                                    }
+                                } else {
+                                    // Date already blocked, skip it
+                                    $skipped_count++;
+                                }
+                                
+                                $current_date = date('Y-m-d', strtotime($current_date . ' +1 day'));
+                            }
+                            
+                            // Batch cancel all affected appointments (OPTIMIZED)
+                            if (!empty($all_affected_ids)) {
+                                $placeholders = str_repeat('?,', count($all_affected_ids) - 1) . '?';
+                                $cancel_stmt = $pdo->prepare("
+                                    UPDATE consultations 
+                                    SET status = 'cancelled'
+                                    WHERE id IN ($placeholders)
+                                    AND lawyer_id = ?
+                                ");
+                                $params = array_merge($all_affected_ids, [$lawyer_id]);
+                                $cancel_stmt->execute($params);
+                                $total_cancelled = $cancel_stmt->rowCount();
+                            }
+                            
+                            if ($blocked_count === 0 && $skipped_count === 0) {
+                                throw new Exception('No dates to block in the selected range');
+                            }
+                            
+                            $message = "Blocked $blocked_count date(s) successfully";
+                            if ($skipped_count > 0) {
+                                $message .= " ($skipped_count already blocked)";
+                            }
+                            
+                            // Add email notification info
+                            if ($notification_count > 0) {
+                                $message .= ". $total_cancelled appointment(s) cancelled and $notification_count email notification(s) are being sent...";
+                                
+                                // Add async email script
+                                $async_script = "
+                                <script>
+                                setTimeout(function() {
+                                    fetch('../process_emails_async.php', {
+                                        method: 'POST',
+                                        headers: {'X-Requested-With': 'XMLHttpRequest'}
+                                    }).then(response => response.json())
+                                    .then(data => {
+                                        if (data.sent > 0) {
+                                            console.log('Emails sent successfully: ' + data.sent);
+                                        }
+                                    }).catch(error => {
+                                        console.log('Email processing error:', error);
+                                    });
+                                }, 100);
+                                </script>";
+                                
+                                $_SESSION['async_email_script'] = $async_script;
+                            }
+                            
+                            // Commit the transaction
+                            $pdo->commit();
+                            
+                        } catch (Exception $e) {
+                            // Rollback transaction on error
+                            $pdo->rollBack();
+                            throw $e;
+                        }
+                    } else {
+                        // Single date blocking
+                        // Check if date is already blocked (max_appointments = 0 means blocked)
+                        $check_stmt = $pdo->prepare("
+                            SELECT id FROM lawyer_availability 
+                            WHERE user_id = ? AND specific_date = ? AND max_appointments = 0
+                        ");
+                        $check_stmt->execute([$lawyer_id, $block_date]);
+                        
+                        if ($check_stmt->fetch()) {
+                            throw new Exception('This date is already blocked');
+                        }
+                        
+                        // Insert blocked date with schedule_type = 'blocked'
+                        $insert_stmt = $pdo->prepare("
+                            INSERT INTO lawyer_availability 
+                            (user_id, schedule_type, specific_date, start_time, end_time, max_appointments, is_active, weekdays)
+                            VALUES (?, 'blocked', ?, '00:00:00', '23:59:59', 0, 1, ?)
                         ");
                         
-                        $params = array_merge($appointment_ids, [$lawyer_id]);
-                        $result = $cancel_stmt->execute($params);
-                        $cancelled_count = $cancel_stmt->rowCount();
-                    }
-                    
-                    // Queue emails for async processing
-                    $message = "Date blocked successfully for " . $lawyer['first_name'] . " " . $lawyer['last_name'];
-                    if ($notification_count > 0) {
-                        $message .= ". $cancelled_count appointment(s) cancelled and $notification_count email notification(s) are being sent...";
+                        $weekdays = $reason . ' (Blocked by Admin)';
+                        $insert_stmt->execute([$lawyer_id, $block_date, $weekdays]);
                         
-                        // Add JavaScript to trigger async email processing
-                        $async_script = "
-                        <script>
-                        setTimeout(function() {
-                            fetch('../process_emails_async.php', {
-                                method: 'POST',
-                                headers: {'X-Requested-With': 'XMLHttpRequest'}
-                            }).then(response => response.json())
-                            .then(data => {
-                                if (data.sent > 0) {
-                                    console.log('Emails sent successfully: ' + data.sent);
-                                }
-                            }).catch(error => {
-                                console.log('Email processing error:', error);
-                            });
-                        }, 100);
-                        </script>";
+                        // Check for affected appointments and send notifications
+                        require_once '../includes/EmailNotification.php';
+                        $emailNotification = new EmailNotification($pdo);
+                        $affected_appointments = $emailNotification->getAffectedAppointments($lawyer_id, $block_date);
                         
-                        // Store script in session to display on next page load
-                        $_SESSION['async_email_script'] = $async_script;
+                        // Queue notifications BEFORE cancelling appointments
+                        $notification_count = 0;
+                        foreach ($affected_appointments as $appointment) {
+                            $queued = $emailNotification->notifyAppointmentCancelled($appointment['id'], $reason);
+                            if ($queued) {
+                                $notification_count++;
+                            }
+                        }
+                        
+                        // Cancel all affected appointments AFTER queuing notifications (BATCH OPERATION)
+                        $cancelled_count = 0;
+                        if (!empty($affected_appointments)) {
+                            // Batch cancel all appointments in single query (FASTER)
+                            $appointment_ids = array_column($affected_appointments, 'id');
+                            $placeholders = str_repeat('?,', count($appointment_ids) - 1) . '?';
+                            
+                            $cancel_stmt = $pdo->prepare("
+                                UPDATE consultations 
+                                SET status = 'cancelled'
+                                WHERE id IN ($placeholders)
+                                AND lawyer_id = ?
+                            ");
+                            
+                            $params = array_merge($appointment_ids, [$lawyer_id]);
+                            $result = $cancel_stmt->execute($params);
+                            $cancelled_count = $cancel_stmt->rowCount();
+                        }
+                        
+                        // Queue emails for async processing
+                        $message = "Date blocked successfully for " . $lawyer['first_name'] . " " . $lawyer['last_name'];
+                        if ($notification_count > 0) {
+                            $message .= ". $cancelled_count appointment(s) cancelled and $notification_count email notification(s) are being sent...";
+                            
+                            // Add JavaScript to trigger async email processing
+                            $async_script = "
+                            <script>
+                            setTimeout(function() {
+                                fetch('../process_emails_async.php', {
+                                    method: 'POST',
+                                    headers: {'X-Requested-With': 'XMLHttpRequest'}
+                                }).then(response => response.json())
+                                .then(data => {
+                                    if (data.sent > 0) {
+                                        console.log('Emails sent successfully: ' + data.sent);
+                                    }
+                                }).catch(error => {
+                                    console.log('Email processing error:', error);
+                                });
+                            }, 100);
+                            </script>";
+                            
+                            // Store script in session to display on next page load
+                            $_SESSION['async_email_script'] = $async_script;
+                        }
                     }
                     
                     $_SESSION['schedule_message'] = $message;
@@ -172,146 +304,6 @@ try {
                     $_SESSION['schedule_message'] = "Date unblocked successfully";
                     header('Location: manage_lawyer_schedule.php?lawyer_id=' . $lawyer_id);
                     exit;
-                    
-                case 'block_multiple':
-                    $start_date = $_POST['start_date'] ?? '';
-                    $end_date = $_POST['end_date'] ?? '';
-                    $reason = trim($_POST['reason'] ?? '');
-                    
-                    // Validate reason is selected
-                    if (empty($reason)) {
-                        throw new Exception('Please select a reason for blocking');
-                    }
-                    
-                    if (empty($start_date) || empty($end_date)) {
-                        throw new Exception('Please select start and end dates');
-                    }
-                    
-                    if (strtotime($start_date) > strtotime($end_date)) {
-                        throw new Exception('Start date must be before end date');
-                    }
-                    
-                    if (strtotime($start_date) < strtotime('today')) {
-                        throw new Exception('Cannot block past dates');
-                    }
-                    
-                    // Start transaction for data integrity
-                    $pdo->beginTransaction();
-                    
-                    try {
-                        // Block each date in the range
-                        $current_date = $start_date;
-                        $blocked_count = 0;
-                        $skipped_count = 0;
-                        $total_cancelled = 0;
-                        $notification_count = 0;
-                        $all_affected_ids = [];
-                        $weekdays_text = $reason . ' (Blocked by Admin)';
-                        
-                        require_once '../includes/EmailNotification.php';
-                        $emailNotification = new EmailNotification($pdo);
-                    
-                    // Prepare check statement
-                    $check_stmt = $pdo->prepare("
-                        SELECT id FROM lawyer_availability 
-                        WHERE user_id = ? AND specific_date = ? AND max_appointments = 0
-                    ");
-                    
-                    // Prepare insert statement
-                    $insert_stmt = $pdo->prepare("
-                        INSERT INTO lawyer_availability 
-                        (user_id, schedule_type, specific_date, start_time, end_time, max_appointments, is_active, weekdays)
-                        VALUES (?, 'one_time', ?, '00:00:00', '23:59:59', 0, 1, ?)
-                    ");
-                    
-                    while (strtotime($current_date) <= strtotime($end_date)) {
-                        // Check if date is already blocked
-                        $check_stmt->execute([$lawyer_id, $current_date]);
-                        
-                        if (!$check_stmt->fetch()) {
-                            // Date not blocked, insert it
-                            $insert_stmt->execute([$lawyer_id, $current_date, $weekdays_text]);
-                            $blocked_count++;
-                            
-                            // Check for affected appointments on this date
-                            $affected_appointments = $emailNotification->getAffectedAppointments($lawyer_id, $current_date);
-                            
-                            // Queue notifications BEFORE cancelling appointments
-                            if (!empty($affected_appointments)) {
-                                foreach ($affected_appointments as $appointment) {
-                                    $queued = $emailNotification->notifyAppointmentCancelled($appointment['id'], $reason);
-                                    if ($queued) {
-                                        $notification_count++;
-                                    }
-                                    $all_affected_ids[] = $appointment['id'];
-                                }
-                            }
-                        } else {
-                            // Date already blocked, skip it
-                            $skipped_count++;
-                        }
-                        
-                        $current_date = date('Y-m-d', strtotime($current_date . ' +1 day'));
-                    }
-                    
-                    // Batch cancel all affected appointments (OPTIMIZED)
-                    if (!empty($all_affected_ids)) {
-                        $placeholders = str_repeat('?,', count($all_affected_ids) - 1) . '?';
-                        $cancel_stmt = $pdo->prepare("
-                            UPDATE consultations 
-                            SET status = 'cancelled'
-                            WHERE id IN ($placeholders)
-                            AND lawyer_id = ?
-                        ");
-                        $params = array_merge($all_affected_ids, [$lawyer_id]);
-                        $cancel_stmt->execute($params);
-                        $total_cancelled = $cancel_stmt->rowCount();
-                    }
-                    
-                    if ($blocked_count === 0 && $skipped_count === 0) {
-                        throw new Exception('No dates to block in the selected range');
-                    }
-                    
-                    $message = "Blocked $blocked_count date(s) successfully";
-                    if ($skipped_count > 0) {
-                        $message .= " ($skipped_count already blocked)";
-                    }
-                    
-                    // Add email notification info
-                    if ($notification_count > 0) {
-                        $message .= ". $total_cancelled appointment(s) cancelled and $notification_count email notification(s) are being sent...";
-                        
-                        // Add async email script
-                        $async_script = "
-                        <script>
-                        setTimeout(function() {
-                            fetch('../process_emails_async.php', {
-                                method: 'POST',
-                                headers: {'X-Requested-With': 'XMLHttpRequest'}
-                            }).then(response => response.json())
-                            .then(data => {
-                                if (data.sent > 0) {
-                                    console.log('Emails sent successfully: ' + data.sent);
-                                }
-                            }).catch(error => {
-                                console.log('Email processing error:', error);
-                            });
-                        }, 100);
-                        </script>";
-                        
-                        $_SESSION['async_email_script'] = $async_script;
-                    }
-                    
-                    // Commit the transaction
-                    $pdo->commit();
-                    $_SESSION['schedule_message'] = $message;
-                    
-                } catch (Exception $e) {
-                    // Rollback transaction on error
-                    $pdo->rollBack();
-                    throw $e;
-                }
-                break;
                     
                 case 'bulk_unblock':
                     $blocked_ids = $_POST['blocked_ids'] ?? '';
@@ -740,73 +732,59 @@ try {
                 </div>
             <?php endif; ?>
 
-            <!-- Action Cards -->
-            <div class="action-cards">
-                <!-- Block Single Date -->
-                <div class="action-card">
-                    <h3><i class="fas fa-ban"></i> Block Single Date</h3>
-                    <form method="POST">
-                        <input type="hidden" name="action" value="block_date">
-                        
-                        <div class="form-group">
-                            <label for="block_date">Select Date:</label>
-                            <input type="date" id="block_date" name="block_date" 
-                                   min="<?php echo date('Y-m-d'); ?>" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="reason">Reason:</label>
-                            <select id="reason" name="reason" required>
-                                <option value="">Select reason...</option>
-                                <option value="Sick Leave">Sick Leave</option>
-                                <option value="Personal Leave">Personal Leave</option>
-                                <option value="Emergency">Emergency</option>
-                                <option value="Vacation">Vacation</option>
-                                <option value="Court Appearance">Court Appearance</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-danger">
-                            <i class="fas fa-ban"></i> Block Date
+            <!-- Block Dates Card -->
+            <div class="action-card" style="max-width: 900px; margin: 0 auto;margin-bottom:32px;">
+                <h3 style="margin-bottom: 25px;"><i class="fas fa-ban"></i> Block Dates</h3>
+                
+                <form method="POST" id="block-dates-form">
+                    <input type="hidden" name="action" value="block_dates">
+                    
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label for="block_date" style="display: block; margin-bottom: 8px; font-weight: 600; color: #0b1d3a;">Date to Block</label>
+                        <input type="date" id="block_date" name="block_date" 
+                               min="<?php echo date('Y-m-d'); ?>" 
+                               style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;"
+                               required>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label for="end_date" style="display: block; margin-bottom: 8px; font-weight: 600; color: #0b1d3a;">End Date (Optional)</label>
+                        <input type="date" id="end_date" name="end_date" 
+                               min="<?php echo date('Y-m-d'); ?>" 
+                               style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                        <small style="display: flex; align-items: center; gap: 8px; margin-top: 8px; color: #856404; background: #fff3cd; padding: 10px; border-radius: 6px;">
+                            <i class="fas fa-info-circle" style="color: #daa520;"></i>
+                            <span>Only select when blocking multiple consecutive dates</span>
+                        </small>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 25px;">
+                        <label for="reason" style="display: block; margin-bottom: 8px; font-weight: 600; color: #0b1d3a;">Reason</label>
+                        <select id="reason" name="reason" 
+                                style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; background: white;"
+                                required>
+                            <option value="Unavailable">Unavailable</option>
+                            <option value="Sick Leave">Sick Leave</option>
+                            <option value="Personal Leave">Personal Leave</option>
+                            <option value="Emergency">Emergency</option>
+                            <option value="Vacation">Vacation</option>
+                            <option value="Court Appearance">Court Appearance</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div style="display: flex; gap: 15px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('block-dates-form').reset();" 
+                                style="padding: 12px 30px; background: #6c757d; color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer;">
+                            Cancel
                         </button>
-                    </form>
-                </div>
-
-                <!-- Block Date Range -->
-                <div class="action-card">
-                    <h3><i class="fas fa-calendar-times"></i> Block Date Range</h3>
-                    <form method="POST">
-                        <input type="hidden" name="action" value="block_multiple">
-                        
-                        <div class="form-group">
-                            <label for="start_date">Start Date:</label>
-                            <input type="date" id="start_date" name="start_date" 
-                                   min="<?php echo date('Y-m-d'); ?>" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="end_date">End Date:</label>
-                            <input type="date" id="end_date" name="end_date" 
-                                   min="<?php echo date('Y-m-d'); ?>" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="reason_range">Reason:</label>
-                            <select id="reason_range" name="reason" required>
-                                <option value="">Select reason...</option>
-                                <option value="Sick Leave">Sick Leave</option>
-                                <option value="Personal Leave">Personal Leave</option>
-                                <option value="Emergency">Emergency</option>
-                                <option value="Vacation">Vacation</option>
-                                <option value="Court Appearance">Court Appearance</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-warning">
-                            <i class="fas fa-calendar-times"></i> Block Range
+                        <button type="submit" class="btn btn-primary" 
+                                style="padding: 12px 30px; background: linear-gradient(135deg, #daa520 0%, #b8860b 100%); color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-ban"></i> Block Date(s)
                         </button>
+                    </div>
+                </form>
+            </div>
                     </form>
                 </div>
             </div>
@@ -971,10 +949,10 @@ try {
 
     <script>
         // Sync end date with start date
-        document.getElementById('start_date').addEventListener('change', function() {
+        document.getElementById('block_date').addEventListener('change', function() {
             const endDate = document.getElementById('end_date');
             if (!endDate.value || new Date(endDate.value) < new Date(this.value)) {
-                endDate.value = this.value;
+                endDate.value = '';
             }
             endDate.min = this.value;
         });

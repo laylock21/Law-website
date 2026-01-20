@@ -314,21 +314,9 @@ $active_page = "dashboard";
                                         ?>
                                         <div class="client-description-container">
                                             <div class="client-description" 
-                                                 title="<?php echo htmlspecialchars($description); ?>"
-                                                 data-full-description="<?php echo htmlspecialchars($description); ?>">
-                                                <span class="desc-text"><?php echo htmlspecialchars($shortDesc); ?></span><?php if ($isLong): ?><span class="desc-ellipsis">...</span>
-                                                <button type="button" class="desc-toggle" onclick="toggleDescription(this)">
-                                                    <i class="fas fa-eye"></i>
-                                                </button><?php endif; ?>
-                                            </div>
-                                            <?php if ($isLong): ?>
-                                            <div class="full-description" style="display: none;">
+                                                 title="<?php echo htmlspecialchars($description); ?>">
                                                 <?php echo htmlspecialchars($description); ?>
-                                                <button type="button" class="desc-toggle-close" onclick="toggleDescription(this.parentElement.previousElementSibling.querySelector('.desc-toggle'))">
-                                                    <i class="fas fa-eye-slash"></i>
-                                                </button>
                                             </div>
-                                            <?php endif; ?>
                                         </div>
                                     </div>
                                     <div class="col-practice">
@@ -367,7 +355,7 @@ $active_page = "dashboard";
                         
                         <!-- Pagination Navigation -->
                         <?php if ($total_pages > 1): ?>
-                        <div style="display:flex; gap:8px; justify-content:center; align-items:center; margin-top:16px;">
+                        <div style="display:flex; gap:8px; justify-content:center; align-items:center; margin-top:16px;padding-bottom:32px;">
                             <?php if ($current_page > 1): ?>
                                 <a href="?page=<?php echo $current_page - 1; ?>#recent-consultations" class="pagination-btn pagination-prev"><i class="fas fa-chevron-left"></i></a>
                             <?php else: ?>
@@ -399,21 +387,7 @@ $active_page = "dashboard";
     window.showPasswordModalOnLoad = false;
     <?php endif; ?>
 
-    function toggleDescription(button) {
-        const container = button.closest('.client-description-container');
-        const fullDesc = container.querySelector('.full-description');
-        const shortDesc = container.querySelector('.client-description');
-        
-        if (fullDesc.style.display === 'none' || !fullDesc.style.display) {
-            fullDesc.style.display = 'block';
-            button.innerHTML = '<i class="fas fa-eye-slash"></i>';
-            button.title = 'Hide full description';
-        } else {
-            fullDesc.style.display = 'none';
-            button.innerHTML = '<i class="fas fa-eye"></i>';
-            button.title = 'Show full description';
-        }
-    }
+
     </script>
 
     <!-- Include Password Change Modal -->
