@@ -249,6 +249,21 @@ $active_page = "profile";
                     <div class="card-body">
                         <div class="form-grid-large">
                             <div class="form-group">
+                                <label for="prefix">
+                                    <i class="fas fa-id-badge"></i>
+                                    <span>Prefix</span>
+                                </label>
+                                <select id="prefix" name="prefix" class="form-input">
+                                    <option value="">Select Prefix</option>
+                                    <option value="Atty.">Atty.</option>
+                                    <option value="Mr.">Mr.</option>
+                                    <option value="Ms.">Ms.</option>
+                                    <option value="Mrs.">Mrs.</option>
+                                    <option value="Dr.">Dr.</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
                                 <label for="first_name">
                                     <i class="fas fa-user"></i>
                                     <span>First Name</span>
