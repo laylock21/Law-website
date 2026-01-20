@@ -69,22 +69,102 @@ $active_page = "dashboard";
     <title>Admin Dashboard | MD Law Firm</title>
     <link rel="stylesheet" href="../src/admin/css/styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        
+        .toast {
+            background: #c5a253;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 300px;
+            animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s;
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+        
+        .toast i {
+            font-size: 24px;
+        }
+        
+        .toast-content h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .toast-content p {
+            margin: 4px 0 0 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+        
+        /* Recent Consultation Requests Font Sizes */
+        .admin-consultation-item .admin-consultation-info h4 {
+            font-size: 1.2rem;
+        }
+        
+        .admin-consultation-item .admin-consultation-info p {
+            font-size: 0.9rem;
+        }
+        
+        /* Unified Font Sizes */
+        .admin-area-name {
+            font-size: 1.2rem;
+        }
+        
+        .action-content h4 {
+            font-size: 1.2rem;
+        }
+    </style>
 </head>
 <body class="admin-page">
     <?php include 'partials/sidebar.php'; ?>
 
+    <!-- Toast Notification -->
+    <div class="toast-container">
+        <div class="toast" id="welcomeToast">
+            <i class="fas fa-chart-line"></i>
+            <div class="toast-content">
+                <h3>Welcome back, <?php echo htmlspecialchars($_SESSION['admin_username'] ?? 'Admin'); ?>!</h3>
+                <p>Here's an overview of your consultation system and key metrics</p>
+            </div>
+        </div>
+    </div>
+
     <main class="admin-main-content">
         <div class="container">
-            <div class="admin-welcome-section">
-                <div class="admin-card-header">
-                    <h2><i class="fas fa-chart-line"></i> Welcome back, <?php echo htmlspecialchars($_SESSION['admin_username'] ?? 'Admin'); ?>!</h2>
-                </div>
-                <div class="admin-card-body">
-                    <p>Here's an overview of your consultation system and key metrics</p>
-                </div>
-            </div>
 
-            <div class="admin-stats-grid">
+            <div class="admin-stats-grid dashboard-stats">
                 <div class="admin-stat-card">
                     <div class="admin-stat-number"><?php echo $total_consultations ?? 0; ?></div>
                     <div class="admin-stat-label">Total Consultations</div>
@@ -115,26 +195,26 @@ $active_page = "dashboard";
                 </div>
             </div>
 
-            <div class="admin-practice-areas">
-                        <div class="admin-section-header">
-                            <h3>Lawyer Practice Areas</h3>
+            <div class="admin-horizontal-layout">
+                <div class="admin-practice-areas">
+                    <div class="admin-section-header">
+                        <h3>Lawyer Practice Areas</h3>
+                    </div>
+                    
+                    <?php if (empty($practice_areas)): ?>
+                        <div style="padding: 2rem; text-align: center; color: #6c757d;">
+                            No data available
                         </div>
-                        
-                        <?php if (empty($practice_areas)): ?>
-                            <div style="padding: 2rem; text-align: center; color: #6c757d;">
-                                No data available
+                    <?php else: ?>
+                        <?php foreach ($practice_areas as $area): ?>
+                            <div class="admin-area-item">
+                                <span class="admin-area-name"><?php echo htmlspecialchars($area['practice_area']); ?></span>
+                                <span class="admin-area-count"><?php echo $area['count']; ?></span>
                             </div>
-                        <?php else: ?>
-                            <?php foreach ($practice_areas as $area): ?>
-                                <div class="admin-area-item">
-                                    <span class="admin-area-name"><?php echo htmlspecialchars($area['practice_area']); ?></span>
-                                    <span class="admin-area-count"><?php echo $area['count']; ?></span>
-                                </div>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
 
-            <div class="admin-dashboard-grid">
                 <div class="admin-recent-consultations">
                     <div class="admin-section-header">
                         <h3>Recent Consultation Requests</h3>
@@ -207,5 +287,15 @@ $active_page = "dashboard";
             
         </div>
     </main>
+
+    <script>
+        // Auto-hide toast after 3 seconds
+        setTimeout(() => {
+            const toast = document.getElementById('welcomeToast');
+            if (toast) {
+                toast.style.display = 'none';
+            }
+        }, 3000);
+    </script>
 </body>
 </html>

@@ -760,7 +760,7 @@ p, span, div, label {
 
 .admin-stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(172px, 1fr));
+    grid-template-columns: repeat(7, 1fr);
     gap: 20px;
     margin-bottom: 30px;
 }
@@ -1817,13 +1817,21 @@ p, span, div, label {
 
 /* Duplicate .admin-stat-card styles removed - see line 755 for main definition */
 
-/* Dashboard Grid */
-.admin-dashboard-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
+/* Horizontal Layout for Practice Areas, Recent Consultations, and Quick Actions */
+.admin-horizontal-layout {
+    display: flex;
     gap: 2rem;
     margin-bottom: 2rem;
-    align-items: start;
+    align-items: stretch;
+}
+
+.admin-horizontal-layout > .admin-practice-areas,
+.admin-horizontal-layout > .admin-recent-consultations,
+.admin-horizontal-layout > .admin-quick-actions-card {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .admin-recent-consultations, 
@@ -3372,8 +3380,8 @@ input[type="radio"]:focus {
 }
 
 @media (max-width: 768px) {
-    .admin-dashboard-grid {
-        grid-template-columns: 1fr;
+    .admin-horizontal-layout {
+        flex-direction: column;
     }
     
     .admin-stats-grid {
