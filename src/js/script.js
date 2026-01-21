@@ -52,6 +52,53 @@ const yearEl = document.getElementById('year');
 if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
 // ============================================
+// SUCCESS MODAL FUNCTIONS
+// ============================================
+
+function showSuccessModal(message) {
+	const modal = document.getElementById('success-modal');
+	const messageEl = document.getElementById('success-modal-message');
+	const closeBtn = document.getElementById('success-modal-close');
+	
+	if (!modal || !messageEl) return;
+	
+	messageEl.textContent = message;
+	modal.style.display = 'flex';
+	
+	// Trigger animation
+	setTimeout(() => {
+		modal.classList.add('show');
+	}, 10);
+	
+	// Close button handler
+	const closeModal = () => {
+		modal.classList.remove('show');
+		setTimeout(() => {
+			modal.style.display = 'none';
+		}, 300);
+	};
+	
+	if (closeBtn) {
+		closeBtn.onclick = closeModal;
+	}
+	
+	// Close on overlay click
+	const overlay = modal.querySelector('.success-modal-overlay');
+	if (overlay) {
+		overlay.onclick = closeModal;
+	}
+	
+	// Close on escape key
+	const escapeHandler = (e) => {
+		if (e.key === 'Escape') {
+			closeModal();
+			document.removeEventListener('keydown', escapeHandler);
+		}
+	};
+	document.addEventListener('keydown', escapeHandler);
+}
+
+// ============================================
 // TOAST NOTIFICATION SYSTEM
 // ============================================
 
@@ -938,52 +985,59 @@ if (appointmentForm && appointmentStatus) {
 			const result = await response.json();
 			
 			if (result.success) {
-				// Feature: Updated success message with full name
-				openStatusModal(`Thank you, ${fullName}! We've received your consultation request for ${service}. We'll contact you within 24 hours to confirm your appointment with ${lawyer} on ${date || 'a date to be determined'}.`);
+				// Show success modal with personalized message
+				const successMessage = `Thank you, ${fullName}! We've received your consultation request for ${service}. We'll contact you within 24 hours to confirm your appointment with ${lawyer} on ${date || 'a date to be determined'}.`;
+				showSuccessModal(successMessage);
 				
 				// Trigger email processing if emails were queued
 				if (result.email_queued) {
 					triggerEmailProcessing();
 				}
 				
-				appointmentForm.reset();
-				document.getElementById('selected-date-display').textContent = 'None';
-				document.getElementById('selected-date').value = '';
-				
-				// Reset practice area and lawyer dropdowns (NEW LOGIC: practice area first, then lawyer)
-				const lawyerSelect = document.getElementById('lawyer');
-				const serviceSelect = document.getElementById('service');
-				const practiceAreaBtn = document.getElementById('practiceAreaBtn');
-				const practiceAreaDisplay = document.getElementById('practiceAreaDisplay');
-				
-				if (lawyerSelect) {
-					lawyerSelect.innerHTML = '<option value="">First select a practice area</option>';
-					lawyerSelect.disabled = true;
-				}
-				
-				if (serviceSelect) {
-					serviceSelect.value = '';
-				}
-				
-				if (practiceAreaBtn) {
-					practiceAreaBtn.disabled = false;
-				}
-				
-				if (practiceAreaDisplay) {
-					practiceAreaDisplay.textContent = 'Click to select practice area';
-				}
-				
-				// Clear calendar
-				clearSelectedDate();
-				
-				// Clear status message
-				if (appointmentStatus) {
-					appointmentStatus.textContent = '';
-					appointmentStatus.style.color = '';
-				}
-				
-				// Update submit button state after form reset
-				updateSubmitButtonState();
+				// Reset form after short delay
+				setTimeout(() => {
+					appointmentForm.reset();
+					document.getElementById('selected-date-display').textContent = 'None';
+					document.getElementById('selected-date').value = '';
+					
+					// Reset practice area and lawyer dropdowns (NEW LOGIC: practice area first, then lawyer)
+					const lawyerSelect = document.getElementById('lawyer');
+					const serviceSelect = document.getElementById('service');
+					const practiceAreaBtn = document.getElementById('practiceAreaBtn');
+					const practiceAreaDisplay = document.getElementById('practiceAreaDisplay');
+					
+					if (lawyerSelect) {
+						lawyerSelect.innerHTML = '<option value="">First select a practice area</option>';
+						lawyerSelect.disabled = true;
+					}
+					
+					if (serviceSelect) {
+						serviceSelect.value = '';
+					}
+					
+					if (practiceAreaBtn) {
+						practiceAreaBtn.disabled = false;
+					}
+					
+					if (practiceAreaDisplay) {
+						practiceAreaDisplay.textContent = 'Click to select practice area';
+					}
+					
+					// Clear calendar
+					clearSelectedDate();
+					
+					// Clear status message
+					if (appointmentStatus) {
+						appointmentStatus.textContent = '';
+						appointmentStatus.style.color = '';
+					}
+					
+					// Reset to step 1
+					showStep(1);
+					
+					// Update submit button state after form reset
+					updateSubmitButtonState();
+				}, 500);
 			} else {
 				openStatusModal(result.message || 'An error occurred. Please try again.');
 			}
@@ -1579,19 +1633,38 @@ window.renderCalendar = function() {
 		}
 		bodyEl.innerHTML = fragments.join('');
 
-		// Feature: Add click handlers for available dates only - now opens time slot modal
+		// Feature: Add click handlers for available dates - syncs with date input
 		Array.from(bodyEl.querySelectorAll('button[data-date]:not([disabled])')).forEach((btn) => {
 			btn.addEventListener('click', () => {
 				const selectedDate = btn.getAttribute('data-date') || '';
-				const selectedLawyer = document.getElementById('lawyer')?.value;
 				
-				if (!selectedLawyer) {
-					alert('Please select a lawyer first.');
-					return;
+				// Update the date input field
+				const dateInput = document.getElementById('consultation-date');
+				if (dateInput) {
+					dateInput.value = selectedDate;
 				}
 				
-				// Open time slot selection modal
-				openTimeSlotModal(selectedDate, selectedLawyer);
+				// Update the hidden date field (for validation)
+				const hiddenDateInput = document.getElementById('selected-date');
+				if (hiddenDateInput) {
+					hiddenDateInput.value = selectedDate;
+				}
+				
+				// Update the display text
+				const displayEl = document.getElementById('selected-date-display');
+				if (displayEl) {
+					const date = new Date(selectedDate + 'T00:00:00');
+					displayEl.textContent = date.toLocaleDateString('en-US', { 
+						weekday: 'short', 
+						year: 'numeric', 
+						month: 'short', 
+						day: 'numeric' 
+					});
+				}
+				
+				// Visual feedback - highlight selected date
+				bodyEl.querySelectorAll('button[data-date]').forEach(b => b.classList.remove('selected'));
+				btn.classList.add('selected');
 			});
 		});
 	};
@@ -2372,6 +2445,7 @@ let currentStep = 1;
 const totalSteps = 3; // Changed from 4 to 3
 
 const prevBtn = document.getElementById('prevBtn');
+const prevBtnReview = document.getElementById('prevBtnReview');
 const nextBtn = document.getElementById('nextBtn');
 const submitBtn = document.getElementById('submitBtn');
 const validationNote = document.getElementById('validation-note');
@@ -2429,9 +2503,10 @@ function updateReviewSection() {
 	document.getElementById('review-lawyer').textContent = document.getElementById('lawyer')?.value || '-';
 	document.getElementById('review-practice').textContent = document.getElementById('service')?.value || '-';
 	
-	const selectedDate = document.getElementById('selected-date')?.value;
+	// Get date from manual input
+	const selectedDate = document.getElementById('consultation-date')?.value;
 	if (selectedDate) {
-		const date = new Date(selectedDate);
+		const date = new Date(selectedDate + 'T00:00:00');
 		document.getElementById('review-date').textContent = date.toLocaleDateString('en-US', { 
 			weekday: 'long', 
 			year: 'numeric', 
@@ -2442,16 +2517,33 @@ function updateReviewSection() {
 		document.getElementById('review-date').textContent = '-';
 	}
 	
+	// Get time slot from dropdown
+	const selectedTime = document.getElementById('consultation-time')?.value;
+	if (selectedTime) {
+		// Time slot is already in display format (e.g., "07:00-09:00")
+		// Convert to readable format
+		const timeSlotText = document.getElementById('consultation-time')?.selectedOptions[0]?.text || selectedTime;
+		document.getElementById('review-time').textContent = timeSlotText;
+	} else {
+		document.getElementById('review-time').textContent = '-';
+	}
+	
 	const message = document.getElementById('message')?.value || '';
-	document.getElementById('review-message').textContent = message.length > 100 
-		? message.substring(0, 100) + '...' 
-		: message || '-';
+	const reviewMessageEl = document.getElementById('review-message');
+	if (reviewMessageEl) {
+		if (message && message.trim()) {
+			reviewMessageEl.textContent = message.length > 100 
+				? message.substring(0, 100) + '...' 
+				: message;
+		} else {
+			reviewMessageEl.textContent = '-';
+		}
+	}
 }
 
 // Show specific step
 function showStep(step) {
 	const steps = document.querySelectorAll('.form-step');
-	const progressSteps = document.querySelectorAll('.progress-step');
 	
 	// Hide all steps
 	steps.forEach(s => s.classList.remove('active'));
@@ -2461,18 +2553,6 @@ function showStep(step) {
 	if (currentStepEl) {
 		currentStepEl.classList.add('active');
 	}
-	
-	// Update progress indicator
-	progressSteps.forEach((ps, index) => {
-		const stepNum = index + 1;
-		ps.classList.remove('active', 'completed');
-		
-		if (stepNum < step) {
-			ps.classList.add('completed');
-		} else if (stepNum === step) {
-			ps.classList.add('active');
-		}
-	});
 	
 	// If moving to step 3 (review), update review section
 	if (step === 3) {
@@ -2485,21 +2565,38 @@ function showStep(step) {
 
 // Update button states
 function updateButtons() {
-	// Previous button
+	// Previous buttons logic
 	if (currentStep === 1) {
+		// Step 1: Disable regular previous button
 		prevBtn.disabled = true;
 		prevBtn.style.opacity = '0.4';
+		prevBtn.style.display = 'inline-flex';
+		if (prevBtnReview) prevBtnReview.style.display = 'none';
+	} else if (currentStep === 3) {
+		// Step 3 (Review): Hide regular previous, show review previous
+		prevBtn.style.display = 'none';
+		if (prevBtnReview) {
+			prevBtnReview.style.display = 'inline-flex';
+			prevBtnReview.disabled = false;
+			prevBtnReview.style.opacity = '1';
+		}
 	} else {
+		// Step 2: Show regular previous button
 		prevBtn.disabled = false;
 		prevBtn.style.opacity = '1';
+		prevBtn.style.display = 'inline-flex';
+		if (prevBtnReview) prevBtnReview.style.display = 'none';
 	}
 	
-	// Next/Submit buttons
+	// Next/Submit buttons - Show Submit ONLY on step 3 (review)
 	if (currentStep === totalSteps) {
+		// On review step: hide Next, show Submit
 		nextBtn.style.display = 'none';
 		submitBtn.style.display = 'inline-flex';
 	} else {
+		// On other steps: show Next, hide Submit
 		nextBtn.style.display = 'inline-flex';
+		nextBtn.innerHTML = 'Next <i class="fas fa-arrow-right"></i>';
 		submitBtn.style.display = 'none';
 	}
 }
@@ -2543,10 +2640,21 @@ function validateStep(step) {
 	
 	// Special validation for step 2 - check if date is selected
 	if (step === 2) {
+		// Check both the hidden field and the visible date input
 		const selectedDate = document.getElementById('selected-date')?.value;
-		if (!selectedDate || selectedDate.trim() === '') {
+		const consultationDate = document.getElementById('consultation-date')?.value;
+		
+		if ((!selectedDate || selectedDate.trim() === '') && (!consultationDate || consultationDate.trim() === '')) {
 			isValid = false;
 			errorMessages.push('Consultation Date');
+		} else {
+			// If consultation-date has value but selected-date doesn't, sync them
+			if (consultationDate && consultationDate.trim() !== '' && (!selectedDate || selectedDate.trim() === '')) {
+				const hiddenDateInput = document.getElementById('selected-date');
+				if (hiddenDateInput) {
+					hiddenDateInput.value = consultationDate;
+				}
+			}
 		}
 	}
 	
@@ -2594,15 +2702,32 @@ if (nextBtn) {
 if (prevBtn) {
 	prevBtn.addEventListener('click', () => {
 		if (currentStep > 1) {
-			showStep(currentStep - 1);
+			showStep(currentStep - 1); // Normal previous step
+			
 			// Scroll to top of form
 			const container = document.querySelector('.appointment-single-column');
 			if (container) {
 				container.scrollIntoView({ 
 					behavior: 'smooth', 
 					block: 'start' 
-					});
+				});
 			}
+		}
+	});
+}
+
+// Review Previous button click (goes directly to step 2)
+if (prevBtnReview) {
+	prevBtnReview.addEventListener('click', () => {
+		showStep(2); // Always go to "Select Date & Lawyer"
+		
+		// Scroll to top of form
+		const container = document.querySelector('.appointment-single-column');
+		if (container) {
+			container.scrollIntoView({ 
+				behavior: 'smooth', 
+				block: 'start' 
+			});
 		}
 	});
 }
@@ -2630,14 +2755,61 @@ document.querySelectorAll('.form-step input, .form-step select, .form-step texta
 document.addEventListener('DOMContentLoaded', () => {
 	initMultiStepForm();
 	
-	// Reset form when navigating to appointment section
+	// Sync date input with calendar
+	const dateInput = document.getElementById('consultation-date');
+	if (dateInput) {
+		dateInput.addEventListener('change', () => {
+			const selectedDate = dateInput.value;
+			if (selectedDate) {
+				// Update the hidden date field (for validation)
+				const hiddenDateInput = document.getElementById('selected-date');
+				if (hiddenDateInput) {
+					hiddenDateInput.value = selectedDate;
+				}
+				
+				// Update calendar display
+				const displayEl = document.getElementById('selected-date-display');
+				if (displayEl) {
+					const date = new Date(selectedDate + 'T00:00:00');
+					displayEl.textContent = date.toLocaleDateString('en-US', { 
+						weekday: 'short', 
+						year: 'numeric', 
+						month: 'short', 
+						day: 'numeric' 
+					});
+				}
+				
+				// Highlight the date in calendar if visible
+				const calendarButtons = document.querySelectorAll('.calendar-day button[data-date]');
+				calendarButtons.forEach(btn => {
+					btn.classList.remove('selected');
+					if (btn.getAttribute('data-date') === selectedDate) {
+						btn.classList.add('selected');
+					}
+				});
+			}
+		});
+	}
+	
+	// Reset form when navigating to appointment section from outside
+	// Only reset if coming from a different section, not when navigating between form steps
 	const appointmentSection = document.getElementById('appointment');
 	if (appointmentSection) {
+		let hasInteractedWithForm = false;
+		
+		// Track if user has interacted with the form
+		const formInputs = document.querySelectorAll('#appointment-form input, #appointment-form select, #appointment-form textarea');
+		formInputs.forEach(input => {
+			input.addEventListener('focus', () => {
+				hasInteractedWithForm = true;
+			}, { once: true });
+		});
+		
 		// Create an intersection observer to detect when section is visible
 		const observer = new IntersectionObserver((entries) => {
 			entries.forEach(entry => {
-				if (entry.isIntersecting) {
-					// Section is visible, reset the form
+				// Only reset if section is visible AND user hasn't interacted with form yet
+				if (entry.isIntersecting && !hasInteractedWithForm) {
 					resetForm();
 				}
 			});
@@ -2648,7 +2820,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		observer.observe(appointmentSection);
 	}
 	
-	// Also reset when clicking "Book Consultation" links
+	// Reset when clicking "Book Consultation" links (force reset)
 	document.querySelectorAll('a[href="#appointment"]').forEach(link => {
 		link.addEventListener('click', () => {
 			setTimeout(() => {
@@ -2657,3 +2829,199 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 	});
 });
+
+
+// ============================================
+// CONSULTATION FORM - NO MODALS VERSION
+// Updated to remove all modal dependencies
+// ============================================
+
+// Load practice areas into dropdown on page load
+async function loadPracticeAreasIntoDropdown() {
+	const serviceSelect = document.getElementById('service');
+	if (!serviceSelect) return;
+	
+	try {
+		const response = await fetch('api/get_all_practice_areas.php');
+		const result = await response.json();
+		
+		if (result.success && result.practice_areas.length > 0) {
+			serviceSelect.innerHTML = '<option value="">Select a practice area</option>';
+			result.practice_areas.forEach(area => {
+				const option = document.createElement('option');
+				option.value = area.area_name;
+				option.textContent = area.area_name;
+				serviceSelect.appendChild(option);
+			});
+			console.log('Practice areas loaded:', result.practice_areas.length);
+		}
+	} catch (error) {
+		console.error('Error loading practice areas:', error);
+	}
+}
+
+// Load time slots into dropdown when date/lawyer changes
+async function loadTimeSlotsIntoDropdown(date, lawyerName) {
+	const timeSelect = document.getElementById('consultation-time');
+	if (!timeSelect) return;
+	
+	timeSelect.innerHTML = '<option value="">Loading time slots...</option>';
+	timeSelect.disabled = true;
+	
+	try {
+		const lawyerNameForAPI = lawyerName.replace(/^Atty\.\s*/i, '');
+		const lawyerSelectEl = document.getElementById('lawyer');
+		const selectedOpt = lawyerSelectEl ? lawyerSelectEl.options[lawyerSelectEl.selectedIndex] : null;
+		const lawyerIdParam = selectedOpt?.dataset?.lawyerId ? `&lawyer_id=${encodeURIComponent(selectedOpt.dataset.lawyerId)}` : '';
+		
+		const response = await fetch(`api/get_time_slots.php?lawyer=${encodeURIComponent(lawyerNameForAPI)}&date=${date}${lawyerIdParam}`);
+		const result = await response.json();
+		
+		if (result.success && result.time_slots.length > 0) {
+			timeSelect.innerHTML = '<option value="">Select a time slot</option>';
+			result.time_slots.forEach(slot => {
+				const option = document.createElement('option');
+				if (slot.available) {
+					option.value = slot.time_24h || slot.time || slot.start_time;
+					option.textContent = `🟢 ${slot.display}`;
+				} else {
+					option.value = '';
+					option.textContent = `🔴 ${slot.display} (Unavailable)`;
+					option.disabled = true;
+				}
+				timeSelect.appendChild(option);
+			});
+			timeSelect.disabled = false;
+			console.log('Time slots loaded:', result.time_slots.length);
+		} else {
+			timeSelect.innerHTML = '<option value="">No time slots available</option>';
+			timeSelect.disabled = true;
+		}
+	} catch (error) {
+		console.error('Error loading time slots:', error);
+		timeSelect.innerHTML = '<option value="">Error loading time slots</option>';
+		timeSelect.disabled = true;
+	}
+}
+
+// Initialize consultation form with no-modal approach
+function initializeNoModalConsultationForm() {
+	// Load practice areas
+	loadPracticeAreasIntoDropdown();
+	
+	const dateInput = document.getElementById('consultation-date');
+	const lawyerSelect = document.getElementById('lawyer');
+	const serviceSelect = document.getElementById('service');
+	
+	// When practice area changes, filter lawyers
+	if (serviceSelect) {
+		serviceSelect.addEventListener('change', async () => {
+			const selectedPracticeArea = serviceSelect.value;
+			if (selectedPracticeArea) {
+				await filterLawyersByPracticeArea(selectedPracticeArea);
+			} else {
+				if (lawyerSelect) {
+					lawyerSelect.innerHTML = '<option value="">First select a practice area</option>';
+					lawyerSelect.disabled = true;
+				}
+			}
+			
+			// Reset time dropdown
+			const timeSelect = document.getElementById('consultation-time');
+			if (timeSelect) {
+				timeSelect.innerHTML = '<option value="">First select a date</option>';
+				timeSelect.disabled = true;
+			}
+		});
+	}
+	
+	// When date changes, load time slots
+	if (dateInput && lawyerSelect) {
+		dateInput.addEventListener('change', () => {
+			const selectedDate = dateInput.value;
+			const selectedLawyer = lawyerSelect.value;
+			if (selectedDate && selectedLawyer) {
+				loadTimeSlotsIntoDropdown(selectedDate, selectedLawyer);
+			}
+		});
+		
+		// When lawyer changes, reload time slots if date is selected
+		lawyerSelect.addEventListener('change', () => {
+			const selectedDate = dateInput.value;
+			const selectedLawyer = lawyerSelect.value;
+			if (selectedDate && selectedLawyer) {
+				loadTimeSlotsIntoDropdown(selectedDate, selectedLawyer);
+			} else {
+				const timeSelect = document.getElementById('consultation-time');
+				if (timeSelect) {
+					timeSelect.innerHTML = '<option value="">First select a date</option>';
+					timeSelect.disabled = true;
+				}
+			}
+		});
+	}
+}
+
+// Override the existing updateReviewSection to include time
+function updateReviewSectionWithTime() {
+	// Personal Information
+	const fullName = document.getElementById('fullName')?.value || '';
+	document.getElementById('review-name').textContent = fullName || '-';
+	document.getElementById('review-email').textContent = document.getElementById('email')?.value || '-';
+	document.getElementById('review-phone').textContent = document.getElementById('phone')?.value || '-';
+	
+	// Consultation Details
+	document.getElementById('review-lawyer').textContent = document.getElementById('lawyer')?.value || '-';
+	document.getElementById('review-practice').textContent = document.getElementById('service')?.value || '-';
+	
+	// Date
+	const selectedDate = document.getElementById('consultation-date')?.value;
+	if (selectedDate) {
+		const date = new Date(selectedDate + 'T00:00:00');
+		document.getElementById('review-date').textContent = date.toLocaleDateString('en-US', { 
+			weekday: 'long', 
+			year: 'numeric', 
+			month: 'long', 
+			day: 'numeric' 
+		});
+	} else {
+		document.getElementById('review-date').textContent = '-';
+	}
+	
+	// Time
+	const timeSelect = document.getElementById('consultation-time');
+	if (timeSelect && timeSelect.value) {
+		const selectedTimeText = timeSelect.selectedOptions[0]?.text || timeSelect.value;
+		const reviewTimeEl = document.getElementById('review-time');
+		if (reviewTimeEl) {
+			reviewTimeEl.textContent = selectedTimeText.replace('🟢 ', '').replace('🔴 ', '');
+		}
+	} else {
+		const reviewTimeEl = document.getElementById('review-time');
+		if (reviewTimeEl) {
+			reviewTimeEl.textContent = '-';
+		}
+	}
+	
+	// Message
+	const message = document.getElementById('message')?.value || '';
+	const reviewMessageEl = document.getElementById('review-message');
+	if (reviewMessageEl) {
+		if (message && message.trim()) {
+			reviewMessageEl.textContent = message.length > 100 
+				? message.substring(0, 100) + '...' 
+				: message;
+		} else {
+			reviewMessageEl.textContent = '-';
+		}
+	}
+}
+
+// Initialize on DOM ready - add to existing DOMContentLoaded listener
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', initializeNoModalConsultationForm);
+} else {
+	initializeNoModalConsultationForm();
+}
+
+console.log('✅ No-modal consultation form initialized');

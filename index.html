@@ -489,11 +489,11 @@
 	</style>
 	
 	<!-- Load full CSS asynchronously -->
-	<link rel="preload" href="src/css/styles.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-	<noscript><link rel="stylesheet" href="src/css/styles.css"></noscript>
+	<link rel="preload" href="src/css/styles.css?v=3.7" as="style" onload="this.onload=null;this.rel='stylesheet'">
+	<noscript><link rel="stylesheet" href="src/css/styles.css?v=3.7"></noscript>
 	
 	<!-- Lawyer Profile Card Styles -->
-	<link rel="stylesheet" href="src/css/LawyerCard.css">
+	<link rel="stylesheet" href="src/css/LawyerCard.css?v=3.7">
 </head>
 
 <body>
@@ -511,7 +511,7 @@
 				<a href="#home" class="logo" aria-label="MD Law - Home">MD Law</a>
 			</div>
 			<nav class="nav" aria-label="Primary navigation">
-				<button class="nav-toggle" aria-expanded="false" aria-controls="primary-menu" aria-label="Toggle navigation menu">
+				<button class="nav-toggle" aria-expanded="false" aria-controls="primary-menu">
 					<span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
 				</button>
 				<ul id="primary-menu" class="nav-list" role="menubar">
@@ -757,24 +757,6 @@
 				
 				<!-- Single Column Layout -->
 				<div class="appointment-single-column">
-					<!-- Multi-step Progress Indicator -->
-					<div class="form-progress">
-						<div class="progress-step active" data-step="1">
-							<div class="step-number">1</div>
-							<div class="step-label">Personal Info</div>
-						</div>
-						<div class="progress-line"></div>
-						<div class="progress-step" data-step="2">
-							<div class="step-number">2</div>
-							<div class="step-label">Lawyer & Date</div>
-						</div>
-						<div class="progress-line"></div>
-						<div class="progress-step" data-step="3">
-							<div class="step-number">3</div>
-							<div class="step-label">Review & Submit</div>
-						</div>
-					</div>
-
 					<form id="appointment-form" class="form multi-step-form" novalidate>
 						<!-- Step 1: Personal Information (Grid Layout) -->
 						<div class="form-step active" data-step="1">
@@ -801,9 +783,12 @@
 									</div>
 								</div>
 								
-								<!-- Right Column: Empty -->
+								<!-- Right Column: Case Description -->
 								<div class="step-right">
-									<!-- Case description moved to Step 2 -->
+									<div class="form-row">
+										<label for="message">Case Description <span class="required-asterisk" aria-label="required">*</span></label>
+										<textarea id="message" name="message" rows="12" placeholder="Briefly describe your legal matter..." required style="height: 100%; min-height: 280px;"></textarea>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -876,18 +861,19 @@
 										</select>
 									</div>
 									<div class="form-row">
-										<label for="message">Case Description <span class="required-asterisk" aria-label="required">*</span></label>
-										<textarea id="message" name="message" rows="4" placeholder="Briefly describe your legal matter..." required></textarea>
-									</div>
-									<div class="form-row">
 										<label for="consultation-date">Consultation Date <span class="required-asterisk" aria-label="required">*</span></label>
 										<input type="date" id="consultation-date" name="date" required aria-describedby="date-help" />
 										<div id="date-help" class="sr-only">Select your preferred consultation date</div>
 									</div>
 									<div class="form-row">
 										<label for="consultation-time">Consultation Time <span class="required-asterisk" aria-label="required">*</span></label>
-										<input type="time" id="consultation-time" name="selected_time" required aria-describedby="time-help" />
-										<div id="time-help" class="sr-only">Select your preferred consultation time</div>
+										<select id="consultation-time" name="selected_time" required aria-describedby="time-help">
+											<option value="">Select a time slot</option>
+											<option value="07:00-09:00">7:00 AM - 9:00 AM</option>
+											<option value="13:00-16:00">1:00 PM - 4:00 PM</option>
+											<option value="17:00-20:00">5:00 PM - 8:00 PM</option>
+										</select>
+										<div id="time-help" class="sr-only">Select your preferred consultation time slot</div>
 									</div>
 								</div>
 							</div>
@@ -950,15 +936,19 @@
 							
 							<!-- Form Navigation Buttons -->
 							<div class="form-navigation">
+								<!-- Regular Previous button (for steps 1-2) -->
 								<button type="button" class="btn btn-secondary btn-prev" id="prevBtn">
 									<i class="fas fa-arrow-left"></i> Previous
+								</button>
+								<!-- Special Previous button for Review step (goes to step 2) -->
+								<button type="button" class="btn btn-secondary btn-prev-review" id="prevBtnReview" style="display: none;">
+									<i class="fas fa-arrow-left"></i> Back to Date & Lawyer
 								</button>
 								<button type="button" class="btn btn-primary btn-next" id="nextBtn">
 									Next <i class="fas fa-arrow-right"></i>
 								</button>
-								<!-- Schedule Consultation button is now hidden - submission happens via Confirm button in time slot modal -->
 								<button type="submit" class="btn btn-primary btn-submit" id="submitBtn" style="display: none;">
-									Schedule Consultation <i class="fas fa-check"></i>
+									<i class="fas fa-paper-plane"></i> Submit
 								</button>
 							</div>
 							<p class="form-validation-note" id="validation-note">Please complete all required fields</p>
@@ -1076,6 +1066,21 @@
 			</div>
 		</section>
 	</main>
+
+	<!-- Success Modal -->
+	<div id="success-modal" class="success-modal" style="display: none;">
+		<div class="success-modal-overlay"></div>
+		<div class="success-modal-content">
+			<div class="success-modal-icon">
+				<i class="fas fa-check-circle"></i>
+			</div>
+			<h2 class="success-modal-title">Booking Success!</h2>
+			<p class="success-modal-message" id="success-modal-message"></p>
+			<button class="success-modal-btn" id="success-modal-close">
+				<i class="fas fa-check"></i> Got it
+			</button>
+		</div>
+	</div>
 
 	<footer class="site-footer">
 		<div class="container footer-inner">
@@ -1250,7 +1255,7 @@
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 	
 	<!-- Main JavaScript - Deferred -->
-	<script src="src/js/script.js?v=3.0" defer></script>
+	<script src="src/js/script.js?v=3.7" defer></script>
 
 	<!-- Back to Top Behavior -->
 	<script>
