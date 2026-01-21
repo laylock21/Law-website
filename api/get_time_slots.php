@@ -67,7 +67,7 @@ try {
     // Resolve lawyer by ID if provided; fallback to name matching
     if ($lawyer_id_param !== '') {
         // Use ID directly
-        $lawyer_stmt = $pdo->prepare("SELECT id, first_name, last_name FROM users WHERE role = 'lawyer' AND id = ? AND is_active = 1");
+        $lawyer_stmt = $pdo->prepare("SELECT id, first_name, last_name, lawyer_prefix FROM users WHERE role = 'lawyer' AND id = ? AND is_active = 1");
         $lawyer_stmt->execute([$lawyer_id_param]);
         $lawyer = $lawyer_stmt->fetch();
         if (!$lawyer) {
@@ -75,37 +75,19 @@ try {
         }
         $lawyer_id = (int)$lawyer['id'];
     } else {
-        // Get lawyer ID from name
-        // Note: Frontend already strips "Atty." prefix before sending, but double-check for safety
-        $lawyer_name_clean = preg_replace('/^Atty\.\s*/i', '', $lawyer_name);
-        $lawyer_parts = explode(' ', $lawyer_name_clean, 2); // Split into max 2 parts
-        $first_name = $lawyer_parts[0] ?? '';
-        $last_name = $lawyer_parts[1] ?? '';
-
-        // Try exact match first
+        // Get lawyer ID from name - try to match with or without prefix
         $lawyer_stmt = $pdo->prepare("
-            SELECT id, first_name, last_name 
+            SELECT id, first_name, last_name, lawyer_prefix
             FROM users 
-            WHERE role = 'lawyer' 
-            AND first_name = ? 
-            AND last_name = ?
+            WHERE (
+                CONCAT(COALESCE(CONCAT(lawyer_prefix, ' '), ''), first_name, ' ', last_name) = ?
+                OR CONCAT(first_name, ' ', last_name) = ?
+            )
+            AND role = 'lawyer' 
             AND is_active = 1
         ");
-        $lawyer_stmt->execute([$first_name, $last_name]);
+        $lawyer_stmt->execute([$lawyer_name, $lawyer_name]);
         $lawyer = $lawyer_stmt->fetch();
-
-        // If not found, try matching by concatenated full name
-        if (!$lawyer) {
-            $lawyer_stmt = $pdo->prepare("
-                SELECT id, first_name, last_name 
-                FROM users 
-                WHERE role = 'lawyer' 
-                AND CONCAT(first_name, ' ', last_name) = ?
-                AND is_active = 1
-            ");
-            $lawyer_stmt->execute([$lawyer_name_clean]);
-            $lawyer = $lawyer_stmt->fetch();
-        }
 
         if (!$lawyer) {
             throw new Exception('Lawyer not found');

@@ -33,6 +33,7 @@ try {
     $pdo->beginTransaction();
     
     // Validate and sanitize input data
+    $prefix = trim($_POST['prefix'] ?? '');
     $first_name = trim($_POST['first_name'] ?? '');
     $last_name = trim($_POST['last_name'] ?? '');
     $email = trim($_POST['email'] ?? '');
@@ -67,7 +68,8 @@ try {
     // Update user information in users table (no password change)
     $update_user_stmt = $pdo->prepare("
         UPDATE users 
-        SET first_name = ?, 
+        SET lawyer_prefix = ?,
+            first_name = ?, 
             last_name = ?, 
             email = ?, 
             phone = ?, 
@@ -76,6 +78,7 @@ try {
     ");
     
     $update_result = $update_user_stmt->execute([
+        $prefix,
         $first_name,
         $last_name,
         $email,

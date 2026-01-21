@@ -1328,7 +1328,8 @@ async function filterLawyersByPracticeArea(practiceArea) {
 			
 			result.lawyers.forEach((lawyer, index) => {
 				const option = document.createElement('option');
-				const fullName = 'Atty. ' + lawyer.name;
+				// Use the name from API which already includes the prefix from database
+				const fullName = lawyer.name;
 				option.value = fullName;
 				option.textContent = fullName;
 				option.dataset.lawyerId = lawyer.id;
@@ -1372,7 +1373,7 @@ async function updateCalendarForPracticeArea(practiceArea) {
 					
 					if (availResult.success) {
 						return {
-							lawyer: 'Atty. ' + lawyerName,
+							lawyer: lawyerName, // Use name as-is from API (already includes prefix)
 							dates: availResult.available_dates,
 							dateStatusMap: availResult.date_status_map || {}
 						};
@@ -1449,8 +1450,8 @@ if (lawyerSelect) {
 			const loaderId = loadingManager.show(calendarContainer, 'Loading availability...');
 			
 			try {
-				// Remove "Atty. " prefix for API call (database stores without prefix)
-				const lawyerNameForAPI = selectedLawyer.replace(/^Atty\.\s*/i, '');
+				// Use the full lawyer name as-is (includes prefix from database)
+				const lawyerNameForAPI = selectedLawyer;
 				
 				// Fetch lawyer availability from database
 				const lawyerIdForAPI = selectedOption.dataset.lawyerId || '';
@@ -2008,8 +2009,8 @@ async function openTimeSlotModal(date, lawyerName) {
     document.getElementById('confirmTimeSlot').disabled = true;
     
     try {
-        // Remove "Atty. " prefix for API call (database stores without prefix)
-        const lawyerNameForAPI = lawyerName.replace(/^Atty\.\s*/i, '');
+        // Use the full lawyer name as-is (includes prefix from database)
+        const lawyerNameForAPI = lawyerName;
         
         console.log('Fetching time slots for:', lawyerNameForAPI, 'on date:', date);
         

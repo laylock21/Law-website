@@ -41,7 +41,7 @@ try {
     
     // Get current lawyer information
     $lawyer_stmt = $pdo->prepare("
-        SELECT id, username, email, first_name, last_name, phone, description, profile_picture 
+        SELECT id, username, email, first_name, last_name, phone, description, profile_picture, lawyer_prefix 
         FROM users 
         WHERE id = ? AND role = 'lawyer'
     ");
@@ -255,11 +255,11 @@ $active_page = "profile";
                                 </label>
                                 <select id="prefix" name="prefix" class="form-input">
                                     <option value="">Select Prefix</option>
-                                    <option value="Atty.">Atty.</option>
-                                    <option value="Mr.">Mr.</option>
-                                    <option value="Ms.">Ms.</option>
-                                    <option value="Mrs.">Mrs.</option>
-                                    <option value="Dr.">Dr.</option>
+                                    <option value="Atty." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Atty.') ? 'selected' : ''; ?>>Atty.</option>
+                                    <option value="Mr." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Mr.') ? 'selected' : ''; ?>>Mr.</option>
+                                    <option value="Ms." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Ms.') ? 'selected' : ''; ?>>Ms.</option>
+                                    <option value="Mrs." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Mrs.') ? 'selected' : ''; ?>>Mrs.</option>
+                                    <option value="Dr." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Dr.') ? 'selected' : ''; ?>>Dr.</option>
                                 </select>
                             </div>
                             
@@ -388,6 +388,30 @@ $active_page = "profile";
                     </button>
                 </div>
             </div>
+            
+            <!-- Personal Info Only Actions -->
+            <div class="form-actions" id="personalInfoActions" style="display: none !important; justify-content: center !important; align-items: center !important; width: 100% !important; padding: 30px !important;">
+                <div style="display: flex; flex-direction: row; gap: 12px; width: 100%;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1; justify-content: center;">
+                        <i class="fas fa-save"></i> Update Personal Information
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="cancelEdit()" style="flex: 1; justify-content: center;">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Specializations Only Actions -->
+            <div class="form-actions" id="specializationsActions" style="display: none !important; justify-content: center !important; align-items: center !important; width: 100% !important; padding: 30px !important;">
+                <div style="display: flex; flex-direction: row; gap: 12px; width: 100%;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1; justify-content: center;">
+                        <i class="fas fa-save"></i> Update Specializations
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="cancelEdit()" style="flex: 1; justify-content: center;">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
         </form>
         <?php endif; ?>
         </div>
@@ -469,10 +493,41 @@ $active_page = "profile";
         let isEditMode = false;
         let isSpecializationsEditMode = false;
         
+        function updateFormActionsVisibility() {
+            const formActions = document.getElementById('formActions');
+            const personalInfoActions = document.getElementById('personalInfoActions');
+            const specializationsActions = document.getElementById('specializationsActions');
+            
+            // Hide all action buttons first
+            formActions.style.display = 'none';
+            personalInfoActions.style.display = 'none';
+            specializationsActions.style.display = 'none';
+            
+            // Show appropriate action buttons based on edit mode
+            if (isEditMode && isSpecializationsEditMode) {
+                // Both sections being edited - show combined actions
+                formActions.style.display = 'flex';
+                setTimeout(() => {
+                    formActions.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            } else if (isEditMode && !isSpecializationsEditMode) {
+                // Only personal info being edited
+                personalInfoActions.style.display = 'flex';
+                setTimeout(() => {
+                    personalInfoActions.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            } else if (!isEditMode && isSpecializationsEditMode) {
+                // Only specializations being edited
+                specializationsActions.style.display = 'flex';
+                setTimeout(() => {
+                    specializationsActions.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            }
+        }
+        
         function toggleEditMode() {
             isEditMode = !isEditMode;
             const formInputs = document.querySelectorAll('.form-input, .form-textarea');
-            const formActions = document.getElementById('formActions');
             const editBtn = document.querySelector('.btn-edit-toggle:not(.btn-edit-specializations)');
             
             formInputs.forEach(input => {
@@ -480,20 +535,19 @@ $active_page = "profile";
             });
             
             if (isEditMode) {
-                formActions.style.display = 'flex';
                 editBtn.innerHTML = '<i class="fas fa-times"></i> Cancel';
                 editBtn.title = 'Cancel Edit';
             } else {
-                formActions.style.display = 'none';
                 editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit';
                 editBtn.title = 'Edit Profile';
             }
+            
+            updateFormActionsVisibility();
         }
         
         function toggleSpecializationsEditMode() {
             isSpecializationsEditMode = !isSpecializationsEditMode;
             const specializationInputs = document.querySelectorAll('input[name="specializations[]"]');
-            const formActions = document.getElementById('formActions');
             const editBtn = document.querySelector('.btn-edit-specializations');
             
             specializationInputs.forEach(input => {
@@ -501,19 +555,16 @@ $active_page = "profile";
             });
             
             if (isSpecializationsEditMode) {
-                formActions.style.display = 'flex';
                 editBtn.innerHTML = '<i class="fas fa-times"></i> Cancel';
                 editBtn.title = 'Cancel Edit';
                 editBtn.classList.add('active');
             } else {
-                // Only hide form actions if personal info is also not being edited
-                if (!isEditMode) {
-                    formActions.style.display = 'none';
-                }
                 editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit';
                 editBtn.title = 'Edit Specializations';
                 editBtn.classList.remove('active');
             }
+            
+            updateFormActionsVisibility();
         }
         
         function cancelEdit() {
@@ -542,8 +593,17 @@ $active_page = "profile";
             
             // Hide form actions on page load
             const formActions = document.getElementById('formActions');
+            const personalInfoActions = document.getElementById('personalInfoActions');
+            const specializationsActions = document.getElementById('specializationsActions');
+            
             if (formActions) {
                 formActions.style.display = 'none';
+            }
+            if (personalInfoActions) {
+                personalInfoActions.style.display = 'none';
+            }
+            if (specializationsActions) {
+                specializationsActions.style.display = 'none';
             }
             
             updateSelectedCount();
@@ -964,29 +1024,80 @@ $active_page = "profile";
                 profileForm.addEventListener('submit', async function(e) {
                     e.preventDefault();
 
-                    const specializations = document.querySelectorAll('input[name="specializations[]"]:checked');
+                    // Always enable ALL fields before submission to ensure all data is sent
+                    const allFormInputs = document.querySelectorAll('.form-input, .form-textarea');
+                    const allSpecializations = document.querySelectorAll('input[name="specializations[]"]');
+                    
+                    // Temporarily enable everything for submission
+                    allFormInputs.forEach(input => {
+                        input.disabled = false;
+                    });
+                    
+                    allSpecializations.forEach(input => {
+                        input.disabled = false;
+                    });
+                    
+                    // Only validate specializations if that section is being edited
+                    if (isSpecializationsEditMode) {
+                        const specializations = document.querySelectorAll('input[name="specializations[]"]:checked');
 
-                    if (specializations.length === 0) {
-                        await ConfirmModal.alert({
-                            title: 'Validation Error',
-                            message: 'Please select at least one legal specialization.',
-                            type: 'warning'
-                        });
-                        return false;
+                        if (specializations.length === 0) {
+                            await ConfirmModal.alert({
+                                title: 'Validation Error',
+                                message: 'Please select at least one legal specialization.',
+                                type: 'warning'
+                            });
+                            
+                            // Re-disable fields that weren't being edited
+                            if (!isEditMode) {
+                                allFormInputs.forEach(input => {
+                                    input.disabled = true;
+                                });
+                            }
+                            if (!isSpecializationsEditMode) {
+                                allSpecializations.forEach(input => {
+                                    input.disabled = true;
+                                });
+                            }
+                            
+                            return false;
+                        }
+                    }
+
+                    // Show appropriate confirmation message
+                    let confirmMessage = 'Are you sure you want to update your profile?';
+                    if (isEditMode && isSpecializationsEditMode) {
+                        confirmMessage = 'Are you sure you want to update your profile information and specializations?';
+                    } else if (isEditMode) {
+                        confirmMessage = 'Are you sure you want to update your personal information?';
+                    } else if (isSpecializationsEditMode) {
+                        confirmMessage = 'Are you sure you want to update your specializations?';
                     }
 
                     // Show confirmation modal
                     const confirmed = await ConfirmModal.confirm({
                         title: 'Confirm Update',
-                        message: 'Are you sure you want to update your profile?',
-                        confirmText: 'Update Profile',
+                        message: confirmMessage,
+                        confirmText: 'Update',
                         cancelText: 'Cancel',
                         type: 'info'
                     });
 
                     if (confirmed) {
-                        // Submit the form
+                        // All fields are already enabled, submit the form
                         this.submit();
+                    } else {
+                        // Re-disable fields based on edit mode if user cancels
+                        if (!isEditMode) {
+                            allFormInputs.forEach(input => {
+                                input.disabled = true;
+                            });
+                        }
+                        if (!isSpecializationsEditMode) {
+                            allSpecializations.forEach(input => {
+                                input.disabled = true;
+                            });
+                        }
                     }
                 });
             }
