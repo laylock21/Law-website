@@ -249,3 +249,19 @@ This project is provided as-is for educational and business use.
          <li><strong>Done:</strong> Notifications will be sent automatically!</li>
    </ol>
 </div>
+
+CREATE TABLE `notification_queue` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `user_id` INT(11) NOT NULL,
+  `email` VARCHAR(255) NOT NULL,
+  `subject` VARCHAR(255) NOT NULL,
+  `message` TEXT NOT NULL,
+  `notification_type` ENUM('appointment_cancelled', 'schedule_changed', 'other') DEFAULT 'other',
+  `consultation_id` INT(11) DEFAULT NULL,
+  `status` ENUM('pending', 'sent', 'failed') DEFAULT 'pending',
+  `attempts` INT(11) DEFAULT 0,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `sent_at` TIMESTAMP NULL DEFAULT NULL,
+  `error_message` TEXT DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
