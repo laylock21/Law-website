@@ -6,7 +6,7 @@
 
 class ErrorHandler {
     private static $log_file = 'logs/error.log';
-    private static $debug_mode = true; // Set to false in production
+    private static $debug_mode = false; // Set to false in production
     
     /**
      * Initialize error handling

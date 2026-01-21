@@ -31,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 try {
     require_once '../../config/database.php';
     require_once '../../config/upload_config.php';
+    require_once '../../config/Logger.php';
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'Configuration error: ' . $e->getMessage()]);
     exit;
@@ -99,6 +100,11 @@ try {
     $profile_picture_url = getProfilePictureUrl($filename);
     
     // Log the successful upload
+    Logger::security('profile_picture_uploaded', [
+        'user_id' => $lawyer_id,
+        'filename' => $filename,
+        'file_size' => $uploaded_file['size']
+    ]);
     error_log("Profile picture uploaded successfully for lawyer ID: $lawyer_id, filename: $filename, URL: $profile_picture_url");
     
     // Return success response
