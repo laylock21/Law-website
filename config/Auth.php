@@ -7,6 +7,7 @@
 class Auth {
     private $pdo;
     private $session;
+    private $sessionManager;
     
     public function __construct($database_connection) {
         $this->pdo = $database_connection;
@@ -17,6 +18,10 @@ class Auth {
         }
         
         $this->session = &$_SESSION;
+        
+        // Initialize session manager
+        require_once __DIR__ . '/SessionManager.php';
+        $this->sessionManager = new SessionManager($database_connection);
     }
     
     /**
@@ -100,6 +105,9 @@ class Auth {
             $_SESSION['lawyer_email'] = $user['email'];
         }
         
+        // Create database session record
+        $this->sessionManager->createSession($user['id']);
+        
         // Clear any failed login attempts
         unset($_SESSION['login_attempts']);
         unset($_SESSION['last_attempt_time']);
@@ -112,7 +120,19 @@ class Auth {
      * Check if user is logged in
      */
     public function isLoggedIn() {
-        return isset($_SESSION['user_logged_in']) && $_SESSION['user_logged_in'] === true;
+        // Check PHP session
+        if (!isset($_SESSION['user_logged_in']) || $_SESSION['user_logged_in'] !== true) {
+            return false;
+        }
+        
+        // Validate against database session
+        if (!$this->sessionManager->validateSession()) {
+            // Session invalid - clear PHP session
+            $this->logout();
+            return false;
+        }
+        
+        return true;
     }
     
     /**
@@ -143,6 +163,9 @@ class Auth {
      * Logout user
      */
     public function logout() {
+        // Mark session as logged out in database
+        $this->sessionManager->logoutSession();
+        
         // Clear all session variables
         $_SESSION = array();
         
@@ -213,7 +236,15 @@ class Auth {
     public function updateLastActivity() {
         if ($this->isLoggedIn()) {
             $_SESSION['last_activity'] = time();
+            $this->sessionManager->updateSessionActivity();
         }
+    }
+    
+    /**
+     * Get session manager instance
+     */
+    public function getSessionManager() {
+        return $this->sessionManager;
     }
     
     /**
