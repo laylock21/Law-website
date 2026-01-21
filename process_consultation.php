@@ -194,6 +194,15 @@ try {
         $consultation_id = $pdo->lastInsertId();
         
         // Log successful consultation submission
+        Logger::security('consultation_booked', [
+            'consultation_id' => $consultation_id,
+            'practice_area' => $practice_area,
+            'lawyer' => $selected_lawyer,
+            'lawyer_id' => $lawyer_id,
+            'date' => $selected_date,
+            'time' => $selected_time,
+            'client_email' => $email
+        ]);
         Logger::userAction('consultation_submitted', null, [
             'consultation_id' => $consultation_id,
             'practice_area' => $practice_area,

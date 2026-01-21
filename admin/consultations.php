@@ -251,7 +251,7 @@ $active_page = "consultations";
                 <div class="admin-alert admin-alert-error"><?php echo htmlspecialchars($error_message); ?></div>
             <?php endif; ?>
 
-            <div class="admin-stats-grid">
+            <div class="admin-stats-grid consultations-stats" style="grid-template-columns: repeat(5, 1fr);">
                 <div class="admin-stat-card">
                     <div class="admin-stat-number"><?php echo $total_consultations; ?></div>
                     <div class="admin-stat-label">Total Consultations</div>

@@ -44,6 +44,7 @@ try {
             u.id,
             u.first_name,
             u.last_name,
+            u.lawyer_prefix,
             u.email,
             u.phone,
             u.description,
@@ -57,7 +58,7 @@ try {
         AND u.is_active = 1
         AND la.is_active = 1
         AND la.schedule_type IN ('weekly', 'one_time')
-        GROUP BY u.id, u.first_name, u.last_name, u.email, u.phone, u.description, u.profile_picture
+        GROUP BY u.id, u.first_name, u.last_name, u.lawyer_prefix, u.email, u.phone, u.description, u.profile_picture
         ORDER BY u.first_name, u.last_name
     ");
     $lawyers_stmt->execute();
@@ -66,9 +67,14 @@ try {
     // Format lawyers data for frontend
     $formatted_lawyers = [];
     foreach ($lawyers as $lawyer) {
+        // Build full name with prefix if available
+        $prefix = !empty($lawyer['lawyer_prefix']) ? $lawyer['lawyer_prefix'] . ' ' : '';
+        $fullName = $prefix . $lawyer['first_name'] . ' ' . $lawyer['last_name'];
+        
         $formatted_lawyers[] = [
             'id' => $lawyer['id'],
-            'name' => 'Atty. ' . $lawyer['first_name'] . ' ' . $lawyer['last_name'],
+            'name' => $fullName,
+            'prefix' => $lawyer['lawyer_prefix'],
             'first_name' => $lawyer['first_name'],
             'last_name' => $lawyer['last_name'],
             'email' => $lawyer['email'],

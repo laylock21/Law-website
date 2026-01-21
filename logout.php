@@ -6,6 +6,15 @@
 
 session_start();
 
+// Log the logout event before clearing session
+if (isset($_SESSION['user_id'])) {
+    require_once 'config/Logger.php';
+    Logger::security('user_logout', [
+        'user_id' => $_SESSION['user_id'],
+        'role' => $_SESSION['user_role'] ?? 'unknown'
+    ]);
+}
+
 // Clear all session variables
 $_SESSION = array();
 

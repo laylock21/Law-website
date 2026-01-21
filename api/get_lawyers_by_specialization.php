@@ -40,7 +40,7 @@ try {
     
     // Get lawyers by specialization
     $lawyers_stmt = $pdo->prepare("
-        SELECT u.id, u.first_name, u.last_name, u.email, u.phone
+        SELECT u.id, u.first_name, u.last_name, u.lawyer_prefix, u.email, u.phone
         FROM users u
         JOIN lawyer_specializations ls ON u.id = ls.user_id
         JOIN practice_areas pa ON ls.practice_area_id = pa.id
@@ -55,9 +55,16 @@ try {
     // Format lawyer names for frontend
     $formatted_lawyers = [];
     foreach ($lawyers as $lawyer) {
+        // Build full name with prefix if available
+        $prefix = !empty($lawyer['lawyer_prefix']) ? $lawyer['lawyer_prefix'] . ' ' : '';
+        $fullName = $prefix . $lawyer['first_name'] . ' ' . $lawyer['last_name'];
+        
         $formatted_lawyers[] = [
             'id' => $lawyer['id'],
-            'name' => $lawyer['first_name'] . ' ' . $lawyer['last_name'],
+            'name' => $fullName,
+            'prefix' => $lawyer['lawyer_prefix'],
+            'first_name' => $lawyer['first_name'],
+            'last_name' => $lawyer['last_name'],
             'email' => $lawyer['email'],
             'phone' => $lawyer['phone']
         ];

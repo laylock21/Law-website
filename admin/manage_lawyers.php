@@ -14,6 +14,7 @@ if (!isset($_SESSION['user_logged_in']) || $_SESSION['user_logged_in'] !== true 
 
 require_once '../config/database.php';
 require_once '../config/upload_config.php';
+require_once '../config/Logger.php';
 
 $message = '';
 $error = '';
@@ -103,6 +104,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     $pdo->commit();
                     
+                    // Log lawyer creation
+                    Logger::security('lawyer_created', [
+                        'admin_id' => $_SESSION['user_id'],
+                        'lawyer_id' => $lawyer_id,
+                        'username' => $username,
+                        'email' => $email,
+                        'password_type' => $password_option
+                    ]);
+                    
                     // Create success message based on password type
                     if ($password_option === 'auto') {
                         // Detailed credentials box for auto-generated passwords
@@ -167,6 +177,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $toggle_stmt = $pdo->prepare("UPDATE users SET is_active = ? WHERE id = ? AND role = 'lawyer'");
                     $toggle_stmt->execute([$new_status, $lawyer_id]);
                     
+                    // Log status change
+                    Logger::security('lawyer_status_changed', [
+                        'admin_id' => $_SESSION['user_id'],
+                        'lawyer_id' => $lawyer_id,
+                        'new_status' => $new_status ? 'active' : 'inactive'
+                    ]);
+                    
                     $status_text = $new_status ? 'activated' : 'deactivated';
                     
                     // Store message in session and redirect (PRG pattern)
@@ -225,6 +242,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Update password and temporary_password status
                     $reset_stmt = $pdo->prepare("UPDATE users SET password = ?, temporary_password = ? WHERE id = ? AND role = 'lawyer'");
                     $reset_stmt->execute([$hashed_password, $force_change, $lawyer_id]);
+                    
+                    // Log password reset
+                    Logger::security('lawyer_password_reset', [
+                        'admin_id' => $_SESSION['user_id'],
+                        'lawyer_id' => $lawyer_id,
+                        'password_type' => $password_option,
+                        'force_change' => $force_change ? true : false
+                    ]);
                     
                     // Create detailed success message
                     $lawyer_name = $lawyer_info['first_name'] . ' ' . $lawyer_info['last_name'];
@@ -313,6 +338,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     
                     $pdo->commit();
+                    
+                    // Log lawyer deletion
+                    Logger::security('lawyer_deleted', [
+                        'admin_id' => $_SESSION['user_id'],
+                        'lawyer_id' => $lawyer_id,
+                        'lawyer_name' => $lawyer_name,
+                        'consultations_deleted' => $consultation_count
+                    ]);
                     
                     $lawyer_name = $lawyer_info['first_name'] . ' ' . $lawyer_info['last_name'];
                     $message = "Lawyer <strong>$lawyer_name</strong> has been permanently deleted.";

@@ -46,8 +46,24 @@ if (!$pdo) {
         $password = $_POST['password'] ?? '';
         $submitted_csrf_token = $_POST['csrf_token'] ?? '';
         
+        // Check if locked out
+        if ($auth->isLockedOut()) {
+            $lockout_info = $auth->getLockoutTimeRemaining();
+            $minutes = $lockout_info['minutes'];
+            $seconds = $lockout_info['seconds'];
+            $tier = $lockout_info['tier'];
+            
+            $tier_names = [1 => 'Tier 1', 2 => 'Tier 2', 3 => 'Tier 3'];
+            $tier_name = $tier_names[$tier] ?? '';
+            
+            if ($minutes > 0) {
+                $error_message = "Device locked. Please try again in {$minutes} minute(s) and {$seconds} second(s).";
+            } else {
+                $error_message = "Device locked. Please try again in {$seconds} second(s).";
+            }
+        }
         // Verify CSRF token
-        if (!$auth->verifyCSRFToken($submitted_csrf_token)) {
+        elseif (!$auth->verifyCSRFToken($submitted_csrf_token)) {
             $error_message = 'Invalid security token. Please try again.';
         } elseif (empty($username) || empty($password)) {
             $error_message = 'Please enter both username and password';
@@ -65,7 +81,32 @@ if (!$pdo) {
                 }
                 exit;
             } else {
-                $error_message = 'Invalid username or password';
+                // Check if now locked out after this attempt
+                if ($auth->isLockedOut()) {
+                    $lockout_info = $auth->getLockoutTimeRemaining();
+                    $minutes = $lockout_info['minutes'];
+                    $seconds = $lockout_info['seconds'];
+                    $tier = $lockout_info['tier'];
+                    $attempts = $auth->getLoginAttempts();
+                    
+                    $tier_messages = [
+                        1 => "Too many failed attempts. Device locked for 2 minutes.",
+                        2 => "Too many failed attempts. Device locked for 5 minutes.",
+                        3 => "Too many failed attempts. Device locked for 15 minutes."
+                    ];
+                    
+                    $error_message = $tier_messages[$tier] ?? "Device locked. Please try again later.";
+                } else {
+                    $attempts = $auth->getLoginAttempts();
+                    $next_info = $auth->getNextLockoutInfo();
+                    
+                    // Show warning when approaching next threshold
+                    if ($next_info['remaining'] <= 2 && $next_info['remaining'] > 0) {
+                        $error_message = "Invalid username or password. Warning: {$next_info['remaining']} more failed attempt(s) will lock this device for {$next_info['lockout_duration']}.";
+                    } else {
+                        $error_message = 'Invalid username or password';
+                    }
+                }
             }
         }
     }

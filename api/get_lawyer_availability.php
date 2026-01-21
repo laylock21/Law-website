@@ -39,17 +39,18 @@ try {
     }
     
     // Get lawyer ID and date preferences from name
-    // Note: Frontend already strips "Atty." prefix before sending, but double-check for safety
-    $lawyer_name_clean = preg_replace('/^Atty\.\s*/i', '', $lawyer_name);
-    
+    // Try to match with full name including prefix, or without prefix
     $lawyer_stmt = $pdo->prepare("
         SELECT id, default_booking_weeks, max_booking_weeks, booking_window_enabled
         FROM users 
-        WHERE CONCAT(first_name, ' ', last_name) = ? 
+        WHERE (
+            CONCAT(COALESCE(CONCAT(lawyer_prefix, ' '), ''), first_name, ' ', last_name) = ?
+            OR CONCAT(first_name, ' ', last_name) = ?
+        )
         AND role = 'lawyer' 
         AND is_active = 1
     ");
-    $lawyer_stmt->execute([$lawyer_name_clean]);
+    $lawyer_stmt->execute([$lawyer_name, $lawyer_name]);
     $lawyer = $lawyer_stmt->fetch();
     
     if (!$lawyer) {

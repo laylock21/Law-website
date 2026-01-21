@@ -23,6 +23,13 @@ class Auth {
      * Authenticate user with username and password
      */
     public function authenticate($username, $password) {
+        // Check if account is locked out
+        if ($this->isLockedOut()) {
+            $remaining = $this->getLockoutTimeRemaining();
+            error_log("Login attempt during lockout for username: $username from IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+            return false;
+        }
+        
         try {
             // Fetch user by username
             $stmt = $this->pdo->prepare('
@@ -37,9 +44,23 @@ class Auth {
             if ($user && $user['is_active'] == 1) {
                 // Use password_verify for hashed passwords
                 if (password_verify($password, $user['password'])) {
+                    // Successful login - log it
+                    $this->logSecurityEvent('successful_login', [
+                        'user_id' => $user['id'],
+                        'username' => $username,
+                        'role' => $user['role']
+                    ]);
+                    
                     return $this->createSession($user);
                 }
             }
+            
+            // Failed login - increment attempts and log
+            $this->incrementLoginAttempts($username);
+            $this->logSecurityEvent('failed_login', [
+                'username' => $username,
+                'attempts' => $_SESSION['login_attempts'] ?? 1
+            ]);
             
             return false;
             
@@ -53,6 +74,9 @@ class Auth {
      * Create user session
      */
     private function createSession($user) {
+        // Regenerate session ID to prevent session fixation attacks
+        session_regenerate_id(true);
+        
         // Set unified session variables
         $_SESSION['user_logged_in'] = true;
         $_SESSION['user_id'] = $user['id'];
@@ -75,6 +99,11 @@ class Auth {
             $_SESSION['lawyer_name'] = $user['first_name'] . ' ' . $user['last_name'];
             $_SESSION['lawyer_email'] = $user['email'];
         }
+        
+        // Clear any failed login attempts
+        unset($_SESSION['login_attempts']);
+        unset($_SESSION['last_attempt_time']);
+        unset($_SESSION['lockout_until']);
         
         return true;
     }
@@ -184,6 +213,132 @@ class Auth {
     public function updateLastActivity() {
         if ($this->isLoggedIn()) {
             $_SESSION['last_activity'] = time();
+        }
+    }
+    
+    /**
+     * Increment failed login attempts
+     */
+    private function incrementLoginAttempts($username) {
+        if (!isset($_SESSION['login_attempts'])) {
+            $_SESSION['login_attempts'] = 0;
+            $_SESSION['attempted_username'] = $username;
+        }
+        
+        $_SESSION['login_attempts']++;
+        $_SESSION['last_attempt_time'] = time();
+        
+        // Tiered lockout system
+        $attempts = $_SESSION['login_attempts'];
+        
+        if ($attempts >= 15) {
+            // 15+ attempts = 15 minutes lockout
+            $_SESSION['lockout_until'] = time() + (15 * 60);
+            $_SESSION['lockout_tier'] = 3;
+        } elseif ($attempts >= 10) {
+            // 10-14 attempts = 5 minutes lockout
+            $_SESSION['lockout_until'] = time() + (5 * 60);
+            $_SESSION['lockout_tier'] = 2;
+        } elseif ($attempts >= 5) {
+            // 5-9 attempts = 2 minutes lockout
+            $_SESSION['lockout_until'] = time() + (2 * 60);
+            $_SESSION['lockout_tier'] = 1;
+        }
+    }
+    
+    /**
+     * Check if account is locked out
+     */
+    public function isLockedOut() {
+        if (isset($_SESSION['lockout_until'])) {
+            if (time() < $_SESSION['lockout_until']) {
+                return true;
+            } else {
+                // Lockout expired, clear it
+                unset($_SESSION['login_attempts']);
+                unset($_SESSION['last_attempt_time']);
+                unset($_SESSION['lockout_until']);
+                unset($_SESSION['lockout_tier']);
+                unset($_SESSION['attempted_username']);
+                return false;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Get remaining lockout time in minutes and seconds
+     */
+    public function getLockoutTimeRemaining() {
+        if (isset($_SESSION['lockout_until'])) {
+            $remaining_seconds = $_SESSION['lockout_until'] - time();
+            if ($remaining_seconds > 0) {
+                $minutes = floor($remaining_seconds / 60);
+                $seconds = $remaining_seconds % 60;
+                return [
+                    'minutes' => $minutes,
+                    'seconds' => $seconds,
+                    'total_seconds' => $remaining_seconds,
+                    'tier' => $_SESSION['lockout_tier'] ?? 1
+                ];
+            }
+        }
+        return ['minutes' => 0, 'seconds' => 0, 'total_seconds' => 0, 'tier' => 0];
+    }
+    
+    /**
+     * Get number of failed login attempts
+     */
+    public function getLoginAttempts() {
+        return $_SESSION['login_attempts'] ?? 0;
+    }
+    
+    /**
+     * Get next lockout threshold info
+     */
+    public function getNextLockoutInfo() {
+        $attempts = $this->getLoginAttempts();
+        
+        if ($attempts < 5) {
+            return [
+                'next_threshold' => 5,
+                'remaining' => 5 - $attempts,
+                'lockout_duration' => '2 minutes'
+            ];
+        } elseif ($attempts < 10) {
+            return [
+                'next_threshold' => 10,
+                'remaining' => 10 - $attempts,
+                'lockout_duration' => '5 minutes'
+            ];
+        } elseif ($attempts < 15) {
+            return [
+                'next_threshold' => 15,
+                'remaining' => 15 - $attempts,
+                'lockout_duration' => '15 minutes'
+            ];
+        } else {
+            return [
+                'next_threshold' => null,
+                'remaining' => 0,
+                'lockout_duration' => '15 minutes'
+            ];
+        }
+    }
+    
+    /**
+     * Log security events
+     */
+    private function logSecurityEvent($event_type, $details = []) {
+        // Only log if Logger class is available
+        if (class_exists('Logger')) {
+            $context = array_merge([
+                'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+                'timestamp' => date('Y-m-d H:i:s')
+            ], $details);
+            
+            Logger::security($event_type, $context);
         }
     }
 }
