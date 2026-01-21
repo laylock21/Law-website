@@ -98,7 +98,7 @@ $active_page = "dashboard";
         
         .toast-content h3 {
             margin: 0;
-            font-size: 16px;
+            font-size: 1.2rem;
             font-weight: 600;
         }
         
@@ -126,6 +126,22 @@ $active_page = "dashboard";
             to {
                 opacity: 0;
             }
+        }
+        
+        /* Welcome Overview Card */
+        .welcome-overview-card {
+            background: white;
+            padding: 20px 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+            text-align: left;
+        }
+        
+        .welcome-overview-card p {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #6c757d;
         }
         
         /* Recent Consultation Requests Font Sizes */
@@ -156,7 +172,6 @@ $active_page = "dashboard";
             <i class="fas fa-chart-line"></i>
             <div class="toast-content">
                 <h3>Welcome back, <?php echo htmlspecialchars($_SESSION['admin_username'] ?? 'Admin'); ?>!</h3>
-                <p>Here's an overview of your consultation system and key metrics</p>
             </div>
         </div>
     </div>
@@ -164,7 +179,20 @@ $active_page = "dashboard";
     <main class="admin-main-content">
         <div class="container">
 
+            <!-- Welcome Overview Card -->
+            <div class="welcome-overview-card">
+                <p>Here's an overview of your consultation system and key metrics</p>
+            </div>
+
             <div class="admin-stats-grid dashboard-stats">
+                <div class="admin-stat-card">
+                    <div class="admin-stat-number"><?php echo $total_lawyers ?? 0; ?></div>
+                    <div class="admin-stat-label">Total Lawyers</div>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="admin-stat-number"><?php echo $active_lawyers ?? 0; ?></div>
+                    <div class="admin-stat-label">Active Lawyers</div>
+                </div>
                 <div class="admin-stat-card">
                     <div class="admin-stat-number"><?php echo $total_consultations ?? 0; ?></div>
                     <div class="admin-stat-label">Total Consultations</div>
@@ -184,14 +212,6 @@ $active_page = "dashboard";
                 <div class="admin-stat-card">
                     <div class="admin-stat-number"><?php echo $cancelled_count ?? 0; ?></div>
                     <div class="admin-stat-label">Cancelled</div>
-                </div>
-                <div class="admin-stat-card">
-                    <div class="admin-stat-number"><?php echo $total_lawyers ?? 0; ?></div>
-                    <div class="admin-stat-label">Total Lawyers</div>
-                </div>
-                <div class="admin-stat-card">
-                    <div class="admin-stat-number"><?php echo $active_lawyers ?? 0; ?></div>
-                    <div class="admin-stat-label">Active Lawyers</div>
                 </div>
             </div>
 
