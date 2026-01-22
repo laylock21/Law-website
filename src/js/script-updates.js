@@ -88,7 +88,7 @@ async function handleDirectFormSubmission(formData) {
 	const appointmentStatus = document.getElementById('appointment-status');
 	
 	try {
-		const response = await fetch('process_consultation.php', {
+		const response = await fetch('api/process_consultation.php', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',

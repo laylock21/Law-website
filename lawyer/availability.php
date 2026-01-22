@@ -340,7 +340,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $async_script = "
                 <script>
                 setTimeout(function() {
-                    fetch('../process_emails_async.php', {
+                    fetch('../api/process_emails_async.php', {
                         method: 'POST',
                         headers: {'X-Requested-With': 'XMLHttpRequest'}
                     }).then(response => response.json())
@@ -469,7 +469,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $async_script = "
                 <script>
                 setTimeout(function() {
-                    fetch('../process_emails_async.php', {
+                    fetch('../api/process_emails_async.php', {
                         method: 'POST',
                         headers: {'X-Requested-With': 'XMLHttpRequest'}
                     }).then(response => response.json())

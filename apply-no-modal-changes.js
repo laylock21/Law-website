@@ -268,7 +268,7 @@ if (appointmentForm) {
 				selected_time: selectedTime
 			};
 			
-			const response = await fetch('process_consultation.php', {
+			const response = await fetch('api/process_consultation.php', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -332,7 +332,7 @@ function validatePhone(phone) {
 function triggerEmailProcessing() {
     console.log('Triggering email processing...');
     setTimeout(function() {
-        fetch('process_emails_async.php', {
+        fetch('api/process_emails_async.php', {
             method: 'POST',
             headers: {'X-Requested-With': 'XMLHttpRequest'}
         }).then(response => response.json())
@@ -348,3 +348,5 @@ function triggerEmailProcessing() {
 document.addEventListener('DOMContentLoaded', () => {
 	initializeConsultationForm();
 });
+
+

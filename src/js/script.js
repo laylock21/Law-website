@@ -974,7 +974,7 @@ if (appointmentForm && appointmentStatus) {
 			
 			
 			// Submit to PHP backend
-			const response = await fetch('process_consultation.php', {
+			const response = await fetch('api/process_consultation.php', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -2307,7 +2307,7 @@ document.getElementById('confirmTimeSlot').addEventListener('click', async () =>
             };
             
             // Submit to PHP backend
-            const response = await fetch('process_consultation.php', {
+            const response = await fetch('api/process_consultation.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -3026,3 +3026,4 @@ if (document.readyState === 'loading') {
 }
 
 console.log('✅ No-modal consultation form initialized');
+
