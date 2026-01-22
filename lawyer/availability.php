@@ -523,13 +523,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Preserve filter and page parameters in redirect (check both POST and GET)
             $redirect_params = [];
             $filter = $_POST['filter'] ?? $_GET['filter'] ?? null;
-            $blocked_page = $_POST['blocked_page'] ?? $_GET['blocked_page'] ?? null;
+            $page = $_POST['page'] ?? $_GET['page'] ?? null;
             
             if ($filter) {
                 $redirect_params[] = 'filter=' . urlencode($filter);
             }
-            if ($blocked_page) {
-                $redirect_params[] = 'blocked_page=' . urlencode($blocked_page);
+            if ($page) {
+                $redirect_params[] = 'page=' . urlencode($page);
             }
             
             $redirect_url = 'availability.php';
@@ -549,13 +549,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Preserve filter and page parameters in redirect (check both POST and GET)
         $redirect_params = [];
         $filter = $_POST['filter'] ?? $_GET['filter'] ?? null;
-        $blocked_page = $_POST['blocked_page'] ?? $_GET['blocked_page'] ?? null;
+        $page = $_POST['page'] ?? $_GET['page'] ?? null;
         
         if ($filter) {
             $redirect_params[] = 'filter=' . urlencode($filter);
         }
-        if ($blocked_page) {
-            $redirect_params[] = 'blocked_page=' . urlencode($blocked_page);
+        if ($page) {
+            $redirect_params[] = 'page=' . urlencode($page);
         }
         
         $redirect_url = 'availability.php';
@@ -667,13 +667,54 @@ try {
         }
     }
     
-    // Pagination for blocked dates
-    $blocked_per_page = 4;
-    $blocked_page = isset($_GET['blocked_page']) ? max(1, (int)$_GET['blocked_page']) : 1;
+    // Unified pagination for all schedule types
+    $items_per_page = 10; // Show 10 items per page
+    $current_page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+    
+    // Combine all schedules into one array for unified pagination
+    $all_schedules_combined = [];
+    
+    // Add weekly schedules with type marker
+    foreach ($weekly_schedules as $schedule) {
+        $schedule['display_type'] = 'weekly';
+        $all_schedules_combined[] = $schedule;
+    }
+    
+    // Add one-time schedules with type marker
+    foreach ($onetime_schedules as $schedule) {
+        $schedule['display_type'] = 'onetime';
+        $all_schedules_combined[] = $schedule;
+    }
+    
+    // Add blocked dates with type marker
+    foreach ($blocked_dates as $schedule) {
+        $schedule['display_type'] = 'blocked';
+        $all_schedules_combined[] = $schedule;
+    }
+    
+    // Calculate pagination
+    $total_items = count($all_schedules_combined);
+    $total_pages = ceil($total_items / $items_per_page);
+    $offset = ($current_page - 1) * $items_per_page;
+    $schedules_paginated = array_slice($all_schedules_combined, $offset, $items_per_page);
+    
+    // Store counts for stats display
     $blocked_total = count($blocked_dates);
-    $blocked_total_pages = ceil($blocked_total / $blocked_per_page);
-    $blocked_offset = ($blocked_page - 1) * $blocked_per_page;
-    $blocked_dates_paginated = array_slice($blocked_dates, $blocked_offset, $blocked_per_page);
+    
+    // Separate paginated results back into types for display
+    $weekly_schedules_paginated = [];
+    $onetime_schedules_paginated = [];
+    $blocked_dates_paginated = [];
+    
+    foreach ($schedules_paginated as $schedule) {
+        if ($schedule['display_type'] === 'weekly') {
+            $weekly_schedules_paginated[] = $schedule;
+        } elseif ($schedule['display_type'] === 'onetime') {
+            $onetime_schedules_paginated[] = $schedule;
+        } elseif ($schedule['display_type'] === 'blocked') {
+            $blocked_dates_paginated[] = $schedule;
+        }
+    }
     
 } catch (Exception $e) {
     $error_message = "Database error: " . $e->getMessage();
@@ -1321,87 +1362,7 @@ $active_page = "availability";
             document.getElementById('bulk-unblock-form').submit();
         }
         
-        // AJAX Pagination for Blocked Dates
-        function loadBlockedDates(page) {
-            const container = document.getElementById('blocked-dates-container');
-            
-            // Show loading state
-            container.style.opacity = '0.5';
-            container.style.pointerEvents = 'none';
-            
-            // Fetch new page
-            fetch(`../api/lawyer/get_blocked_dates_lawyer.php?page=${page}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.text();
-                })
-                .then(html => {
-                    container.innerHTML = html;
-                    container.style.opacity = '1';
-                    container.style.pointerEvents = 'auto';
-                    
-                    // Re-attach form submission handlers
-                    attachBlockedFormHandlers();
-                    
-                    // Restore bulk mode state if active
-                    if (bulkModeActive) {
-                        const checkboxContainers = document.querySelectorAll('.bulk-checkbox-container');
-                        const contentDivs = document.querySelectorAll('.blocked-date-content');
-                        checkboxContainers.forEach(container => {
-                            container.style.display = 'block';
-                        });
-                        contentDivs.forEach(div => {
-                            div.style.marginLeft = '35px';
-                        });
-                    }
-                    
-                    // Smooth scroll to top of blocked dates section
-                    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                })
-                .catch(error => {
-                    console.error('Error loading blocked dates:', error);
-                    container.innerHTML = '<p style="color: #dc3545; text-align: center; padding: 20px;">Error loading blocked dates. Please refresh the page.</p>';
-                    container.style.opacity = '1';
-                    container.style.pointerEvents = 'auto';
-                });
-        }
-        
-        // Attach form handlers for AJAX-loaded blocked dates
-        function attachBlockedFormHandlers() {
-            const forms = document.querySelectorAll('#blocked-dates-container form[action*="availability.php"]');
-            forms.forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    
-                    if (!confirm('Unblock this date?')) {
-                        return;
-                    }
-                    
-                    const formData = new FormData(this);
-                    
-                    fetch('availability.php', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.text())
-                    .then(() => {
-                        // Reload the current page of blocked dates
-                        const currentPage = document.querySelector('.pagination .current');
-                        const page = currentPage ? parseInt(currentPage.textContent) : 1;
-                        loadBlockedDates(page);
-                    })
-                    .catch(error => {
-                        console.error('Error unblocking date:', error);
-                        alert('Error unblocking date. Please try again.');
-                    });
-                });
-            });
-        }
-        
-        // Initial attachment on page load
-        document.addEventListener('DOMContentLoaded', attachBlockedFormHandlers);
+        // Removed AJAX pagination - using simple page reload pagination instead
         
         
         
@@ -1492,7 +1453,7 @@ $active_page = "availability";
         <div id="toast-container"></div>
 
         <!-- Top summary stats bar -->
-        <div class="schedule-stats-bar" style="margin-bottom: 20px;">
+        <div class="schedule-stats-bar" style="margin-bottom: 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; width: 100%;">
             <div class="stat-item">
                 <i class="fas fa-calendar-week"></i>
                 <div class="stat-content">
@@ -1512,13 +1473,6 @@ $active_page = "availability";
                 <div class="stat-content">
                     <span class="stat-number"><?php echo $blocked_total; ?></span>
                     <span class="stat-label">Blocked Dates</span>
-                </div>
-            </div>
-            <div class="stat-item">
-                <i class="fas fa-calendar-times"></i>
-                <div class="stat-content">
-                    <span class="stat-number"><?php echo $blocked_total; ?></span>
-                    <span class="stat-label">Unavailable</span>
                 </div>
             </div>
             <div class="stat-item">
@@ -1545,7 +1499,6 @@ $active_page = "availability";
                 </div>
             </div>
         </div>
-        </div>
 
         <div class="lawyer-availability-section">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
@@ -1557,6 +1510,15 @@ $active_page = "availability";
                         <option value="onetime" <?php echo ($status_filter === 'onetime') ? 'selected' : ''; ?>>One Time</option>
                         <option value="unavailable" <?php echo ($status_filter === 'unavailable') ? 'selected' : ''; ?>>Unavailable</option>
                     </select>
+                    <?php if ($total_pages > 1): ?>
+                        <select id="page-selector" class="status-filter-dropdown" onchange="jumpToPage(this.value)" style="min-width: 100px;">
+                            <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                                <option value="<?php echo $i; ?>" <?php echo $i == $current_page ? 'selected' : ''; ?>>
+                                    Page <?php echo $i; ?>
+                                </option>
+                            <?php endfor; ?>
+                        </select>
+                    <?php endif; ?>
                     <button type="button" class="lawyer-btn btn-create-custom" onclick="openScheduleModal()">
                         <i class="fas fa-plus-circle"></i> Create
                     </button>
@@ -1568,19 +1530,15 @@ $active_page = "availability";
                 if (pageNum) {
                     const urlParams = new URLSearchParams(window.location.search);
                     const currentFilter = urlParams.get('filter') || 'all';
-                    window.location.href = '?blocked_page=' + pageNum + '&filter=' + encodeURIComponent(currentFilter);
+                    window.location.href = '?page=' + pageNum + '&filter=' + encodeURIComponent(currentFilter);
                 }
             }
             
             function filterSchedules() {
                 const filter = document.getElementById('status-filter').value;
                 
-                // Update URL with filter parameter while preserving blocked_page
-                const urlParams = new URLSearchParams(window.location.search);
-                const currentPage = urlParams.get('blocked_page') || '1';
-                
-                // Build new URL with filter and current page
-                const newUrl = '?blocked_page=' + currentPage + '&filter=' + encodeURIComponent(filter);
+                // Update URL with filter parameter, reset to page 1
+                const newUrl = '?page=1&filter=' + encodeURIComponent(filter);
                 window.location.href = newUrl;
             }
             </script>
@@ -1600,7 +1558,7 @@ $active_page = "availability";
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($weekly_schedules as $s): ?>
+                        <?php foreach ($weekly_schedules_paginated as $s): ?>
                             <tr>
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
                                     <?php echo htmlspecialchars($s['weekdays']); ?>
@@ -1639,8 +1597,8 @@ $active_page = "availability";
                                         <?php if (isset($_GET['filter'])): ?>
                                             <input type="hidden" name="filter" value="<?php echo htmlspecialchars($_GET['filter']); ?>">
                                         <?php endif; ?>
-                                        <?php if (isset($_GET['blocked_page'])): ?>
-                                            <input type="hidden" name="blocked_page" value="<?php echo htmlspecialchars($_GET['blocked_page']); ?>">
+                                        <?php if (isset($_GET['page'])): ?>
+                                            <input type="hidden" name="page" value="<?php echo htmlspecialchars($_GET['page']); ?>">
                                         <?php endif; ?>
                                         <button type="button" class="lawyer-btn btn-delete-custom" onclick="showConfirmModal('Delete Schedule', 'Permanently delete this schedule?', function() { document.getElementById('delete-form-weekly-<?php echo $s['id']; ?>').submit(); })">Delete</button>
                                     </form>
@@ -1648,7 +1606,7 @@ $active_page = "availability";
                             </tr>
                         <?php endforeach; ?>
 
-                        <?php foreach ($onetime_schedules as $s): ?>
+                        <?php foreach ($onetime_schedules_paginated as $s): ?>
                             <tr>
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
                                     <?php echo date('D, M d, Y', strtotime($s['specific_date'])); ?>
@@ -1687,8 +1645,8 @@ $active_page = "availability";
                                         <?php if (isset($_GET['filter'])): ?>
                                             <input type="hidden" name="filter" value="<?php echo htmlspecialchars($_GET['filter']); ?>">
                                         <?php endif; ?>
-                                        <?php if (isset($_GET['blocked_page'])): ?>
-                                            <input type="hidden" name="blocked_page" value="<?php echo htmlspecialchars($_GET['blocked_page']); ?>">
+                                        <?php if (isset($_GET['page'])): ?>
+                                            <input type="hidden" name="page" value="<?php echo htmlspecialchars($_GET['page']); ?>">
                                         <?php endif; ?>
                                         <button type="button" class="lawyer-btn btn-delete-custom" onclick="showConfirmModal('Delete Schedule', 'Permanently delete this schedule?', function() { document.getElementById('delete-form-onetime-<?php echo $s['id']; ?>').submit(); })">Delete</button>
                                     </form>
@@ -1719,8 +1677,8 @@ $active_page = "availability";
                                         <?php if (isset($_GET['filter'])): ?>
                                             <input type="hidden" name="filter" value="<?php echo htmlspecialchars($_GET['filter']); ?>">
                                         <?php endif; ?>
-                                        <?php if (isset($_GET['blocked_page'])): ?>
-                                            <input type="hidden" name="blocked_page" value="<?php echo htmlspecialchars($_GET['blocked_page']); ?>">
+                                        <?php if (isset($_GET['page'])): ?>
+                                            <input type="hidden" name="page" value="<?php echo htmlspecialchars($_GET['page']); ?>">
                                         <?php endif; ?>
                                         <button type="button" class="lawyer-btn btn-unblock-custom" onclick="showConfirmModal('Unblock Date', 'Unblock this date?', function() { document.getElementById('unblock-form-<?php echo $s['id']; ?>').submit(); })">Unblock</button>
                                     </form>
@@ -1731,20 +1689,20 @@ $active_page = "availability";
                 </table>
             </div>
 
-            <?php if ($blocked_total_pages > 1): ?>
-                <div style="display:flex; gap:8px; justify-content:center; align-items:center; margin-top:16px;">
-                    <?php if ($blocked_page > 1): ?>
-                        <a href="?blocked_page=<?php echo $blocked_page - 1; ?>&filter=<?php echo urlencode($status_filter); ?>" class="pagination-btn pagination-prev"><i class="fas fa-chevron-left"></i></a>
+            <?php if ($total_pages > 1): ?>
+                <div style="display:flex; gap:12px; justify-content:center; align-items:center; margin-top:16px;">
+                    <?php if ($current_page > 1): ?>
+                        <a href="?page=<?php echo $current_page - 1; ?>&filter=<?php echo urlencode($status_filter); ?>" class="pagination-btn pagination-prev"><i class="fas fa-chevron-left"></i></a>
                     <?php else: ?>
                         <span class="pagination-btn pagination-prev pagination-disabled"><i class="fas fa-chevron-left"></i></span>
                     <?php endif; ?>
 
                     <span style="font-size:14px; color:#666; font-weight:500;">
-                        <?php echo $blocked_page; ?>
+                        <?php echo $current_page; ?>
                     </span>
 
-                    <?php if ($blocked_page < $blocked_total_pages): ?>
-                        <a href="?blocked_page=<?php echo $blocked_page + 1; ?>&filter=<?php echo urlencode($status_filter); ?>" class="pagination-btn pagination-next"><i class="fas fa-chevron-right"></i></a>
+                    <?php if ($current_page < $total_pages): ?>
+                        <a href="?page=<?php echo $current_page + 1; ?>&filter=<?php echo urlencode($status_filter); ?>" class="pagination-btn pagination-next"><i class="fas fa-chevron-right"></i></a>
                     <?php else: ?>
                         <span class="pagination-btn pagination-next pagination-disabled"><i class="fas fa-chevron-right"></i></span>
                     <?php endif; ?>
@@ -2578,16 +2536,6 @@ $active_page = "availability";
                                                     ?>
                                                 </span>
                                             </div>
-                                                        } elseif ($days_until == 0) {
-                                                            echo 'Today';
-                                                        } elseif ($days_until == 1) {
-                                                            echo 'Tomorrow';
-                                                        } else {
-                                                            echo $days_until . ' days';
-                                                        }
-                                                    ?>
-                                                </span>
-                                            </div>
                                             <div class="detail-item enhanced-detail">
                                                 <i class="fas fa-info-circle"></i>
                                                 <span class="detail-label">Reason:</span>
@@ -2600,48 +2548,6 @@ $active_page = "availability";
                                 <?php endforeach; ?>
                             </div>
                             
-                            <!-- Pagination Controls -->
-                            <?php if ($blocked_total_pages > 1): ?>
-                                <div class="pagination">
-                                    <?php if ($blocked_page > 1): ?>
-                                        <a href="javascript:void(0)" onclick="loadBlockedDates(<?php echo $blocked_page - 1; ?>)" title="Previous">
-                                            ← Prev
-                                        </a>
-                                    <?php else: ?>
-                                        <span class="disabled">← Prev</span>
-                                    <?php endif; ?>
-                                    
-                                    <?php
-                                    // Show page numbers with smart ellipsis
-                                    $range = 2; // Show 2 pages on each side of current
-                                    for ($i = 1; $i <= $blocked_total_pages; $i++):
-                                        if ($i == 1 || $i == $blocked_total_pages || abs($i - $blocked_page) <= $range):
-                                    ?>
-                                        <?php if ($i == $blocked_page): ?>
-                                            <span class="current"><?php echo $i; ?></span>
-                                        <?php else: ?>
-                                            <a href="javascript:void(0)" onclick="loadBlockedDates(<?php echo $i; ?>)"><?php echo $i; ?></a>
-                                        <?php endif; ?>
-                                    <?php
-                                        elseif (abs($i - $blocked_page) == $range + 1):
-                                            echo '<span class="disabled">...</span>';
-                                        endif;
-                                    endfor;
-                                    ?>
-                                    
-                                    <?php if ($blocked_page < $blocked_total_pages): ?>
-                                        <a href="javascript:void(0)" onclick="loadBlockedDates(<?php echo $blocked_page + 1; ?>)" title="Next">
-                                            Next →
-                                        </a>
-                                    <?php else: ?>
-                                        <span class="disabled">Next →</span>
-                                    <?php endif; ?>
-                                </div>
-                                
-                                <div class="pagination-info">
-                                    Showing <?php echo $blocked_offset + 1; ?>-<?php echo min($blocked_offset + $blocked_per_page, $blocked_total); ?> of <?php echo $blocked_total; ?> blocked dates
-                                </div>
-                            <?php endif; ?>
                         <?php endif; ?>
                         </div>
                     </div>

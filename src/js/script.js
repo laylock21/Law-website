@@ -985,59 +985,57 @@ if (appointmentForm && appointmentStatus) {
 			const result = await response.json();
 			
 			if (result.success) {
-				// Show success modal with personalized message
-				const successMessage = `Thank you, ${fullName}! We've received your consultation request for ${service}. We'll contact you within 24 hours to confirm your appointment with ${lawyer} on ${date || 'a date to be determined'}.`;
-				showSuccessModal(successMessage);
+				// Success message
+				openStatusModal(`✅ Booking Successful!\n\nThank you, ${fullName}! Your consultation has been booked with ${lawyer} for ${service} on ${date}.\n\nWe'll send you a confirmation email shortly and contact you within 24 hours to finalize the details.`);
 				
 				// Trigger email processing if emails were queued
 				if (result.email_queued) {
 					triggerEmailProcessing();
 				}
 				
-				// Reset form after short delay
-				setTimeout(() => {
-					appointmentForm.reset();
-					document.getElementById('selected-date-display').textContent = 'None';
-					document.getElementById('selected-date').value = '';
-					
-					// Reset practice area and lawyer dropdowns (NEW LOGIC: practice area first, then lawyer)
-					const lawyerSelect = document.getElementById('lawyer');
-					const serviceSelect = document.getElementById('service');
-					const practiceAreaBtn = document.getElementById('practiceAreaBtn');
-					const practiceAreaDisplay = document.getElementById('practiceAreaDisplay');
-					
-					if (lawyerSelect) {
-						lawyerSelect.innerHTML = '<option value="">First select a practice area</option>';
-						lawyerSelect.disabled = true;
-					}
-					
-					if (serviceSelect) {
-						serviceSelect.value = '';
-					}
-					
-					if (practiceAreaBtn) {
-						practiceAreaBtn.disabled = false;
-					}
-					
-					if (practiceAreaDisplay) {
-						practiceAreaDisplay.textContent = 'Click to select practice area';
-					}
-					
-					// Clear calendar
-					clearSelectedDate();
-					
-					// Clear status message
-					if (appointmentStatus) {
-						appointmentStatus.textContent = '';
-						appointmentStatus.style.color = '';
-					}
-					
-					// Reset to step 1
-					showStep(1);
-					
-					// Update submit button state after form reset
-					updateSubmitButtonState();
-				}, 500);
+				appointmentForm.reset();
+				document.getElementById('selected-date-display').textContent = 'None';
+				document.getElementById('selected-date').value = '';
+				
+				// Reset to step 1
+				currentStep = 1;
+				showStep(currentStep);
+				updateButtons();
+				
+				// Reset practice area and lawyer dropdowns (NEW LOGIC: practice area first, then lawyer)
+				const lawyerSelect = document.getElementById('lawyer');
+				const serviceSelect = document.getElementById('service');
+				const practiceAreaBtn = document.getElementById('practiceAreaBtn');
+				const practiceAreaDisplay = document.getElementById('practiceAreaDisplay');
+				
+				if (lawyerSelect) {
+					lawyerSelect.innerHTML = '<option value="">First select a practice area</option>';
+					lawyerSelect.disabled = true;
+				}
+				
+				if (serviceSelect) {
+					serviceSelect.value = '';
+				}
+				
+				if (practiceAreaBtn) {
+					practiceAreaBtn.disabled = false;
+				}
+				
+				if (practiceAreaDisplay) {
+					practiceAreaDisplay.textContent = 'Click to select practice area';
+				}
+				
+				// Clear calendar
+				clearSelectedDate();
+				
+				// Clear status message
+				if (appointmentStatus) {
+					appointmentStatus.textContent = '';
+					appointmentStatus.style.color = '';
+				}
+				
+				// Update submit button state after form reset
+				updateSubmitButtonState();
 			} else {
 				openStatusModal(result.message || 'An error occurred. Please try again.');
 			}
@@ -1634,7 +1632,7 @@ window.renderCalendar = function() {
 		}
 		bodyEl.innerHTML = fragments.join('');
 
-		// Feature: Add click handlers for available dates - syncs with date input
+		// Feature: Add click handlers for available dates - syncs with date input field
 		Array.from(bodyEl.querySelectorAll('button[data-date]:not([disabled])')).forEach((btn) => {
 			btn.addEventListener('click', () => {
 				const selectedDate = btn.getAttribute('data-date') || '';
@@ -1643,9 +1641,11 @@ window.renderCalendar = function() {
 				const dateInput = document.getElementById('consultation-date');
 				if (dateInput) {
 					dateInput.value = selectedDate;
+					// Trigger change event to load time slots
+					dateInput.dispatchEvent(new Event('change', { bubbles: true }));
 				}
 				
-				// Update the hidden date field (for validation)
+				// Update the hidden date input for review section
 				const hiddenDateInput = document.getElementById('selected-date');
 				if (hiddenDateInput) {
 					hiddenDateInput.value = selectedDate;
@@ -1666,6 +1666,11 @@ window.renderCalendar = function() {
 				// Visual feedback - highlight selected date
 				bodyEl.querySelectorAll('button[data-date]').forEach(b => b.classList.remove('selected'));
 				btn.classList.add('selected');
+				
+				// Check form completion
+				if (typeof checkCurrentStepCompletion === 'function') {
+					checkCurrentStepCompletion();
+				}
 			});
 		});
 	};
@@ -2445,9 +2450,9 @@ function triggerEmailProcessing() {
 let currentStep = 1;
 const totalSteps = 3; // Changed from 4 to 3
 
-const prevBtn = document.getElementById('prevBtn');
-const prevBtnReview = document.getElementById('prevBtnReview');
-const nextBtn = document.getElementById('nextBtn');
+const persBtn = document.getElementById('persBtn');
+const lawBtn = document.getElementById('lawBtn');
+const sumBtn = document.getElementById('sumBtn');
 const submitBtn = document.getElementById('submitBtn');
 const validationNote = document.getElementById('validation-note');
 
@@ -2489,6 +2494,8 @@ function resetForm() {
 function initMultiStepForm() {
 	showStep(currentStep);
 	updateButtons();
+	// Check initial completion status
+	checkCurrentStepCompletion();
 }
 
 // Update review section with form data
@@ -2518,33 +2525,24 @@ function updateReviewSection() {
 		document.getElementById('review-date').textContent = '-';
 	}
 	
-	// Get time slot from dropdown
+	// Time
 	const selectedTime = document.getElementById('consultation-time')?.value;
 	if (selectedTime) {
-		// Time slot is already in display format (e.g., "07:00-09:00")
-		// Convert to readable format
-		const timeSlotText = document.getElementById('consultation-time')?.selectedOptions[0]?.text || selectedTime;
-		document.getElementById('review-time').textContent = timeSlotText;
+		document.getElementById('review-time').textContent = selectedTime;
 	} else {
 		document.getElementById('review-time').textContent = '-';
 	}
 	
 	const message = document.getElementById('message')?.value || '';
-	const reviewMessageEl = document.getElementById('review-message');
-	if (reviewMessageEl) {
-		if (message && message.trim()) {
-			reviewMessageEl.textContent = message.length > 100 
-				? message.substring(0, 100) + '...' 
-				: message;
-		} else {
-			reviewMessageEl.textContent = '-';
-		}
-	}
+	document.getElementById('review-message').textContent = message || '-';
 }
 
 // Show specific step
 function showStep(step) {
 	const steps = document.querySelectorAll('.form-step');
+	
+	// Update current step FIRST
+	currentStep = step;
 	
 	// Hide all steps
 	steps.forEach(s => s.classList.remove('active'));
@@ -2558,48 +2556,18 @@ function showStep(step) {
 	// If moving to step 3 (review), update review section
 	if (step === 3) {
 		updateReviewSection();
-	}
-	
-	currentStep = step;
-	updateButtons();
-}
-
-// Update button states
-function updateButtons() {
-	// Previous buttons logic
-	if (currentStep === 1) {
-		// Step 1: Disable regular previous button
-		prevBtn.disabled = true;
-		prevBtn.style.opacity = '0.4';
-		prevBtn.style.display = 'inline-flex';
-		if (prevBtnReview) prevBtnReview.style.display = 'none';
-	} else if (currentStep === 3) {
-		// Step 3 (Review): Hide regular previous, show review previous
-		prevBtn.style.display = 'none';
-		if (prevBtnReview) {
-			prevBtnReview.style.display = 'inline-flex';
-			prevBtnReview.disabled = false;
-			prevBtnReview.style.opacity = '1';
+		// For review step, show a different message
+		const validationNote = document.getElementById('validation-note');
+		if (validationNote) {
+			validationNote.innerHTML = '<i class="fas fa-info-circle"></i> Review your information and click Confirm & Submit';
+			validationNote.classList.remove('valid', 'warning', 'error');
 		}
 	} else {
-		// Step 2: Show regular previous button
-		prevBtn.disabled = false;
-		prevBtn.style.opacity = '1';
-		prevBtn.style.display = 'inline-flex';
-		if (prevBtnReview) prevBtnReview.style.display = 'none';
+		// For other steps, check completion status
+		checkCurrentStepCompletion();
 	}
 	
-	// Next/Submit buttons - Show Submit ONLY on step 3 (review)
-	if (currentStep === totalSteps) {
-		// On review step: hide Next, show Submit
-		nextBtn.style.display = 'none';
-		submitBtn.style.display = 'inline-flex';
-	} else {
-		// On other steps: show Next, hide Submit
-		nextBtn.style.display = 'inline-flex';
-		nextBtn.innerHTML = 'Next <i class="fas fa-arrow-right"></i>';
-		submitBtn.style.display = 'none';
-	}
+	updateButtons();
 }
 
 // Validate current step
@@ -2639,43 +2607,45 @@ function validateStep(step) {
 		}
 	});
 	
-	// Special validation for step 2 - check if date is selected
+	// Special validation for step 2 - check if date and time are selected
 	if (step === 2) {
-		// Check both the hidden field and the visible date input
-		const selectedDate = document.getElementById('selected-date')?.value;
-		const consultationDate = document.getElementById('consultation-date')?.value;
+		const dateInput = document.getElementById('consultation-date');
+		const timeInput = document.getElementById('consultation-time');
 		
-		if ((!selectedDate || selectedDate.trim() === '') && (!consultationDate || consultationDate.trim() === '')) {
+		// Check date
+		if (!dateInput || !dateInput.value.trim()) {
 			isValid = false;
-			errorMessages.push('Consultation Date');
-		} else {
-			// If consultation-date has value but selected-date doesn't, sync them
-			if (consultationDate && consultationDate.trim() !== '' && (!selectedDate || selectedDate.trim() === '')) {
-				const hiddenDateInput = document.getElementById('selected-date');
-				if (hiddenDateInput) {
-					hiddenDateInput.value = consultationDate;
-				}
+			if (!errorMessages.includes('Consultation Date')) {
+				errorMessages.push('Consultation Date');
+			}
+		}
+		
+		// Check time (hidden input that gets populated by time slot selection)
+		if (!timeInput || !timeInput.value.trim()) {
+			isValid = false;
+			if (!errorMessages.includes('Consultation Time')) {
+				errorMessages.push('Consultation Time');
 			}
 		}
 	}
 	
 	// Update validation note
 	if (!isValid) {
-		validationNote.textContent = `Please complete: ${errorMessages.join(', ')}`;
-		validationNote.classList.remove('valid');
-		validationNote.style.color = '#dc3545';
+		validationNote.innerHTML = `<i class="fas fa-times-circle"></i> Please complete: ${errorMessages.join(', ')}`;
+		validationNote.classList.remove('valid', 'warning');
+		validationNote.classList.add('error');
 	} else {
-		validationNote.textContent = 'Step completed! Click Next to continue.';
+		validationNote.innerHTML = '<i class="fas fa-check-circle"></i> Step completed! Click Next to continue.';
+		validationNote.classList.remove('error', 'warning');
 		validationNote.classList.add('valid');
-		validationNote.style.color = '#C5A253';
 	}
 	
 	return isValid;
 }
 
 // Next button click
-if (nextBtn) {
-	nextBtn.addEventListener('click', () => {
+if (lawBtn) {
+	lawBtn.addEventListener('click', () => {
 		if (validateStep(currentStep)) {
 			if (currentStep < totalSteps) {
 				showStep(currentStep + 1);
@@ -2699,12 +2669,58 @@ if (nextBtn) {
 	});
 }
 
-// Previous button click
+// Lawyer and date button click //
+if (sumBtn) {
+	sumBtn.addEventListener('click', () => {
+		if (validateStep(currentStep)) {
+			if (currentStep < totalSteps) {
+				showStep(currentStep + 1);
+				// Scroll to top of form
+				const container = document.querySelector('.appointment-single-column');
+				if (container) {
+					container.scrollIntoView({ 
+						behavior: 'smooth', 
+						block: 'start' 
+					});
+				}
+			}
+		} else {
+			// Shake the form to indicate error
+			const formContainer = document.querySelector('.appointment-single-column');
+			if (formContainer) {
+				formContainer.classList.add('shake');
+				setTimeout(() => formContainer.classList.remove('shake'), 500);
+			}
+		}
+	});
+}
+
+// Personal info button click
+if (persBtn) {
+	persBtn.addEventListener('click', () => {
+		if (currentStep > 1) {
+			showStep(currentStep - 1);
+			// Scroll to top of form
+			const container = document.querySelector('.appointment-single-column');
+			if (container) {
+				container.scrollIntoView({ 
+					behavior: 'smooth', 
+					block: 'start' 
+					});
+			}
+		}
+	});
+}
+
+// New Navigation Buttons
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
 if (prevBtn) {
 	prevBtn.addEventListener('click', () => {
 		if (currentStep > 1) {
-			showStep(currentStep - 1); // Normal previous step
-			
+			showStep(currentStep - 1);
+			updateButtons();
 			// Scroll to top of form
 			const container = document.querySelector('.appointment-single-column');
 			if (container) {
@@ -2717,28 +2733,57 @@ if (prevBtn) {
 	});
 }
 
-// Review Previous button click (goes directly to step 2)
-if (prevBtnReview) {
-	prevBtnReview.addEventListener('click', () => {
-		showStep(2); // Always go to "Select Date & Lawyer"
-		
-		// Scroll to top of form
-		const container = document.querySelector('.appointment-single-column');
-		if (container) {
-			container.scrollIntoView({ 
-				behavior: 'smooth', 
-				block: 'start' 
-			});
+if (nextBtn) {
+	nextBtn.addEventListener('click', () => {
+		if (validateStep(currentStep)) {
+			if (currentStep < totalSteps) {
+				showStep(currentStep + 1);
+				updateButtons();
+				// Scroll to top of form
+				const container = document.querySelector('.appointment-single-column');
+				if (container) {
+					container.scrollIntoView({ 
+						behavior: 'smooth', 
+						block: 'start' 
+					});
+				}
+			} else if (currentStep === totalSteps) {
+				// On final step, submit the form
+				const appointmentForm = document.getElementById('appointment-form');
+				if (appointmentForm) {
+					appointmentForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+				}
+			}
+		} else {
+			// Shake the form to indicate error
+			const formContainer = document.querySelector('.appointment-single-column');
+			if (formContainer) {
+				formContainer.classList.add('shake');
+				setTimeout(() => formContainer.classList.remove('shake'), 500);
+			}
 		}
 	});
 }
 
-// Clear error styling on input
+// Update button states
+function updateButtons() {
+	if (prevBtn) {
+		prevBtn.disabled = currentStep === 1;
+	}
+	if (nextBtn) {
+		nextBtn.disabled = false;
+		nextBtn.textContent = currentStep === totalSteps ? 'Submit' : 'Next';
+	}
+}
+
+// Clear error styling on input and validate in real-time
 document.querySelectorAll('.form-step input, .form-step select, .form-step textarea').forEach(input => {
 	input.addEventListener('input', () => {
 		if (input.value.trim()) {
 			input.style.borderColor = '#e0e0e0';
 		}
+		// Real-time validation check
+		checkCurrentStepCompletion();
 	});
 	
 	input.addEventListener('focus', () => {
@@ -2749,8 +2794,100 @@ document.querySelectorAll('.form-step input, .form-step select, .form-step texta
 		if (!input.value.trim() && input.required) {
 			input.style.borderColor = '#e0e0e0';
 		}
+		// Check completion on blur as well
+		checkCurrentStepCompletion();
 	});
+	
+	// Also check on change for select elements
+	if (input.tagName === 'SELECT') {
+		input.addEventListener('change', () => {
+			checkCurrentStepCompletion();
+		});
+	}
 });
+
+// Real-time validation check function
+function checkCurrentStepCompletion() {
+	const currentStepEl = document.querySelector(`.form-step[data-step="${currentStep}"]`);
+	if (!currentStepEl) {
+		console.log('No current step element found for step:', currentStep);
+		return;
+	}
+	
+	const validationNote = document.getElementById('validation-note');
+	if (!validationNote) {
+		console.log('Validation note element not found');
+		return;
+	}
+	
+	// Reset all state classes and inline styles first
+	validationNote.classList.remove('valid', 'warning', 'error');
+	validationNote.style.color = '';
+	validationNote.style.fontWeight = '';
+	
+	const inputs = currentStepEl.querySelectorAll('input[required], select[required], textarea[required]');
+	let emptyFields = [];
+	let allFilled = true;
+	let totalRequired = 0;
+	
+	inputs.forEach(input => {
+		// Skip disabled inputs and hidden inputs
+		if (input.disabled || input.type === 'hidden') return;
+		
+		totalRequired++;
+		
+		if (!input.value.trim()) {
+			allFilled = false;
+			const label = currentStepEl.querySelector(`label[for="${input.id}"]`);
+			if (label) {
+				const fieldName = label.textContent.replace('*', '').replace(':', '').trim();
+				emptyFields.push(fieldName);
+			}
+		}
+	});
+	
+	// Special check for step 2 - date and time selection
+	if (currentStep === 2) {
+		const dateInput = document.getElementById('consultation-date');
+		const timeInput = document.getElementById('consultation-time');
+		
+		if (dateInput && !dateInput.value.trim()) {
+			allFilled = false;
+			if (!emptyFields.includes('Consultation Date')) {
+				emptyFields.push('Consultation Date');
+				totalRequired++;
+			}
+		}
+		
+		if (timeInput && !timeInput.value.trim()) {
+			allFilled = false;
+			if (!emptyFields.includes('Consultation Time')) {
+				emptyFields.push('Consultation Time');
+				totalRequired++;
+			}
+		}
+	}
+	
+	console.log(`Step ${currentStep}: ${emptyFields.length} empty fields out of ${totalRequired} total`);
+	
+	// Update validation note based on completion
+	if (allFilled) {
+		validationNote.innerHTML = '<i class="fas fa-check-circle"></i> All fields completed! Click Next to continue.';
+		validationNote.classList.add('valid');
+	} else if (emptyFields.length > 0) {
+		const remaining = emptyFields.length;
+		const filled = totalRequired - remaining;
+		
+		if (filled === 0) {
+			// No fields filled yet
+			validationNote.innerHTML = '<i class="fas fa-info-circle"></i> Please complete all required fields';
+		} else {
+			// Some fields filled - show progress
+			validationNote.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${remaining} field${remaining > 1 ? 's' : ''} remaining: ${emptyFields.slice(0, 2).join(', ')}${emptyFields.length > 2 ? '...' : ''}`;
+			validationNote.classList.add('warning');
+		}
+	}
+}
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
@@ -2833,44 +2970,95 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // ============================================
-// CONSULTATION FORM - NO MODALS VERSION
-// Updated to remove all modal dependencies
+// SYNC CALENDAR WITH DATE INPUT FIELD
 // ============================================
 
-// Load practice areas into dropdown on page load
-async function loadPracticeAreasIntoDropdown() {
-	const serviceSelect = document.getElementById('service');
-	if (!serviceSelect) return;
+// Sync date input field with calendar selection
+document.addEventListener('DOMContentLoaded', () => {
+	const dateInput = document.getElementById('consultation-date');
+	const lawyerSelect = document.getElementById('lawyer');
 	
-	try {
-		const response = await fetch('api/get_all_practice_areas.php');
-		const result = await response.json();
+	if (dateInput) {
+		// When user types or selects a date in the input field
+		dateInput.addEventListener('change', () => {
+			const selectedDate = dateInput.value;
+			
+			if (selectedDate) {
+				// Highlight the selected date in the calendar
+				const calendarButtons = document.querySelectorAll('.calendar-day button[data-date]');
+				calendarButtons.forEach(btn => {
+					btn.classList.remove('selected');
+					if (btn.getAttribute('data-date') === selectedDate) {
+						btn.classList.add('selected');
+					}
+				});
+				
+				// Update the display text
+				const displayEl = document.getElementById('selected-date-display');
+				if (displayEl) {
+					const date = new Date(selectedDate + 'T00:00:00');
+					displayEl.textContent = date.toLocaleDateString('en-US', { 
+						weekday: 'short', 
+						year: 'numeric', 
+						month: 'short', 
+						day: 'numeric' 
+					});
+				}
+				
+				// Load time slots if lawyer is selected
+				const selectedLawyer = lawyerSelect?.value;
+				if (selectedLawyer) {
+					// Check if loadTimeSlotsIntoDropdown function exists
+					if (typeof window.loadTimeSlotsIntoDropdown === 'function') {
+						window.loadTimeSlotsIntoDropdown(selectedDate, selectedLawyer);
+					}
+				}
+				
+				// Check form completion
+				if (typeof checkCurrentStepCompletion === 'function') {
+					checkCurrentStepCompletion();
+				}
+			}
+		});
 		
-		if (result.success && result.practice_areas.length > 0) {
-			serviceSelect.innerHTML = '<option value="">Select a practice area</option>';
-			result.practice_areas.forEach(area => {
-				const option = document.createElement('option');
-				option.value = area.area_name;
-				option.textContent = area.area_name;
-				serviceSelect.appendChild(option);
-			});
-			console.log('Practice areas loaded:', result.practice_areas.length);
-		}
-	} catch (error) {
-		console.error('Error loading practice areas:', error);
+		// Also trigger on input (for manual typing)
+		dateInput.addEventListener('input', () => {
+			if (dateInput.value && dateInput.value.length === 10) {
+				dateInput.dispatchEvent(new Event('change'));
+			}
+		});
 	}
-}
+});
 
-// Load time slots into dropdown when date/lawyer changes
-async function loadTimeSlotsIntoDropdown(date, lawyerName) {
-	const timeSelect = document.getElementById('consultation-time');
-	if (!timeSelect) return;
+console.log('✅ Calendar and date input synchronization initialized');
+
+
+// ============================================
+// VISUAL TIME SLOT SELECTOR
+// ============================================
+
+// Load and display time slots as clickable buttons
+async function loadVisualTimeSlots(date, lawyerName) {
+	const container = document.getElementById('time-slots-container');
+	const message = document.getElementById('time-slots-message');
+	const grid = document.getElementById('time-slots-grid');
+	const hiddenInput = document.getElementById('consultation-time');
 	
-	timeSelect.innerHTML = '<option value="">Loading time slots...</option>';
-	timeSelect.disabled = true;
+	if (!container || !message || !grid) return;
+	
+	// Show loading state
+	message.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading available time slots...';
+	message.classList.add('loading');
+	message.classList.remove('error');
+	message.style.display = 'flex';
+	grid.style.display = 'none';
+	grid.innerHTML = '';
 	
 	try {
+		// Remove "Atty. " prefix for API call
 		const lawyerNameForAPI = lawyerName.replace(/^Atty\.\s*/i, '');
+		
+		// Get lawyer ID
 		const lawyerSelectEl = document.getElementById('lawyer');
 		const selectedOpt = lawyerSelectEl ? lawyerSelectEl.options[lawyerSelectEl.selectedIndex] : null;
 		const lawyerIdParam = selectedOpt?.dataset?.lawyerId ? `&lawyer_id=${encodeURIComponent(selectedOpt.dataset.lawyerId)}` : '';
@@ -2879,151 +3067,122 @@ async function loadTimeSlotsIntoDropdown(date, lawyerName) {
 		const result = await response.json();
 		
 		if (result.success && result.time_slots.length > 0) {
-			timeSelect.innerHTML = '<option value="">Select a time slot</option>';
+			// Hide message, show grid
+			message.style.display = 'none';
+			grid.style.display = 'grid';
+			
+			// Create time slot buttons
 			result.time_slots.forEach(slot => {
-				const option = document.createElement('option');
+				const button = document.createElement('button');
+				button.type = 'button';
+				button.className = 'time-slot-button';
+				
 				if (slot.available) {
-					option.value = slot.time_24h || slot.time || slot.start_time;
-					option.textContent = `🟢 ${slot.display}`;
+					button.classList.add('available');
+					button.innerHTML = `
+						<span class="slot-icon">🟢</span>
+						<span>${slot.display}</span>
+					`;
+					
+					// Click handler for available slots
+					button.addEventListener('click', () => {
+						// Remove selected class from all buttons
+						grid.querySelectorAll('.time-slot-button').forEach(btn => {
+							btn.classList.remove('selected');
+						});
+						
+						// Add selected class to clicked button
+						button.classList.add('selected');
+						
+						// Update hidden input with the display text (includes time in - time out)
+						hiddenInput.value = slot.display;
+						
+						console.log('✅ Time slot selected:', slot.display);
+						console.log('Hidden input value:', hiddenInput.value);
+						
+						// Trigger change event for validation
+						hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+						
+						// Check form completion
+						if (typeof checkCurrentStepCompletion === 'function') {
+							checkCurrentStepCompletion();
+						}
+					});
 				} else {
-					option.value = '';
-					option.textContent = `🔴 ${slot.display} (Unavailable)`;
-					option.disabled = true;
+					button.disabled = true;
+					button.innerHTML = `
+						<span class="slot-icon">🔴</span>
+						<span>${slot.display}</span>
+					`;
 				}
-				timeSelect.appendChild(option);
+				
+				grid.appendChild(button);
 			});
-			timeSelect.disabled = false;
+			
 			console.log('Time slots loaded:', result.time_slots.length);
 		} else {
-			timeSelect.innerHTML = '<option value="">No time slots available</option>';
-			timeSelect.disabled = true;
+			// No time slots available
+			message.innerHTML = '<i class="fas fa-calendar-times"></i> No available time slots for this date';
+			message.classList.remove('loading');
+			message.classList.add('error');
+			message.style.display = 'flex';
+			grid.style.display = 'none';
 		}
 	} catch (error) {
 		console.error('Error loading time slots:', error);
-		timeSelect.innerHTML = '<option value="">Error loading time slots</option>';
-		timeSelect.disabled = true;
+		message.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error loading time slots. Please try again.';
+		message.classList.remove('loading');
+		message.classList.add('error');
+		message.style.display = 'flex';
+		grid.style.display = 'none';
 	}
 }
 
-// Initialize consultation form with no-modal approach
-function initializeNoModalConsultationForm() {
-	// Load practice areas
-	loadPracticeAreasIntoDropdown();
-	
+// Update the date/lawyer change handlers to use visual time slots
+document.addEventListener('DOMContentLoaded', () => {
 	const dateInput = document.getElementById('consultation-date');
 	const lawyerSelect = document.getElementById('lawyer');
-	const serviceSelect = document.getElementById('service');
 	
-	// When practice area changes, filter lawyers
-	if (serviceSelect) {
-		serviceSelect.addEventListener('change', async () => {
-			const selectedPracticeArea = serviceSelect.value;
-			if (selectedPracticeArea) {
-				await filterLawyersByPracticeArea(selectedPracticeArea);
-			} else {
-				if (lawyerSelect) {
-					lawyerSelect.innerHTML = '<option value="">First select a practice area</option>';
-					lawyerSelect.disabled = true;
-				}
+	// Function to load time slots when both date and lawyer are selected
+	function checkAndLoadTimeSlots() {
+		const selectedDate = dateInput?.value;
+		const selectedLawyer = lawyerSelect?.value;
+		
+		if (selectedDate && selectedLawyer) {
+			loadVisualTimeSlots(selectedDate, selectedLawyer);
+		} else {
+			// Reset time slots display
+			const message = document.getElementById('time-slots-message');
+			const grid = document.getElementById('time-slots-grid');
+			
+			if (message && grid) {
+				message.innerHTML = '<i class="fas fa-info-circle"></i> Select a date and lawyer to view available time slots';
+				message.classList.remove('loading', 'error');
+				message.style.display = 'flex';
+				grid.style.display = 'none';
+				grid.innerHTML = '';
+			}
+		}
+	}
+	
+	// Listen for date changes
+	if (dateInput) {
+		dateInput.addEventListener('change', () => {
+			// Update hidden date input for review section
+			const hiddenDateInput = document.getElementById('selected-date');
+			if (hiddenDateInput && dateInput.value) {
+				hiddenDateInput.value = dateInput.value;
 			}
 			
-			// Reset time dropdown
-			const timeSelect = document.getElementById('consultation-time');
-			if (timeSelect) {
-				timeSelect.innerHTML = '<option value="">First select a date</option>';
-				timeSelect.disabled = true;
-			}
+			// Load time slots
+			checkAndLoadTimeSlots();
 		});
 	}
 	
-	// When date changes, load time slots
-	if (dateInput && lawyerSelect) {
-		dateInput.addEventListener('change', () => {
-			const selectedDate = dateInput.value;
-			const selectedLawyer = lawyerSelect.value;
-			if (selectedDate && selectedLawyer) {
-				loadTimeSlotsIntoDropdown(selectedDate, selectedLawyer);
-			}
-		});
-		
-		// When lawyer changes, reload time slots if date is selected
-		lawyerSelect.addEventListener('change', () => {
-			const selectedDate = dateInput.value;
-			const selectedLawyer = lawyerSelect.value;
-			if (selectedDate && selectedLawyer) {
-				loadTimeSlotsIntoDropdown(selectedDate, selectedLawyer);
-			} else {
-				const timeSelect = document.getElementById('consultation-time');
-				if (timeSelect) {
-					timeSelect.innerHTML = '<option value="">First select a date</option>';
-					timeSelect.disabled = true;
-				}
-			}
-		});
+	// Listen for lawyer changes
+	if (lawyerSelect) {
+		lawyerSelect.addEventListener('change', checkAndLoadTimeSlots);
 	}
-}
+});
 
-// Override the existing updateReviewSection to include time
-function updateReviewSectionWithTime() {
-	// Personal Information
-	const fullName = document.getElementById('fullName')?.value || '';
-	document.getElementById('review-name').textContent = fullName || '-';
-	document.getElementById('review-email').textContent = document.getElementById('email')?.value || '-';
-	document.getElementById('review-phone').textContent = document.getElementById('phone')?.value || '-';
-	
-	// Consultation Details
-	document.getElementById('review-lawyer').textContent = document.getElementById('lawyer')?.value || '-';
-	document.getElementById('review-practice').textContent = document.getElementById('service')?.value || '-';
-	
-	// Date
-	const selectedDate = document.getElementById('consultation-date')?.value;
-	if (selectedDate) {
-		const date = new Date(selectedDate + 'T00:00:00');
-		document.getElementById('review-date').textContent = date.toLocaleDateString('en-US', { 
-			weekday: 'long', 
-			year: 'numeric', 
-			month: 'long', 
-			day: 'numeric' 
-		});
-	} else {
-		document.getElementById('review-date').textContent = '-';
-	}
-	
-	// Time
-	const timeSelect = document.getElementById('consultation-time');
-	if (timeSelect && timeSelect.value) {
-		const selectedTimeText = timeSelect.selectedOptions[0]?.text || timeSelect.value;
-		const reviewTimeEl = document.getElementById('review-time');
-		if (reviewTimeEl) {
-			reviewTimeEl.textContent = selectedTimeText.replace('🟢 ', '').replace('🔴 ', '');
-		}
-	} else {
-		const reviewTimeEl = document.getElementById('review-time');
-		if (reviewTimeEl) {
-			reviewTimeEl.textContent = '-';
-		}
-	}
-	
-	// Message
-	const message = document.getElementById('message')?.value || '';
-	const reviewMessageEl = document.getElementById('review-message');
-	if (reviewMessageEl) {
-		if (message && message.trim()) {
-			reviewMessageEl.textContent = message.length > 100 
-				? message.substring(0, 100) + '...' 
-				: message;
-		} else {
-			reviewMessageEl.textContent = '-';
-		}
-	}
-}
-
-// Initialize on DOM ready - add to existing DOMContentLoaded listener
-if (document.readyState === 'loading') {
-	document.addEventListener('DOMContentLoaded', initializeNoModalConsultationForm);
-} else {
-	initializeNoModalConsultationForm();
-}
-
-console.log('✅ No-modal consultation form initialized');
-
+console.log('✅ Visual time slot selector initialized');

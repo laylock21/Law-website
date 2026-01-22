@@ -155,6 +155,9 @@ if (isset($_SESSION['bulk_error'])) {
 // Handle search
 $search_query = isset($_GET['search']) ? trim($_GET['search']) : '';
 
+// Handle status filter
+$status_filter = isset($_GET['status']) ? trim($_GET['status']) : 'all';
+
 // Get consultations with pagination and sorting
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $limit = 10;
@@ -177,12 +180,12 @@ if (!in_array($sort_by, $allowed_sort_columns)) {
 try {
     $pdo = getDBConnection();
     
-    // Build search conditions
-    $search_conditions = '';
+    // Build search and filter conditions
+    $conditions = [];
     $search_params = [];
     
     if (!empty($search_query)) {
-        $search_conditions = " WHERE (
+        $conditions[] = "(
             full_name LIKE ? OR 
             email LIKE ? OR 
             phone LIKE ? OR 
@@ -193,17 +196,25 @@ try {
         )";
         
         $search_term = "%{$search_query}%";
-        $search_params = array_fill(0, 7, $search_term);
+        $search_params = array_merge($search_params, array_fill(0, 7, $search_term));
     }
     
-    // Get total count with search
+    // Add status filter
+    if ($status_filter !== 'all') {
+        $conditions[] = "status = ?";
+        $search_params[] = $status_filter;
+    }
+    
+    $search_conditions = !empty($conditions) ? ' WHERE ' . implode(' AND ', $conditions) : '';
+    
+    // Get total count with search and filter
     $count_query = "SELECT COUNT(*) FROM consultations" . $search_conditions;
     $count_stmt = $pdo->prepare($count_query);
     $count_stmt->execute($search_params);
     $total_consultations = $count_stmt->fetchColumn();
     $total_pages = ceil($total_consultations / $limit);
     
-    // Get consultations with sorting and search
+    // Get consultations with sorting, search, and filter
     $query = "
         SELECT * FROM consultations 
         {$search_conditions}
@@ -333,6 +344,14 @@ $active_page = "consultations";
                                             <i class="fas fa-search"></i>
                                         </button>
                                     </div>
+                                    <!-- Status Filter Dropdown -->
+                                    <select name="status" class="admin-dropdown" onchange="this.form.submit()" style="margin-left: 10px; min-width: 150px;">
+                                        <option value="all" <?php echo $status_filter === 'all' ? 'selected' : ''; ?>>All Status</option>
+                                        <option value="pending" <?php echo $status_filter === 'pending' ? 'selected' : ''; ?>>Pending</option>
+                                        <option value="confirmed" <?php echo $status_filter === 'confirmed' ? 'selected' : ''; ?>>Confirmed</option>
+                                        <option value="completed" <?php echo $status_filter === 'completed' ? 'selected' : ''; ?>>Completed</option>
+                                        <option value="cancelled" <?php echo $status_filter === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                                    </select>
                                 </div>
                                 <!-- Preserve current sort parameters -->
                                 <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort_by); ?>">
