@@ -116,25 +116,6 @@
 			font-family: var(--font-sans); 
 			letter-spacing: 0.3px;
 		}
-
-		@keyframes pulse {
-			0% { box-shadow: 0 0 0 0 rgba(74,144,226,0.5); }
-			100% { box-shadow: 0 0 0 12px rgba(74,144,226,0); }
-		}
-		
-		.progress-step.attention {
-			animation: pulse 1.2s ease-out 1;
-		}
-
-		.progress-step {
-			cursor: pointer;
-			transition: transform 0.15s ease, color 0.15s ease;
-		}
-
-		.progress-step:hover .step-number {
-			transform: scale(1.05);
-		}
-
 		.btn-primary { 
 			background: #D4AF37;
 			color: #000000; 
@@ -774,27 +755,8 @@
 					<p>Tell us about your case and schedule a consultation. We'll confirm via email or phone.</p>
 				</header>
 				
-				<div class="form-progress">
-					<div class="progress-step active" data-step="1" type="button" id="persBtn">
-						<div class="step-number">1</div>
-						<div class="step-label">Personal Info</div>
-					</div>
-					<div class="progress-line"></div>
-					<div class="progress-step" data-step="2" type="button" id="lawBtn">
-						<div class="step-number">2</div>
-						<div class="step-label">Lawyer & Date</div>
-					</div>
-					<div class="progress-line"></div>
-					<div class="progress-step" data-step="3" type="button" id="sumBtn">
-						<div class="step-number">3</div>
-						<div class="step-label">Review & Submit</div>
-					</div>
-				</div>	
-
 				<!-- Single Column Layout -->
 				<div class="appointment-single-column">
-					<!-- Multi-step Progress Indicator -->
-
 					<form id="appointment-form" class="form multi-step-form" novalidate>
 						<!-- Step 1: Personal Information (Grid Layout) -->
 						<div class="form-step active" data-step="1">
@@ -820,12 +782,7 @@
 										<div id="phone-help" class="sr-only">Enter your 11-digit mobile phone number</div>
 									</div>
 								</div>
-							<div>
-								<div class="form-row">
-									<label for="message">Case Description <span class="required-asterisk" aria-label="required">*</span></label>
-									<textarea id="message" name="message" rows="4" placeholder="Briefly describe your legal matter..." required></textarea>
-								</div>
-							</div>
+							
 								<!-- Right Column: Empty -->
 								<div class="step-right">
 									<div class="form-row">
@@ -846,9 +803,9 @@
 								<div class="step-left">
 									<div class="calendar" aria-label="Monthly calendar">
 										<div class="calendar-header">
-											<button type="button" class="cal-nav" data-dir="prev" aria-label="Previous month">&#10094;</button>
+											<button class="cal-nav" data-dir="prev" aria-label="Previous month">&#10094;</button>
 											<h3 class="cal-title" id="calendar-title">March 2025</h3>
-											<button type="button" class="cal-nav" data-dir="next" aria-label="Next month">&#10095;</button>
+											<button class="cal-nav" data-dir="next" aria-label="Next month">&#10095;</button>
 										</div>
 										<div class="calendar-grid" role="grid" aria-labelledby="calendar-title">
 											<div class="calendar-row calendar-weekdays" role="row">
@@ -910,16 +867,13 @@
 									</div>
 									<div class="form-row">
 										<label for="consultation-time">Consultation Time <span class="required-asterisk" aria-label="required">*</span></label>
-										<div class="time-slots-container" id="time-slots-container">
-											<p class="time-slots-message" id="time-slots-message">
-												<i class="fas fa-info-circle"></i> Select a date and lawyer to view available time slots
-											</p>
-											<div class="time-slots-grid" id="time-slots-grid" style="display: none;">
-												<!-- Time slots will be populated here dynamically -->
-											</div>
-										</div>
-										<input type="hidden" id="consultation-time" name="selected_time" required />
-										<div id="time-help" class="sr-only">Select your preferred consultation time</div>
+										<select id="consultation-time" name="selected_time" required aria-describedby="time-help">
+											<option value="">Select a time slot</option>
+											<option value="07:00-09:00">7:00 AM - 9:00 AM</option>
+											<option value="13:00-16:00">1:00 PM - 4:00 PM</option>
+											<option value="17:00-20:00">5:00 PM - 8:00 PM</option>
+										</select>
+										<div id="time-help" class="sr-only">Select your preferred consultation time slot</div>
 									</div>
 								</div>
 							</div>
@@ -950,8 +904,8 @@
 									</div>
 								</div>
 								
-								<!-- Middle Column: Consultation Details -->
-								<div class="step-middle">
+								<!-- Right Column: Consultation Details -->
+								<div class="step-right">
 									<div class="review-card">
 										<h4><i class="fas fa-briefcase"></i> Consultation Details</h4>
 										<div class="review-item">
@@ -967,17 +921,6 @@
 											<span class="review-value" id="review-date">-</span>
 										</div>
 										<div class="review-item">
-											<span class="review-label">Time:</span>
-											<span class="review-value" id="review-time">-</span>
-										</div>
-									</div>
-								</div>
-
-								<!-- Right Column: Client Concern-->
-								<div class="step-right">
-									<div class="review-card">
-										<h4><i class="fas fa-briefcase"></i> Consultation Details</h4>
-										<div class="review-item">
 											<span class="review-label">Case Description:</span>
 											<span class="review-value" id="review-message">-</span>
 										</div>
@@ -990,15 +933,26 @@
 
 						<input type="hidden" id="selected-lawyer" name="lawyer" />
 						<input type="hidden" id="selected-date" name="date" />
-						
-						<!-- Form Navigation -->
-						<div class="form-navigation">
-							<button type="button" class="btn-prev" id="prevBtn">Previous</button>
-							<button type="button" class="btn-next" id="nextBtn">Next</button>
-						</div>
-						
-						<p class="form-validation-note" id="validation-note">Please complete all required fields</p>
-					</form>
+							
+							<!-- Form Navigation Buttons -->
+							<div class="form-navigation">
+								<!-- Regular Previous button (for steps 1-2) -->
+								<button type="button" class="btn btn-secondary btn-prev" id="prevBtn">
+									<i class="fas fa-arrow-left"></i> Previous
+								</button>
+								<!-- Special Previous button for Review step (goes to step 2) -->
+								<button type="button" class="btn btn-secondary btn-prev-review" id="prevBtnReview" style="display: none;">
+									<i class="fas fa-arrow-left"></i> Back to Date & Lawyer
+								</button>
+								<button type="button" class="btn btn-primary btn-next" id="nextBtn">
+									Next <i class="fas fa-arrow-right"></i>
+								</button>
+								<button type="submit" class="btn btn-primary btn-submit" id="submitBtn" style="display: none;">
+									<i class="fas fa-paper-plane"></i> Submit
+								</button>
+							</div>
+							<p class="form-validation-note" id="validation-note">Please complete all required fields</p>
+						</form>
 					</div>
 				</div>
 			</div>
