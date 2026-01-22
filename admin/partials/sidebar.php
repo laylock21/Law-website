@@ -44,6 +44,10 @@ $active_page = $active_page ?? "";
             <i class="fas fa-users"></i>
             <span>Lawyers</span>
         </a>
+        <a href="practice_areas.php" class="sidebar-link <?php echo ($active_page === 'practice_areas') ? 'active' : ''; ?>">
+            <i class="fas fa-briefcase"></i>
+            <span>Practice Areas</span>
+        </a>
         <a href="process_emails.php" class="sidebar-link <?php echo ($active_page === 'emails') ? 'active' : ''; ?>">
             <i class="fas fa-envelope"></i>
             <span>Email System</span>
@@ -79,6 +83,8 @@ $active_page = $active_page ?? "";
                 <p>Consultation and lawyer management oversight</p>
             <?php elseif ($active_page === 'lawyers'): ?>
                 <p>Create, manage, and monitor lawyer accounts</p>
+            <?php elseif ($active_page === 'practice_areas'): ?>
+                <p>Manage legal service categories and specializations</p>
             <?php elseif ($active_page === 'emails'): ?>
                 <p>Configure email sending for pending notifications</p>
             <?php elseif ($active_page === 'queue'): ?>
