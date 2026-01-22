@@ -52,6 +52,53 @@ const yearEl = document.getElementById('year');
 if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
 // ============================================
+// SUCCESS MODAL FUNCTIONS
+// ============================================
+
+function showSuccessModal(message) {
+	const modal = document.getElementById('success-modal');
+	const messageEl = document.getElementById('success-modal-message');
+	const closeBtn = document.getElementById('success-modal-close');
+	
+	if (!modal || !messageEl) return;
+	
+	messageEl.textContent = message;
+	modal.style.display = 'flex';
+	
+	// Trigger animation
+	setTimeout(() => {
+		modal.classList.add('show');
+	}, 10);
+	
+	// Close button handler
+	const closeModal = () => {
+		modal.classList.remove('show');
+		setTimeout(() => {
+			modal.style.display = 'none';
+		}, 300);
+	};
+	
+	if (closeBtn) {
+		closeBtn.onclick = closeModal;
+	}
+	
+	// Close on overlay click
+	const overlay = modal.querySelector('.success-modal-overlay');
+	if (overlay) {
+		overlay.onclick = closeModal;
+	}
+	
+	// Close on escape key
+	const escapeHandler = (e) => {
+		if (e.key === 'Escape') {
+			closeModal();
+			document.removeEventListener('keydown', escapeHandler);
+		}
+	};
+	document.addEventListener('keydown', escapeHandler);
+}
+
+// ============================================
 // TOAST NOTIFICATION SYSTEM
 // ============================================
 
@@ -927,7 +974,7 @@ if (appointmentForm && appointmentStatus) {
 			
 			
 			// Submit to PHP backend
-			const response = await fetch('process_consultation.php', {
+			const response = await fetch('api/process_consultation.php', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -2265,7 +2312,7 @@ document.getElementById('confirmTimeSlot').addEventListener('click', async () =>
             };
             
             // Submit to PHP backend
-            const response = await fetch('process_consultation.php', {
+            const response = await fetch('api/process_consultation.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -2464,9 +2511,10 @@ function updateReviewSection() {
 	document.getElementById('review-lawyer').textContent = document.getElementById('lawyer')?.value || '-';
 	document.getElementById('review-practice').textContent = document.getElementById('service')?.value || '-';
 	
-	const selectedDate = document.getElementById('selected-date')?.value;
+	// Get date from manual input
+	const selectedDate = document.getElementById('consultation-date')?.value;
 	if (selectedDate) {
-		const date = new Date(selectedDate);
+		const date = new Date(selectedDate + 'T00:00:00');
 		document.getElementById('review-date').textContent = date.toLocaleDateString('en-US', { 
 			weekday: 'long', 
 			year: 'numeric', 
@@ -2492,7 +2540,6 @@ function updateReviewSection() {
 // Show specific step
 function showStep(step) {
 	const steps = document.querySelectorAll('.form-step');
-	const progressSteps = document.querySelectorAll('.progress-step');
 	
 	// Update current step FIRST
 	currentStep = step;
@@ -2505,18 +2552,6 @@ function showStep(step) {
 	if (currentStepEl) {
 		currentStepEl.classList.add('active');
 	}
-	
-	// Update progress indicator
-	progressSteps.forEach((ps, index) => {
-		const stepNum = index + 1;
-		ps.classList.remove('active', 'completed');
-		
-		if (stepNum < step) {
-			ps.classList.add('completed');
-		} else if (stepNum === step) {
-			ps.classList.add('active');
-		}
-	});
 	
 	// If moving to step 3 (review), update review section
 	if (step === 3) {
@@ -2858,14 +2893,61 @@ function checkCurrentStepCompletion() {
 document.addEventListener('DOMContentLoaded', () => {
 	initMultiStepForm();
 	
-	// Reset form when navigating to appointment section
+	// Sync date input with calendar
+	const dateInput = document.getElementById('consultation-date');
+	if (dateInput) {
+		dateInput.addEventListener('change', () => {
+			const selectedDate = dateInput.value;
+			if (selectedDate) {
+				// Update the hidden date field (for validation)
+				const hiddenDateInput = document.getElementById('selected-date');
+				if (hiddenDateInput) {
+					hiddenDateInput.value = selectedDate;
+				}
+				
+				// Update calendar display
+				const displayEl = document.getElementById('selected-date-display');
+				if (displayEl) {
+					const date = new Date(selectedDate + 'T00:00:00');
+					displayEl.textContent = date.toLocaleDateString('en-US', { 
+						weekday: 'short', 
+						year: 'numeric', 
+						month: 'short', 
+						day: 'numeric' 
+					});
+				}
+				
+				// Highlight the date in calendar if visible
+				const calendarButtons = document.querySelectorAll('.calendar-day button[data-date]');
+				calendarButtons.forEach(btn => {
+					btn.classList.remove('selected');
+					if (btn.getAttribute('data-date') === selectedDate) {
+						btn.classList.add('selected');
+					}
+				});
+			}
+		});
+	}
+	
+	// Reset form when navigating to appointment section from outside
+	// Only reset if coming from a different section, not when navigating between form steps
 	const appointmentSection = document.getElementById('appointment');
 	if (appointmentSection) {
+		let hasInteractedWithForm = false;
+		
+		// Track if user has interacted with the form
+		const formInputs = document.querySelectorAll('#appointment-form input, #appointment-form select, #appointment-form textarea');
+		formInputs.forEach(input => {
+			input.addEventListener('focus', () => {
+				hasInteractedWithForm = true;
+			}, { once: true });
+		});
+		
 		// Create an intersection observer to detect when section is visible
 		const observer = new IntersectionObserver((entries) => {
 			entries.forEach(entry => {
-				if (entry.isIntersecting) {
-					// Section is visible, reset the form
+				// Only reset if section is visible AND user hasn't interacted with form yet
+				if (entry.isIntersecting && !hasInteractedWithForm) {
 					resetForm();
 				}
 			});
@@ -2876,7 +2958,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		observer.observe(appointmentSection);
 	}
 	
-	// Also reset when clicking "Book Consultation" links
+	// Reset when clicking "Book Consultation" links (force reset)
 	document.querySelectorAll('a[href="#appointment"]').forEach(link => {
 		link.addEventListener('click', () => {
 			setTimeout(() => {

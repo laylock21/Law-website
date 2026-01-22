@@ -97,7 +97,7 @@ try {
         // Trigger async email processing (fire and forget)
         @file_get_contents(
             'http' . (isset($_SERVER['HTTPS']) ? 's' : '') . '://' . $_SERVER['HTTP_HOST'] . 
-            dirname($_SERVER['REQUEST_URI']) . '/../process_emails_async.php',
+            dirname(dirname($_SERVER['REQUEST_URI'])) . '/process_emails_async.php',
             false,
             $context
         );

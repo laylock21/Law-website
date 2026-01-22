@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
                 $async_script = "
                 <script>
                 setTimeout(function() {
-                    fetch('../process_emails_async.php', {
+                    fetch('../api/process_emails_async.php', {
                         method: 'POST',
                         headers: {'X-Requested-With': 'XMLHttpRequest'}
                     }).then(response => response.json())
@@ -162,7 +162,6 @@ $active_page = "consultations";
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>My Consultations - <?php echo htmlspecialchars($lawyer_name); ?></title>
-	<link rel="stylesheet" href="../src/css/styles.css">
 	<link rel="stylesheet" href="../src/lawyer/css/styles.css">
 	<link rel="stylesheet" href="../includes/confirmation-modal.css">
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">

@@ -508,11 +508,11 @@
 	</style>
 	
 	<!-- Load full CSS asynchronously -->
-	<link rel="preload" href="src/css/styles.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-	<noscript><link rel="stylesheet" href="src/css/styles.css"></noscript>
+	<link rel="preload" href="src/css/styles.css?v=3.7" as="style" onload="this.onload=null;this.rel='stylesheet'">
+	<noscript><link rel="stylesheet" href="src/css/styles.css?v=3.7"></noscript>
 	
 	<!-- Lawyer Profile Card Styles -->
-	<link rel="stylesheet" href="src/css/LawyerCard.css">
+	<link rel="stylesheet" href="src/css/LawyerCard.css?v=3.7">
 </head>
 
 <body>
@@ -530,7 +530,7 @@
 				<a href="#home" class="logo" aria-label="MD Law - Home">MD Law</a>
 			</div>
 			<nav class="nav" aria-label="Primary navigation">
-				<button class="nav-toggle" aria-expanded="false" aria-controls="primary-menu" aria-label="Toggle navigation menu">
+				<button class="nav-toggle" aria-expanded="false" aria-controls="primary-menu">
 					<span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
 				</button>
 				<ul id="primary-menu" class="nav-list" role="menubar">
@@ -828,7 +828,10 @@
 							</div>
 								<!-- Right Column: Empty -->
 								<div class="step-right">
-									<!-- Case description moved to Step 2 -->
+									<div class="form-row">
+										<label for="message">Case Description <span class="required-asterisk" aria-label="required">*</span></label>
+										<textarea id="message" name="message" rows="12" placeholder="Briefly describe your legal matter..." required style="height: 100%; min-height: 280px;"></textarea>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -1283,7 +1286,7 @@
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 	
 	<!-- Main JavaScript - Deferred -->
-	<script src="src/js/script.js?v=3.0" defer></script>
+	<script src="src/js/script.js?v=3.2" defer></script>
 
 	<!-- Back to Top Behavior -->
 	<script>
