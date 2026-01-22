@@ -19,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 require_once '../../config/database.php';
+require_once '../../config/Logger.php';
 
 $lawyer_id = $_SESSION['lawyer_id'];
 
@@ -84,6 +85,10 @@ try {
     }
     
     // Log the password change
+    Logger::security('password_changed', [
+        'user_id' => $lawyer_id,
+        'role' => 'lawyer'
+    ]);
     error_log("Password changed successfully for lawyer ID: $lawyer_id");
     
     // Redirect with success message

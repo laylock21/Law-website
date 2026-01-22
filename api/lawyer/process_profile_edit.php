@@ -19,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 require_once '../../config/database.php';
+require_once '../../config/Logger.php';
 
 $lawyer_id = $_SESSION['lawyer_id'];
 
@@ -125,6 +126,11 @@ try {
     $pdo->commit();
     
     // Log the profile update
+    Logger::security('profile_updated', [
+        'user_id' => $lawyer_id,
+        'role' => 'lawyer',
+        'fields_updated' => ['prefix', 'first_name', 'last_name', 'email', 'phone', 'description', 'specializations']
+    ]);
     error_log("Profile updated successfully for lawyer ID: $lawyer_id");
     
     // Redirect with success message
