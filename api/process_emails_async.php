@@ -13,8 +13,8 @@ if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH
     }
 }
 
-require_once 'config/database.php';
-require_once 'includes/EmailNotification.php';
+require_once '../config/database.php';
+require_once '../includes/EmailNotification.php';
 
 try {
     $pdo = getDBConnection();
