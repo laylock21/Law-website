@@ -23,6 +23,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'process_emails') {
         try {
             $pdo = getDBConnection();
+            
+            if (!$pdo) {
+                throw new Exception('Database connection failed');
+            }
+            
             $emailNotification = new EmailNotification($pdo);
             
             $result = $emailNotification->processPendingNotifications();
@@ -44,6 +49,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 // Get current queue statistics
 try {
     $pdo = getDBConnection();
+    
+    if (!$pdo) {
+        throw new Exception('Database connection failed');
+    }
     
     $stats_stmt = $pdo->query("
         SELECT 
