@@ -104,11 +104,11 @@ $active_page = "emails";
 
     <main class="admin-main-content">
         <div class="container">
-            <div class="page-header">
+            <div class="page-header ep-mobile-header">
                 <h1>📧 Email Processor</h1>
                 <p>Manually trigger email sending for pending notifications</p>
                 <div style="margin-top: 12px;">
-                    <a href="notification_queue.php" class="btn btn-secondary" style="
+                    <a href="notification_queue.php" class="btn btn-secondary ep-mobile-btn" style="
                         display: inline-flex;
                         align-items: center;
                         gap: 8px;
@@ -126,47 +126,51 @@ $active_page = "emails";
         </div>
 
         <?php if ($message): ?>
-            <div class="alert alert-success">
+            <div class="alert alert-success ep-mobile-alert">
                 <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($message); ?>
             </div>
         <?php endif; ?> 
 
         <?php if ($error): ?>
-            <div class="alert alert-error">
+            <div class="alert alert-error ep-mobile-alert">
                 <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?>
             </div>
         <?php endif; ?>
 
         <!-- Statistics Cards -->
-        <div class="stats-grid" style=gap:16px;margin-bottom:32px;>
-            <div class="stat-card">
+        <div class="stats-grid ep-mobile-stats-grid" style=gap:16px;margin-bottom:32px;>
+            <div class="stat-card ep-mobile-stat-card">
                 <div class="stat-number"><?php echo $stats['pending'] ?? 0; ?></div>
                 <div>Pending Emails</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card ep-mobile-stat-card">
                 <div class="stat-number"><?php echo $stats['sent'] ?? 0; ?></div>
                 <div>Sent Today</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card ep-mobile-stat-card">
                 <div class="stat-number"><?php echo $stats['failed'] ?? 0; ?></div>
                 <div>Failed</div>
             </div>
         </div>
 
         <!-- Manual Processing -->
-        <div class="section" style="padding: 32px 48px 32px 48px">
+        <div class="section ep-mobile-section" style="padding: 32px 48px 32px 48px">
             <h3><i class="fas fa-paper-plane"></i> Manual Email Processing</h3>
             
             <?php if (($stats['pending'] ?? 0) > 0): ?>
-                <div class="alert alert-info">
-                    <strong>📧 Ready to Send:</strong> There are <?php echo $stats['pending']; ?> pending email(s) in the queue.
-                    <a href="#SendAllPendingEmails" class="btn btn-primary" style="margin-left: 15px;">
+                <div class="alert alert-info ep-mobile-alert">
+                    <div class="ep-mobile-alert-content">
+                        <div>
+                            <strong>📧 Ready to Send:</strong> There are <?php echo $stats['pending']; ?> pending email(s) in the queue.
+                        </div>
+                        <a href="#SendAllPendingEmails" class="btn btn-primary ep-mobile-btn">
                             <i class="fas fa-paper-plane"></i> Send Now
-                    </a>
+                        </a>
+                    </div>
                 </div>
                 
             <?php else: ?>
-                <div class="alert alert-info">
+                <div class="alert alert-info ep-mobile-alert">
                     <strong>✅ All Clear:</strong> No pending emails in the queue.
                 </div>
             <?php endif; ?>

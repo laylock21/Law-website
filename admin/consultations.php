@@ -248,6 +248,97 @@ $active_page = "consultations";
     <link rel="stylesheet" href="../src/admin/css/styles.css">
     <link rel="stylesheet" href="../includes/confirmation-modal.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Mobile responsive styles for consultations page */
+        @media (max-width: 768px) {
+            .consultations-stats {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 0.75rem;
+            }
+            
+            .consult-mobile-header-controls {
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+                width: 100%;
+            }
+            
+            .consult-mobile-search-section {
+                width: 100%;
+            }
+            
+            .consult-mobile-search-section .search-container {
+                flex-direction: column;
+                gap: 0.5rem;
+                position: relative;
+                overflow: visible;
+                right:auto;
+            }
+            
+            .consult-mobile-search-section .search-input-wrapper {
+                width: 100%;
+            }
+            
+            .consult-mobile-search-section .admin-dropdown {
+                width: 100%;
+                margin-left: 0 !important;
+            }
+            
+            .consult-mobile-bulk-section {
+                width: 100%;
+                display: none;
+                opacity: 0;
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease, opacity 0.3s ease;
+            }
+            
+            .consult-mobile-bulk-section.show {
+                display: block;
+                opacity: 1;
+                max-height: 200px;
+            }
+            
+            .consult-mobile-bulk-section .bulk-form {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                width: 100%;
+            }
+            
+            .consult-mobile-bulk-section .admin-dropdown {
+                width: 100%;
+            }
+            
+            .consult-mobile-bulk-section .apply-selected {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .consult-mobile-table-wrapper {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .consult-mobile-table-wrapper table {
+                min-width: 800px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .consultations-stats {
+                grid-template-columns: 1fr !important;
+            }
+            
+            .admin-stat-card {
+                padding: 1rem;
+            }
+            
+            .admin-stat-number {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
 </head>
 <body class="admin-page">
     <?php include 'partials/sidebar.php'; ?>
@@ -324,9 +415,9 @@ $active_page = "consultations";
             <div class="admin-consultations-table">
                 <div class="admin-section-header">
                     <h2>Consultation Requests</h2>
-                    <div class="header-controls">
+                    <div class="header-controls consult-mobile-header-controls">
                         <!-- Search Form -->
-                        <div class="search-section">
+                        <div class="search-section consult-mobile-search-section">
                             <form method="GET" class="search-form">
                                 <div class="search-container">
                                     <div class="search-input-wrapper">
@@ -360,13 +451,13 @@ $active_page = "consultations";
                         </div>
                         
                         <!-- Bulk Actions Form -->
-                        <div class="bulk-actions-section" id="bulk-actions-section">
+                        <div class="bulk-actions-section consult-mobile-bulk-section" id="bulk-actions-section">
                             <form method="POST" id="bulk-form" class="bulk-form">
                                 <select name="bulk_action" id="bulk_action" class="admin-dropdown admin-dropdown-primary">
-                                    <option value="pending" selected>Pending</option>
-                                    <option value="confirm">Confirm</option>
-                                    <option value="complete">Complete</option>
-                                    <option value="cancelled">Cancel</option>
+                                    <option value="pending" selected>Set to Pending</option>
+                                    <option value="confirm">Set to Confirmed</option>
+                                    <option value="complete">Set to Completed</option>
+                                    <option value="cancelled">Set to Cancelled</option>
                                 </select>
                                 <button type="submit" class="admin-btn admin-btn-primary apply-selected" onclick="return confirmBulkAction()">
                                     <i class="fas fa-check-circle"></i> Apply to Selected
@@ -376,7 +467,7 @@ $active_page = "consultations";
                     </div>
                 </div>
                 
-                <div class="table-responsive">
+                <div class="table-responsive consult-mobile-table-wrapper">
                     <form method="POST" id="consultations-form">
                     <table>
                         <thead>
