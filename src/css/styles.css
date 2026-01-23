@@ -79,6 +79,19 @@ html {
 	transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Remove all borders from navigation links */
+.site-header .nav-list a {
+	border-bottom: none !important;
+	border: none !important;
+}
+
+.site-header .nav-list a:hover,
+.site-header .nav-list a:focus,
+.site-header .nav-list a:active {
+	border-bottom: none !important;
+	border: none !important;
+}
+
 /* Scrolled state - enhanced styling */
 .site-header.scrolled {
 	background: rgba(255, 255, 255, 0.95);
@@ -374,20 +387,20 @@ html {
 	font-weight: 500;
 	padding: 12px 16px 10px 16px;
 	border-radius: 8px;
-	transition: color 0.3s ease, border-bottom-color 0.3s ease;
+	transition: color 0.3s ease;
 	font-size: 16px;
 	position: relative;
 	display: inline-flex;
 	align-items: center;
 	box-sizing: border-box;
-	border-bottom: 2px solid transparent;
+	/* border-bottom: 2px solid transparent; */ /* Removed border */
 	height: 44px;
 	vertical-align: top;
 }
 
 .nav-list a:hover {
 	color: var(--gold);
-	border-bottom-color: var(--gold);
+	/* border-bottom-color: var(--gold); */ /* Removed underline on hover */
 }
 
 /* Login Link Styling */
