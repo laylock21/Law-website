@@ -1646,12 +1646,13 @@ body.lawyer-page {
     .control-buttons {
         display: flex;
         flex-direction: column;
+        align-items: center;
         gap: 12px;
         width: 100%;
     }
     
     .btn-profile-action {
-        width: 100% !important;
+        width: 200px !important;
         flex: none !important;
         font-size: 15px !important;
         padding: 14px 20px !important;
