@@ -64,13 +64,13 @@ $active_page = "queue";
             <?php 
             $pending_count = $stats['pending'] ?? 0;
             if ($pending_count > 0): ?>
-                <div class="alert alert-warning">
+                <div class="alert alert-warning nq-mobile-alert">
                     <div style="display:flex;align-items:center;">
                         <strong>📧 Action Required:</strong> There are <?php echo $pending_count; ?> pending email(s) waiting to be sent.
                     </div>
                 </div>
             <?php else: ?>
-                <div class="alert alert-success">
+                <div class="alert alert-success nq-mobile-alert">
                     <strong>✅ Email System Active:</strong> All notifications are being sent automatically.
                 </div>
             <?php endif; ?>
@@ -79,46 +79,48 @@ $active_page = "queue";
             
             
             
-            <h2 style="padding:16px 0 16px 0;">Recent Notifications</h2>
+            <h2 class="nq-mobile-heading" style="padding:16px 0 16px 0;">Recent Notifications</h2>
             
             <?php if (empty($notifications)): ?>
-                <p style="text-align: center; padding: 40px; color: #6c757d;">
+                <p class="nq-mobile-empty" style="text-align: center; padding: 40px; color: #6c757d;">
                     No notifications in queue.
                 </p>
             <?php else: ?>
-                <table class="notification-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Recipient</th>
-                            <th>Subject</th>
-                            <th>Type</th>
-                            <th>Status</th>
-                            <th>Created</th>
-                            <th>Attempts</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($notifications as $notif): ?>
+                <div class="nq-mobile-table-wrapper">
+                    <table class="notification-table nq-mobile-table">
+                        <thead>
                             <tr>
-                                <td><?php echo $notif['id']; ?></td>
-                                <td>
-                                    <strong><?php echo htmlspecialchars($notif['first_name'] . ' ' . $notif['last_name']); ?></strong><br>
-                                    <small><?php echo htmlspecialchars($notif['email']); ?></small>
-                                </td>
-                                <td><?php echo htmlspecialchars($notif['subject']); ?></td>
-                                <td><?php echo ucwords(str_replace('_', ' ', $notif['notification_type'])); ?></td>
-                                <td>
-                                    <span class="status-badge status-<?php echo $notif['status']; ?>">
-                                        <?php echo ucfirst($notif['status']); ?>
-                                    </span>
-                                </td>
-                                <td><?php echo date('M d, Y g:i A', strtotime($notif['created_at'])); ?></td>
-                                <td><?php echo $notif['attempts']; ?></td>
+                                <th>ID</th>
+                                <th>Recipient</th>
+                                <th>Subject</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Attempts</th>
                             </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($notifications as $notif): ?>
+                                <tr>
+                                    <td><?php echo $notif['id']; ?></td>
+                                    <td>
+                                        <strong><?php echo htmlspecialchars($notif['first_name'] . ' ' . $notif['last_name']); ?></strong><br>
+                                        <small><?php echo htmlspecialchars($notif['email']); ?></small>
+                                    </td>
+                                    <td><?php echo htmlspecialchars($notif['subject']); ?></td>
+                                    <td><?php echo ucwords(str_replace('_', ' ', $notif['notification_type'])); ?></td>
+                                    <td>
+                                        <span class="status-badge status-<?php echo $notif['status']; ?>">
+                                            <?php echo ucfirst($notif['status']); ?>
+                                        </span>
+                                    </td>
+                                    <td><?php echo date('M d, Y g:i A', strtotime($notif['created_at'])); ?></td>
+                                    <td><?php echo $notif['attempts']; ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             <?php endif; ?>
         </div>
     </main>

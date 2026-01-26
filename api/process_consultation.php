@@ -5,9 +5,9 @@
  */
 
 // Include database configuration and error handling
-require_once 'config/database.php';
-require_once 'config/ErrorHandler.php';
-require_once 'config/Logger.php';
+require_once '../config/database.php';
+require_once '../config/ErrorHandler.php';
+require_once '../config/Logger.php';
 
 // Initialize error handling and logging
 ErrorHandler::init();
@@ -214,7 +214,7 @@ try {
         // Send email notification to lawyer(s)
         $email_queued = false;
         try {
-            require_once 'includes/EmailNotification.php';
+            require_once '../includes/EmailNotification.php';
             $emailNotification = new EmailNotification($pdo);
             $email_queued = $emailNotification->notifyLawyerNewConsultation($consultation_id);
             

@@ -3351,26 +3351,28 @@ input[type="radio"]:focus {
     /* Stack action buttons vertically on smaller screens */
     .lawyers-table td:nth-child(9) .btn {
         display: block;
-        margin: 2px auto;
-        width: 90%;
+        margin: 4px auto;
+        width: 100%;
         text-align: center;
-        min-width: 32px;
-        height: 32px;
-        font-size: 12px;
+        min-width: auto;
+        height: 36px;
+        font-size: 13px;
+        padding: 8px 12px;
     }
     
     .lawyers-table td:nth-child(9) .btn:not(.btn-warning):not(.btn-success) {
-        font-size: 14px;
-        width: 32px;
-        min-width: 32px;
-        height: 32px;
-        margin: 2px auto;
+        font-size: 16px;
+        width: 36px;
+        min-width: 36px;
+        height: 36px;
+        margin: 4px auto;
+        padding: 8px;
     }
     
     .lawyers-table td:nth-child(9) {
         white-space: normal;
-        width: 120px;
-        min-width: 100px;
+        width: 140px;
+        min-width: 120px;
         padding: 12px 8px;
     }
     
@@ -3484,25 +3486,28 @@ input[type="radio"]:focus {
     
     .lawyers-table th:nth-child(9),
     .lawyers-table td:nth-child(9) {
-        width: 100px;
-        min-width: 90px;
+        width: 140px;
+        min-width: 120px;
     }
     
     .lawyers-table td:nth-child(9) .btn {
-        padding: 4px 6px;
-        font-size: 10px;
-        margin: 1px auto;
-        width: 90%;
-        height: 28px;
-        min-width: 28px;
+        padding: 8px 12px;
+        font-size: 13px;
+        margin: 3px auto;
+        width: 100%;
+        height: 38px;
+        min-width: auto;
+        display: block;
     }
     
     .lawyers-table td:nth-child(9) .btn:not(.btn-warning):not(.btn-success) {
-        font-size: 12px;
-        width: 28px;
-        min-width: 28px;
-        height: 28px;
-        padding: 4px;
+        font-size: 16px;
+        width: 38px;
+        min-width: 38px;
+        height: 38px;
+        padding: 8px;
+        margin: 3px auto;
+        display: block;
     }
 }
 
@@ -3522,16 +3527,446 @@ input[type="radio"]:focus {
         display: none;
     }
     
+    /* Increase actions column width for better button display */
+    .lawyers-table th:nth-child(9),
+    .lawyers-table td:nth-child(9) {
+        width: 120px;
+        min-width: 110px;
+    }
+    
     .lawyers-table td:nth-child(9) .btn {
-        padding: 3px 4px;
+        padding: 6px 10px;
+        font-size: 12px;
+        height: 36px;
+        width: 100%;
+        margin: 3px auto;
     }
     
     .lawyers-table td:nth-child(9) .btn:not(.btn-warning):not(.btn-success) {
-        font-size: 9px;
-        width: 20px;
-        min-width: 20px;
-        height: 20px;
-        padding: 2px;
+        font-size: 14px;
+        width: 36px;
+        min-width: 36px;
+        height: 36px;
+        padding: 6px;
+        margin: 3px auto;
+    }
+}
+
+/* Responsive Styles for Schedule Management Page */
+@media (max-width: 768px) {
+    /* Schedule page specific - Lawyer info card */
+    .schedule-management .lawyer-info-card,
+    body:has(#block-dates-form) .lawyer-info-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    body:has(#block-dates-form) .lawyer-info-card h2 {
+        font-size: 1.5rem;
+    }
+    
+    body:has(#block-dates-form) .lawyer-info-card p {
+        font-size: 0.9rem;
+    }
+    
+    /* Schedule page specific - Action card */
+    body:has(#block-dates-form) .action-card {
+        padding: 20px;
+    }
+    
+    body:has(#block-dates-form) .action-card h3 {
+        font-size: 1.2rem;
+    }
+    
+    body:has(#block-dates-form) .action-card .form-group label {
+        font-size: 13px;
+    }
+    
+    body:has(#block-dates-form) .action-card .form-group input,
+    body:has(#block-dates-form) .action-card .form-group select {
+        padding: 10px;
+        font-size: 14px;
+    }
+    
+    /* Schedule page - Fix button layout on mobile */
+    #block-dates-form > div:last-child {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    
+    #block-dates-form > div:last-child button {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+    
+    /* Schedule page specific - Blocked dates list */
+    body:has(#blocked-dates-container) .blocked-dates-list {
+        padding: 15px;
+    }
+    
+    body:has(#blocked-dates-container) .blocked-dates-list h3 {
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+    }
+    
+    /* Schedule page specific - Blocked date items */
+    #blocked-dates-container .blocked-date-item {
+        padding: 15px;
+    }
+    
+    #blocked-dates-container .blocked-date-content {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 15px;
+    }
+    
+    #blocked-dates-container .date-info {
+        width: 100%;
+    }
+    
+    #blocked-dates-container .date-info strong {
+        font-size: 15px;
+    }
+    
+    #blocked-dates-container .date-info small {
+        font-size: 0.85rem;
+    }
+    
+    #blocked-dates-container .blocked-date-content form {
+        width: 100%;
+    }
+    
+    #blocked-dates-container .blocked-date-content form button {
+        width: 100%;
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+    
+    /* Schedule page - Bulk actions bar responsive */
+    #bulk-actions-bar > div {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+    
+    #bulk-actions-bar > div > div:last-child {
+        width: 100%;
+        flex-direction: column;
+    }
+    
+    #bulk-actions-bar button {
+        width: 100%;
+        margin: 5px 0;
+    }
+    
+    /* Schedule page - Toggle bulk mode button */
+    #toggle-bulk-mode {
+        font-size: 0.85rem;
+        padding: 8px 12px;
+    }
+    
+    /* Schedule page - Pagination responsive */
+    #blocked-dates-container .pagination {
+        flex-wrap: wrap;
+        gap: 5px;
+        justify-content: center;
+    }
+    
+    #blocked-dates-container .pagination a,
+    #blocked-dates-container .pagination span {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+    
+    #blocked-dates-container .pagination-info {
+        font-size: 0.85rem;
+        text-align: center;
+    }
+    
+    /* Schedule page - Warning box responsive */
+    body:has(#block-dates-form) .warning-box {
+        flex-direction: column;
+        padding: 12px;
+    }
+    
+    body:has(#block-dates-form) .warning-box i {
+        font-size: 18px;
+    }
+    
+    body:has(#block-dates-form) .warning-box p {
+        font-size: 0.9rem;
+    }
+    
+    /* Schedule page - Consultation items */
+    body:has(#block-dates-form) .consultation-item {
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Schedule page - Small mobile adjustments */
+    body:has(#block-dates-form) .lawyer-info-card {
+        padding: 15px;
+    }
+    
+    body:has(#block-dates-form) .lawyer-info-card h2 {
+        font-size: 1.3rem;
+    }
+    
+    body:has(#block-dates-form) .action-card {
+        padding: 15px;
+    }
+    
+    body:has(#block-dates-form) .action-card h3 {
+        font-size: 1.1rem;
+    }
+    
+    body:has(#blocked-dates-container) .blocked-dates-list {
+        padding: 12px;
+    }
+    
+    #blocked-dates-container .blocked-date-item {
+        padding: 12px;
+    }
+    
+    #blocked-dates-container .date-info strong {
+        font-size: 14px;
+    }
+    
+    #blocked-dates-container .date-info small {
+        font-size: 0.8rem;
+    }
+    
+    /* Schedule page - Make buttons more touch-friendly */
+    #blocked-dates-container .blocked-date-content form button {
+        padding: 14px 20px;
+        font-size: 15px;
+        min-height: 48px;
+    }
+    
+    #toggle-bulk-mode {
+        font-size: 0.8rem;
+        padding: 10px;
+        white-space: nowrap;
+    }
+    
+    /* Schedule page - Adjust bulk checkbox positioning */
+    #blocked-dates-container .bulk-checkbox-container {
+        left: 8px !important;
+    }
+    
+    #blocked-dates-container .blocked-date-content {
+        margin-left: 0 !important;
+    }
+    
+    #blocked-dates-container .blocked-date-content[style*="margin-left: 35px"] {
+        margin-left: 30px !important;
+    }
+}
+
+/* =============================================================================
+   RESPONSIVE STYLES FOR LAWYER MANAGEMENT PAGE (manage_lawyers.php)
+   ============================================================================= */
+
+@media (max-width: 768px) {
+    /* Lawyer Management - Stats grid */
+    body:has(#openCreateLawyerModal) .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 15px;
+    }
+    
+    body:has(#openCreateLawyerModal) .stat-card {
+        padding: 15px;
+    }
+    
+    body:has(#openCreateLawyerModal) .stat-number {
+        font-size: 28px;
+    }
+    
+    /* Lawyer Management - Section header */
+    body:has(.lawyers-table) .section > div:first-child {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+    
+    body:has(.lawyers-table) .section h2 {
+        font-size: 1.3rem;
+    }
+    
+    /* Lawyer Management - Create button full width on mobile */
+    #openCreateLawyerModal {
+        width: 100% !important;
+        margin-right: 0 !important;
+        justify-content: center;
+    }
+    
+    /* Lawyer Management - Table wrapper */
+    body:has(.lawyers-table) .table-wrapper {
+        margin: 0 -15px;
+        padding: 0 15px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Lawyer Management - Password Reset Modal */
+    #passwordResetModal .modal-content {
+        width: 95%;
+        max-width: 95%;
+        margin: 20px auto;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    #passwordResetModal .modal-header h3 {
+        font-size: 1.2rem;
+    }
+    
+    #passwordResetModal .password-setup-container {
+        gap: 12px !important;
+    }
+    
+    #passwordResetModal .password-option {
+        padding: 12px !important;
+    }
+    
+    #passwordResetModal .password-option-label strong {
+        font-size: 14px !important;
+    }
+    
+    #passwordResetModal .password-option-label small {
+        font-size: 12px !important;
+    }
+    
+    /* Password fields side by side becomes stacked */
+    #passwordResetModal #reset-custom-password-fields > div:first-child {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+    
+    /* Modal actions buttons */
+    #passwordResetModal .modal-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    #passwordResetModal .modal-actions button {
+        width: 100%;
+        padding: 12px 20px;
+    }
+    
+    /* Alert messages */
+    body:has(.lawyers-table) .alert {
+        margin: 15px;
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+    
+    /* Credentials box in alert */
+    body:has(.lawyers-table) .alert-success > div {
+        padding: 15px !important;
+    }
+    
+    body:has(.lawyers-table) .alert-success h4 {
+        font-size: 1.1rem !important;
+    }
+    
+    body:has(.lawyers-table) .alert-success h5 {
+        font-size: 1rem !important;
+    }
+    
+    body:has(.lawyers-table) .alert-success ul {
+        padding-left: 15px !important;
+        font-size: 0.85rem !important;
+    }
+    
+    /* Credentials buttons */
+    body:has(.lawyers-table) .alert-success button {
+        display: block !important;
+        width: 100% !important;
+        margin: 5px 0 !important;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Lawyer Management - Small mobile */
+    body:has(#openCreateLawyerModal) .stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+    }
+    
+    body:has(#openCreateLawyerModal) .stat-card {
+        padding: 12px;
+    }
+    
+    body:has(#openCreateLawyerModal) .stat-number {
+        font-size: 24px;
+    }
+    
+    body:has(.lawyers-table) .section {
+        padding: 16px 0 0 8px !important;
+    }
+    
+    body:has(.lawyers-table) .section h2 {
+        font-size: 1.1rem;
+        padding-bottom: 6px;
+    }
+    
+    #openCreateLawyerModal {
+        padding: 10px 20px !important;
+        font-size: 0.9rem !important;
+    }
+    
+    #openCreateLawyerModal i {
+        display: none;
+    }
+    
+    /* Password Reset Modal - Very small screens */
+    #passwordResetModal .modal-content {
+        width: 98%;
+        margin: 10px auto;
+    }
+    
+    #passwordResetModal .modal-header {
+        padding: 12px;
+    }
+    
+    #passwordResetModal .modal-body {
+        padding: 12px;
+    }
+    
+    #passwordResetModal .password-option {
+        padding: 10px !important;
+    }
+    
+    #passwordResetModal input[type="radio"] {
+        width: 16px !important;
+        height: 16px !important;
+    }
+    
+    /* Alert credentials - Very small screens */
+    body:has(.lawyers-table) .alert-success {
+        margin: 10px;
+        padding: 10px;
+    }
+    
+    body:has(.lawyers-table) .alert-success > div {
+        padding: 10px !important;
+    }
+    
+    body:has(.lawyers-table) .alert-success h4 {
+        font-size: 1rem !important;
+    }
+    
+    body:has(.lawyers-table) .alert-success h5 {
+        font-size: 0.9rem !important;
+    }
+    
+    body:has(.lawyers-table) .alert-success #password-display,
+    body:has(.lawyers-table) .alert-success #reset-password-display {
+        font-size: 16px !important;
+        padding: 3px 6px !important;
     }
 }
 
@@ -4677,5 +5112,282 @@ body.admin-page table.admin-consultations-table th,
         bottom: 0;
         background: rgba(0, 0, 0, 0.5);
         z-index: -1;
+    }
+}
+
+
+/* =============================================================================
+   NOTIFICATION QUEUE & EMAIL PROCESSOR - MOBILE RESPONSIVE STYLES
+   ============================================================================= */
+
+/* Notification Queue Mobile Styles */
+@media (max-width: 768px) {
+    /* Notification queue alert adjustments */
+    .nq-mobile-alert {
+        padding: 12px 16px;
+        font-size: 14px;
+        margin-bottom: 16px;
+    }
+    
+    .nq-mobile-alert strong {
+        display: block;
+        margin-bottom: 4px;
+    }
+    
+    /* Notification queue heading */
+    .nq-mobile-heading {
+        font-size: 1.5rem !important;
+        padding: 12px 0 !important;
+        margin-bottom: 16px;
+    }
+    
+    /* Notification table mobile wrapper */
+    .nq-mobile-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 -15px;
+        padding: 0 15px;
+    }
+    
+    /* Notification table mobile adjustments */
+    .nq-mobile-table {
+        min-width: 800px;
+        font-size: 13px;
+    }
+    
+    .nq-mobile-table th,
+    .nq-mobile-table td {
+        padding: 10px 8px;
+        font-size: 12px;
+    }
+    
+    .nq-mobile-table th {
+        white-space: nowrap;
+        font-size: 11px;
+    }
+    
+    /* Notification empty state */
+    .nq-mobile-empty {
+        padding: 30px 20px !important;
+        font-size: 14px !important;
+    }
+}
+
+/* Email Processor Mobile Styles */
+@media (max-width: 768px) {
+    /* Email processor page header */
+    .ep-mobile-header {
+        margin-bottom: 20px;
+    }
+    
+    .ep-mobile-header h1 {
+        font-size: 1.75rem !important;
+        margin-bottom: 8px;
+    }
+    
+    .ep-mobile-header p {
+        font-size: 14px !important;
+        margin-bottom: 12px;
+    }
+    
+    /* Email processor button adjustments */
+    .ep-mobile-btn {
+        width: 100% !important;
+        padding: 10px 16px !important;
+        font-size: 14px !important;
+        margin-top: 8px !important;
+        justify-content: center;
+    }
+    
+    /* Email processor stats grid */
+    .ep-mobile-stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        margin-bottom: 24px !important;
+    }
+    
+    .ep-mobile-stat-card {
+        padding: 16px !important;
+        text-align: center;
+    }
+    
+    .ep-mobile-stat-card .stat-number {
+        font-size: 2rem !important;
+    }
+    
+    /* Email processor section */
+    .ep-mobile-section {
+        padding: 20px 16px !important;
+        margin-bottom: 20px;
+    }
+    
+    .ep-mobile-section h3 {
+        font-size: 1.25rem !important;
+        margin-bottom: 16px;
+    }
+    
+    /* Email processor alert */
+    .ep-mobile-alert {
+        padding: 16px !important;
+        font-size: 14px;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+        display: flex !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    .ep-mobile-alert strong {
+        display: block;
+        margin-bottom: 4px;
+    }
+    
+    /* Alert content wrapper for mobile */
+    .ep-mobile-alert-content {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+    }
+    
+    .ep-mobile-alert .btn,
+    .ep-mobile-alert a.btn {
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-top: 0 !important;
+        padding: 12px 16px !important;
+        justify-content: center !important;
+        display: flex !important;
+        align-items: center !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Email processor table wrapper */
+    .ep-mobile-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 -16px;
+        padding: 0 16px;
+    }
+    
+    /* Email processor table */
+    .ep-mobile-table {
+        min-width: 900px;
+        font-size: 13px;
+    }
+    
+    .ep-mobile-table th,
+    .ep-mobile-table td {
+        padding: 10px 8px;
+        font-size: 12px;
+    }
+    
+    .ep-mobile-table th {
+        font-size: 11px;
+        white-space: nowrap;
+    }
+    
+    /* Email processor form */
+    .ep-mobile-form {
+        text-align: center;
+        margin: 20px 0;
+        padding-top: 24px;
+    }
+    
+    .ep-mobile-form button {
+        width: 100% !important;
+        padding: 14px 24px !important;
+        font-size: 16px !important;
+    }
+}
+
+/* Small Mobile Devices - Notification Queue & Email Processor */
+@media (max-width: 480px) {
+    /* Notification queue small mobile */
+    .nq-mobile-heading {
+        font-size: 1.25rem !important;
+        padding: 10px 0 !important;
+    }
+    
+    .nq-mobile-alert {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+    
+    .nq-mobile-table {
+        min-width: 700px;
+        font-size: 12px;
+    }
+    
+    .nq-mobile-table th,
+    .nq-mobile-table td {
+        padding: 8px 6px;
+        font-size: 11px;
+    }
+    
+    /* Email processor small mobile */
+    .ep-mobile-header h1 {
+        font-size: 1.5rem !important;
+    }
+    
+    .ep-mobile-header p {
+        font-size: 13px !important;
+    }
+    
+    .ep-mobile-btn {
+        padding: 8px 12px !important;
+        font-size: 13px !important;
+    }
+    
+    .ep-mobile-stat-card .stat-number {
+        font-size: 1.75rem !important;
+    }
+    
+    .ep-mobile-section {
+        padding: 16px 12px !important;
+    }
+    
+    .ep-mobile-section h3 {
+        font-size: 1.125rem !important;
+    }
+    
+    .ep-mobile-table {
+        min-width: 800px;
+        font-size: 12px;
+    }
+    
+    .ep-mobile-table th,
+    .ep-mobile-table td {
+        padding: 8px 6px;
+        font-size: 11px;
+    }
+    
+    .ep-mobile-form button {
+        padding: 12px 20px !important;
+        font-size: 15px !important;
+    }
+}
+
+/* Very Small Screens - Notification Queue & Email Processor */
+@media (max-width: 360px) {
+    .nq-mobile-heading {
+        font-size: 1.125rem !important;
+    }
+    
+    .nq-mobile-table {
+        min-width: 650px;
+    }
+    
+    .ep-mobile-header h1 {
+        font-size: 1.375rem !important;
+    }
+    
+    .ep-mobile-section {
+        padding: 14px 10px !important;
+    }
+    
+    .ep-mobile-table {
+        min-width: 750px;
     }
 }

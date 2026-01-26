@@ -140,8 +140,26 @@ $active_page = "consultations";
     <title>Admin - View Consultation | Lex & Co.</title>
     <link rel="stylesheet" href="../src/admin/css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Mobile horizontal scroll for table */
+        @media (max-width: 768px) {
+            .vconsult-table-wrapper {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .vconsult-table-wrapper table th {
+                min-width: 120px;
+                width: 120px;
+            }
+            
+            .vconsult-table-wrapper table td {
+                min-width: 200px;
+            }
+        }
+    </style>
 </head>
-<body class="admin-page">
+<body class="admin-page"></body>
     <?php include 'partials/sidebar.php'; ?>
 
     <main class="admin-main-content">
@@ -175,6 +193,7 @@ $active_page = "consultations";
                     <div class="admin-section-header">
                         <h3>Client & Case Details</h3>
                     </div>
+                    <div class="vconsult-table-wrapper">
                     <table>
                         <tbody>
                             <tr>
@@ -243,6 +262,7 @@ $active_page = "consultations";
                             </tr>
                         </tbody>
                     </table>
+                    </div>
                 </div>
 
                 <div class="admin-quick-actions" style="margin-top: 1.5rem; text-align: left;">

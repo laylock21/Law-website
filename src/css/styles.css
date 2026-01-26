@@ -79,6 +79,19 @@ html {
 	transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Remove all borders from navigation links */
+.site-header .nav-list a {
+	border-bottom: none !important;
+	border: none !important;
+}
+
+.site-header .nav-list a:hover,
+.site-header .nav-list a:focus,
+.site-header .nav-list a:active {
+	border-bottom: none !important;
+	border: none !important;
+}
+
 /* Scrolled state - enhanced styling */
 .site-header.scrolled {
 	background: rgba(255, 255, 255, 0.95);
@@ -374,20 +387,20 @@ html {
 	font-weight: 500;
 	padding: 12px 16px 10px 16px;
 	border-radius: 8px;
-	transition: color 0.3s ease, border-bottom-color 0.3s ease;
+	transition: color 0.3s ease;
 	font-size: 16px;
 	position: relative;
 	display: inline-flex;
 	align-items: center;
 	box-sizing: border-box;
-	border-bottom: 2px solid transparent;
+	/* border-bottom: 2px solid transparent; */ /* Removed border */
 	height: 44px;
 	vertical-align: top;
 }
 
 .nav-list a:hover {
 	color: var(--gold);
-	border-bottom-color: var(--gold);
+	/* border-bottom-color: var(--gold); */ /* Removed underline on hover */
 }
 
 /* Login Link Styling */
@@ -990,6 +1003,9 @@ html {
 	border-radius: 12px;
 	border: 2px solid rgba(197, 162, 83, 0.15);
 	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
 }
 
 /* Review Cards (Step 3) */
@@ -1047,7 +1063,8 @@ html {
 /* Responsive Design */
 @media (max-width: 768px) {
 	.appointment-single-column {
-		padding: 24px;
+		padding: 20px 16px;
+		margin: 30px auto 0;
 	}
 	
 	.step-grid {
@@ -1062,6 +1079,78 @@ html {
 	
 	.info-box {
 		order: -1; /* Show info box first on mobile */
+	}
+	
+	/* Mobile-friendly form progress */
+	.form-progress {
+		flex-direction: row;
+		justify-content: space-between;
+		gap: 8px;
+		padding: 16px 12px;
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+	
+	.progress-step {
+		flex-direction: column;
+		min-width: 70px;
+		gap: 6px;
+	}
+	
+	.step-number {
+		width: 36px;
+		height: 36px;
+		font-size: 16px;
+	}
+	
+	.step-label {
+		font-size: 11px;
+		text-align: center;
+		line-height: 1.2;
+	}
+	
+	.progress-line {
+		flex: 1;
+		min-width: 20px;
+		height: 2px;
+		margin: 0 4px;
+		align-self: center;
+		margin-top: -20px;
+	}
+	
+	/* Step containers - ensure no overflow */
+	.step-left,
+	.step-right,
+	.step-middle {
+		width: 100%;
+		max-width: 100%;
+		box-sizing: border-box;
+		overflow: hidden;
+	}
+	
+	/* Calendar in step - mobile specific */
+	.step-left .calendar {
+		padding: 16px;
+		margin: 0;
+		width: 100%;
+		max-width: 100%;
+	}
+	
+	/* Calendar legend mobile */
+	.calendar-legend {
+		gap: 12px;
+		padding: 10px;
+		justify-content: flex-start;
+	}
+	
+	.legend-item {
+		font-size: 11px;
+		gap: 6px;
+	}
+	
+	.legend-color {
+		width: 16px;
+		height: 16px;
 	}
 }
 
@@ -1356,6 +1445,9 @@ html {
 	border-radius: 16px;
 	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 	border: 2px solid rgba(197, 162, 83, 0.2);
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
 }
 
 .calendar-header {
@@ -1405,6 +1497,9 @@ html {
 	overflow: hidden;
 	background: #ffffff;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
 }
 
 .calendar-weekdays {
@@ -1412,6 +1507,7 @@ html {
 	grid-template-columns: repeat(7, 1fr);
 	background: linear-gradient(135deg, #2d2d2d 0%, #3a3a3a 100%);
 	border-bottom: 2px solid rgba(197, 162, 83, 0.3);
+	width: 100%;
 }
 
 .calendar-weekdays span {
@@ -1422,12 +1518,14 @@ html {
 	font-size: 12px;
 	letter-spacing: 0.5px;
 	text-transform: uppercase;
+	box-sizing: border-box;
 }
 
 .calendar-body {
 	display: grid;
 	grid-template-columns: repeat(7, 1fr);
 	background: #ffffff;
+	width: 100%;
 }
 
 .calendar-day {
@@ -1441,6 +1539,7 @@ html {
 	position: relative;
 	background: #ffffff;
 	transition: background 0.2s ease;
+	box-sizing: border-box;
 }
 
 .calendar-day:hover {
@@ -1467,6 +1566,7 @@ html {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	box-sizing: border-box;
 }
 
 .calendar-day button:hover {
@@ -1910,7 +2010,26 @@ html {
 	
 	.about-content {
 		grid-template-columns: 1fr;
-		gap: 60px;
+		gap: 40px;
+	}
+	
+	.about-image img {
+		height: 350px;
+		border-radius: 12px;
+	}
+	
+	.about-features {
+		gap: 24px;
+		margin-top: 32px;
+	}
+	
+	.feature-item {
+		gap: 16px;
+	}
+	
+	.feature-icon {
+		width: 42px;
+		height: 42px;
 	}
 	
 	.contact-content {
@@ -2029,24 +2148,55 @@ html {
 	/* Grid layouts */
 	.services-grid {
 		grid-template-columns: 1fr;
+		gap: 24px;
+	}
+	
+	.service-card {
+		padding: 24px 20px;
 	}
 	
 	.testimonials-grid {
 		grid-template-columns: 1fr;
+		gap: 24px;
+	}
+	
+	.testimonial-card {
+		padding: 24px 20px;
 	}
 	
 	.lawyer-grid {
 		grid-template-columns: 1fr;
+		gap: 20px;
 	}
 	
 	.footer-content {
 		grid-template-columns: 1fr;
 		text-align: center;
+		gap: 32px;
+	}
+	
+	.footer-section {
+		padding: 0 16px;
+	}
+	
+	.footer-section h3,
+	.footer-section h4 {
+		margin-bottom: 16px;
+	}
+	
+	.footer-section ul {
+		padding: 0;
+	}
+	
+	.footer-section ul li {
+		margin-bottom: 10px;
 	}
 	
 	/* Center footer navigation on mobile */
 	.footer-section .nav-list {
 		display: flex;
+		flex-direction: column;
+		align-items: center;
 		justify-content: center;
 	}
 	
@@ -2092,11 +2242,28 @@ html {
 	
 	/* Touch improvements */
 	.btn {
-		min-height: 50px;
+		min-height: 48px;
 		min-width: 48px;
-		padding: 14px 28px;
+		padding: 14px 24px;
 		width: 100%;
 		max-width: 300px;
+		font-size: 15px;
+	}
+	
+	/* Form navigation buttons - full width on mobile */
+	.form-navigation {
+		flex-direction: row;
+		gap: 12px;
+		margin: 20px 0 12px 0;
+	}
+	
+	.btn-prev,
+	.btn-next {
+		flex: 1;
+		width: auto;
+		min-width: 100px;
+		height: 48px;
+		font-size: 15px;
 	}
 	
 	/* Form inputs */
@@ -2122,33 +2289,50 @@ html {
 	
 	/* Calendar - Mobile Optimized with Responsive Scaling */
 	.calendar {
-		margin: 0 -1vw; /* Use more screen width on mobile */
-		width: calc(100% + 2vw);
-		max-width: calc(100% + 2vw);
+		margin: 0;
+		width: 100%;
+		max-width: 100%;
+		padding: 16px;
 	}
 	
 	.calendar-grid {
-		border-radius: clamp(6px, 1.5vw, 12px);
+		border-radius: 8px;
 		border-width: 1px;
+		width: 100%;
+		max-width: 100%;
+		overflow: hidden;
+	}
+	
+	.calendar-weekdays {
+		width: 100%;
+	}
+	
+	.calendar-body {
+		width: 100%;
 	}
 	
 	.calendar-day {
-		padding: clamp(2px, 0.8vw, 4px); /* Responsive padding */
-		min-height: clamp(42px, 11vw, 56px); /* Scales with viewport */
-		aspect-ratio: 1; /* Keep days square */
+		padding: 2px;
+		min-height: 48px;
+		height: 48px;
 		border-width: 1px;
+		box-sizing: border-box;
 	}
 	
 	.calendar-day button {
-		min-height: clamp(36px, 9vw, 48px); /* Responsive button size */
-		min-width: clamp(36px, 9vw, 48px);
-		font-size: clamp(13px, 3.2vw, 16px); /* Scales with screen */
+		width: 100%;
+		height: 100%;
+		min-height: 40px;
+		min-width: 40px;
+		font-size: 14px;
 		font-weight: 600;
-		border-radius: clamp(4px, 1vw, 8px);
-		inset: clamp(1px, 0.4vw, 3px); /* Responsive spacing */
+		border-radius: 6px;
+		inset: 2px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		padding: 0;
+		box-sizing: border-box;
 		/* Better touch targets */
 		touch-action: manipulation;
 		-webkit-tap-highlight-color: transparent;
@@ -2162,8 +2346,8 @@ html {
 	
 	/* Calendar weekday headers - Responsive */
 	.calendar-weekdays span {
-		padding: clamp(6px, 2vw, 12px) clamp(2px, 1vw, 6px);
-		font-size: clamp(10px, 2.8vw, 14px);
+		padding: 10px 4px;
+		font-size: 11px;
 		font-weight: 700;
 		text-align: center;
 		display: flex;
@@ -2173,23 +2357,24 @@ html {
 	
 	/* Calendar navigation - Responsive */
 	.calendar-header {
-		padding: clamp(8px, 2.5vw, 16px) clamp(4px, 1.5vw, 12px);
-		margin-bottom: clamp(4px, 1.5vw, 12px);
+		padding: 12px 16px;
+		margin-bottom: 8px;
 	}
 	
 	.calendar-header h3 {
-		font-size: clamp(16px, 4.5vw, 22px);
+		font-size: 18px;
 	}
 	
 	.cal-nav {
-		width: clamp(32px, 8vw, 44px);
-		height: clamp(32px, 8vw, 44px);
-		font-size: clamp(14px, 4vw, 20px);
+		width: 36px;
+		height: 36px;
+		font-size: 16px;
 	}
 	
 	/* Modal */
 	.modal .modal-content {
 		width: 95%;
+		max-width: 95vw;
 		margin: 10px;
 		max-height: 90vh;
 		overflow-y: auto;
@@ -2197,32 +2382,38 @@ html {
 	}
 	
 	.modal .modal-content h3 {
-		padding: 20px 24px 16px;
-		font-size: 1.2rem;
+		padding: 18px 20px 14px;
+		font-size: 1.1rem;
 	}
 	
 	.modal .modal-content h3::before {
-		width: 28px;
-		height: 28px;
-		font-size: 16px;
-		margin-right: 10px;
+		width: 26px;
+		height: 26px;
+		font-size: 15px;
+		margin-right: 8px;
 	}
 	
 	.modal .modal-content p {
-		padding: 24px;
-		font-size: 1rem;
+		padding: 20px;
+		font-size: 0.95rem;
 	}
 	
 	.modal .modal-content > div:last-child {
-		padding: 0 24px 24px;
+		padding: 0 20px 20px;
 	}
 	
 	.modal .close {
-		top: 16px;
-		right: 20px;
+		top: 14px;
+		right: 16px;
 		width: 28px;
 		height: 28px;
 		font-size: 20px;
+	}
+	
+	.modal .btn-primary {
+		width: 100%;
+		padding: 12px 24px;
+		font-size: 15px;
 	}
 	
 	/* Card interactions for mobile */
@@ -2304,19 +2495,33 @@ html {
 	/* Prevent horizontal scroll on mobile */
 	body {
 		overflow-x: hidden;
+		width: 100%;
 	}
 	
 	.container {
-		padding: 0 20px;
+		padding: 0 16px;
 		max-width: 100vw;
+		width: 100%;
 	}
 	
 	/* Ensure sections don't overflow */
 	.section {
-		padding-left: 20px;
-		padding-right: 20px;
+		padding: 50px 0;
 		max-width: 100vw;
 		overflow-x: hidden;
+	}
+	
+	.section-header {
+		margin-bottom: 32px;
+		padding: 0 8px;
+	}
+	
+	.section-header h2 {
+		font-size: clamp(26px, 6vw, 36px);
+	}
+	
+	.section-header p {
+		font-size: clamp(15px, 3.5vw, 17px);
 	}
 	
 	/* Fix wide elements */
@@ -2326,9 +2531,30 @@ html {
 	.testimonials,
 	.lawyers,
 	.appointment,
+	.contact,
 	.footer {
 		max-width: 100vw;
 		overflow-x: hidden;
+	}
+	
+	/* Contact section mobile improvements */
+	.contact-content {
+		gap: 32px;
+	}
+	
+	.contact-card {
+		padding: 20px 16px;
+	}
+	
+	.contact-item {
+		flex-direction: row;
+		gap: 16px;
+		padding-left: 0;
+		margin-bottom: 16px;
+	}
+	
+	.contact-icon {
+		flex-shrink: 0;
 	}
 	
 	/* Fix form elements */
@@ -2512,23 +2738,91 @@ html {
 
 @media (max-width: 480px) {
 	.hero h1 {
-		font-size: 36px;
+		font-size: 32px;
 	}
 	
 	.hero-tagline {
-		font-size: 18px;
+		font-size: 16px;
 	}
 	
 	/* Enhanced centering for small devices (iPhone SE, Galaxy S8+) */
 	#appointment {
-		padding: 40px 5px; /* Tighter padding for small screens */
+		padding: 40px 8px;
+	}
+	
+	.appointment-single-column {
+		padding: 16px 12px;
+		margin: 20px auto 0;
+		border-radius: 12px;
 	}
 	
 	.appointment-form-container,
 	.appointment-calendar {
-		max-width: 95vw; /* Use more screen width */
+		max-width: 95vw;
 		margin: 0 auto;
-		padding: clamp(16px, 4vw, 24px); /* Responsive padding */
+		padding: clamp(16px, 4vw, 24px);
+	}
+	
+	/* Extra small form progress */
+	.form-progress {
+		padding: 12px 8px;
+		gap: 4px;
+	}
+	
+	.progress-step {
+		min-width: 60px;
+	}
+	
+	.step-number {
+		width: 32px;
+		height: 32px;
+		font-size: 14px;
+	}
+	
+	.step-label {
+		font-size: 10px;
+	}
+	
+	.progress-line {
+		min-width: 15px;
+		margin-top: -18px;
+	}
+	
+	/* Compact step titles */
+	.step-title {
+		font-size: 18px;
+		margin-bottom: 16px;
+	}
+	
+	/* Smaller form inputs on very small screens */
+	.form-row input,
+	.form-row textarea,
+	.form-row select {
+		padding: 12px 14px;
+		font-size: 14px;
+	}
+	
+	.form-row label {
+		font-size: 13px;
+	}
+	
+	/* Compact review cards */
+	.review-card {
+		padding: 16px;
+	}
+	
+	.review-card h4 {
+		font-size: 14px;
+		margin-bottom: 12px;
+		padding-bottom: 10px;
+	}
+	
+	.review-label {
+		font-size: 12px;
+	}
+	
+	.review-value {
+		font-size: 13px;
 	}
 	
 	/* Calendar specific centering for small screens */
@@ -2651,18 +2945,423 @@ html {
 	.hero-actions {
 		flex-direction: column;
 		width: 100%;
+		gap: 10px;
 	}
 	
 	.btn {
 		width: 100%;
+		padding: 12px 20px;
+		font-size: 14px;
 	}
 	
 	.section {
-		padding: 60px 0;
+		padding: 40px 0;
 	}
 	
 	.section-header h2 {
+		font-size: 24px;
+		margin-bottom: 16px;
+	}
+	
+	.section-header p {
+		font-size: 14px;
+	}
+	
+	/* Extra compact containers */
+	.container {
+		padding: 0 12px;
+	}
+	
+	/* Smaller cards */
+	.service-card,
+	.testimonial-card,
+	.contact-card {
+		padding: 18px 14px;
+		border-radius: 12px;
+	}
+	
+	/* Compact navigation */
+	.site-header .nav-list {
+		width: 260px;
+		padding: 90px 16px 16px;
+	}
+	
+	.site-header .nav-list a {
+		padding: 14px 16px;
+		font-size: 15px;
+	}
+}
+
+/* Extra small devices - phones under 360px width */
+@media (max-width: 360px) {
+	.container {
+		padding: 0 10px;
+	}
+	
+	.section {
+		padding: 35px 0;
+	}
+	
+	.section-header {
+		margin-bottom: 24px;
+		padding: 0 4px;
+	}
+	
+	.section-header h2 {
+		font-size: 22px;
+	}
+	
+	.section-header p {
+		font-size: 13px;
+	}
+	
+	.hero h1 {
 		font-size: 28px;
+	}
+	
+	.hero-tagline {
+		font-size: 15px;
+	}
+	
+	.btn {
+		padding: 11px 18px;
+		font-size: 13px;
+		min-height: 44px;
+	}
+	
+	.appointment-single-column {
+		padding: 14px 10px;
+		margin: 16px auto 0;
+	}
+	
+	.form-progress {
+		padding: 10px 6px;
+		gap: 2px;
+	}
+	
+	.progress-step {
+		min-width: 55px;
+	}
+	
+	.step-number {
+		width: 30px;
+		height: 30px;
+		font-size: 13px;
+	}
+	
+	.step-label {
+		font-size: 9px;
+	}
+	
+	.progress-line {
+		min-width: 12px;
+		margin-top: -16px;
+	}
+	
+	.calendar-legend {
+		gap: 8px;
+		padding: 8px;
+	}
+	
+	.legend-item {
+		font-size: 10px;
+		gap: 4px;
+	}
+	
+	.legend-color {
+		width: 14px;
+		height: 14px;
+	}
+	
+	/* Extra small calendar adjustments */
+	.calendar {
+		padding: 12px;
+		gap: 12px;
+	}
+	
+	.calendar-header {
+		padding: 10px 12px;
+		margin-bottom: 6px;
+	}
+	
+	.calendar-header h3 {
+		font-size: 16px;
+	}
+	
+	.cal-nav {
+		width: 32px;
+		height: 32px;
+		font-size: 14px;
+	}
+	
+	.calendar-weekdays span {
+		padding: 8px 2px;
+		font-size: 10px;
+	}
+	
+	.calendar-day {
+		padding: 1px;
+		min-height: 42px;
+		height: 42px;
+	}
+	
+	.calendar-day button {
+		min-height: 36px;
+		min-width: 36px;
+		font-size: 13px;
+		inset: 1px;
+		border-radius: 5px;
+	}
+	
+	.service-card,
+	.testimonial-card {
+		padding: 16px 12px;
+	}
+	
+	.site-header .nav-list {
+		width: 240px;
+		padding: 80px 12px 12px;
+	}
+	
+	.site-header .nav-list a {
+		padding: 12px 14px;
+		font-size: 14px;
+	}
+	
+	.form-row input,
+	.form-row textarea,
+	.form-row select {
+		padding: 11px 13px;
+		font-size: 14px;
+	}
+	
+	.form-row label {
+		font-size: 12px;
+	}
+	
+	.review-card {
+		padding: 14px 12px;
+	}
+	
+	.review-card h4 {
+		font-size: 13px;
+		margin-bottom: 10px;
+		padding-bottom: 8px;
+	}
+}
+
+/* Ultra small devices - 320px width phones (iPhone SE 1st gen, iPhone 5, etc.) */
+@media (max-width: 320px) {
+	.container {
+		padding: 0 8px;
+	}
+	
+	.section {
+		padding: 30px 0;
+	}
+	
+	.section-header {
+		margin-bottom: 20px;
+		padding: 0 4px;
+	}
+	
+	.section-header h2 {
+		font-size: 20px;
+		margin-bottom: 12px;
+	}
+	
+	.section-header p {
+		font-size: 12px;
+		line-height: 1.5;
+	}
+	
+	.hero {
+		padding: 100px 0 50px;
+	}
+	
+	.hero h1 {
+		font-size: 26px;
+		margin-bottom: 16px;
+	}
+	
+	.hero-tagline {
+		font-size: 14px;
+		margin-bottom: 24px;
+	}
+	
+	.btn {
+		padding: 10px 16px;
+		font-size: 13px;
+		min-height: 42px;
+	}
+	
+	.appointment-single-column {
+		padding: 12px 8px;
+		margin: 12px auto 0;
+		border-radius: 10px;
+	}
+	
+	.form-progress {
+		padding: 8px 4px;
+		gap: 2px;
+	}
+	
+	.progress-step {
+		min-width: 50px;
+	}
+	
+	.step-number {
+		width: 28px;
+		height: 28px;
+		font-size: 12px;
+	}
+	
+	.step-label {
+		font-size: 8px;
+		line-height: 1.1;
+	}
+	
+	.progress-line {
+		min-width: 10px;
+		margin-top: -14px;
+	}
+	
+	.step-title {
+		font-size: 16px;
+		margin-bottom: 12px;
+	}
+	
+	.form-row input,
+	.form-row textarea,
+	.form-row select {
+		padding: 10px 12px;
+		font-size: 13px;
+	}
+	
+	.form-row label {
+		font-size: 12px;
+	}
+	
+	.calendar {
+		padding: 10px;
+		gap: 10px;
+	}
+	
+	.calendar-header {
+		padding: 8px 10px;
+		margin-bottom: 4px;
+	}
+	
+	.calendar-header h3 {
+		font-size: 15px;
+	}
+	
+	.cal-nav {
+		width: 30px;
+		height: 30px;
+		font-size: 13px;
+	}
+	
+	.calendar-weekdays span {
+		padding: 6px 1px;
+		font-size: 9px;
+	}
+	
+	.calendar-day {
+		padding: 1px;
+		min-height: 38px;
+		height: 38px;
+	}
+	
+	.calendar-day button {
+		min-height: 32px;
+		min-width: 32px;
+		font-size: 12px;
+		inset: 1px;
+		border-radius: 4px;
+	}
+	
+	.calendar-legend {
+		gap: 6px;
+		padding: 6px;
+		flex-wrap: wrap;
+	}
+	
+	.legend-item {
+		font-size: 9px;
+		gap: 3px;
+	}
+	
+	.legend-color {
+		width: 12px;
+		height: 12px;
+	}
+	
+	.service-card,
+	.testimonial-card,
+	.contact-card {
+		padding: 14px 10px;
+		border-radius: 10px;
+	}
+	
+	.service-card h3,
+	.testimonial-card h4 {
+		font-size: 16px;
+	}
+	
+	.service-card p,
+	.testimonial-card p {
+		font-size: 13px;
+	}
+	
+	.review-card {
+		padding: 12px 10px;
+	}
+	
+	.review-card h4 {
+		font-size: 12px;
+		margin-bottom: 8px;
+		padding-bottom: 6px;
+	}
+	
+	.review-label {
+		font-size: 11px;
+	}
+	
+	.review-value {
+		font-size: 12px;
+	}
+	
+	.site-header .nav-list {
+		width: 220px;
+		padding: 70px 10px 10px;
+	}
+	
+	.site-header .nav-list a {
+		padding: 10px 12px;
+		font-size: 13px;
+	}
+	
+	.logo {
+		font-size: 24px;
+	}
+	
+	.nav-toggle span {
+		width: 22px;
+		height: 2px;
+	}
+	
+	.footer-section h3 {
+		font-size: 20px;
+	}
+	
+	.footer-section h4 {
+		font-size: 16px;
+	}
+	
+	.footer-section p,
+	.footer-section ul li a {
+		font-size: 13px;
 	}
 }
 
@@ -2677,6 +3376,7 @@ html {
     border-radius: 8px;
     border: 2px solid rgba(197, 162, 83, 0.3);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    flex-wrap: wrap;
 }
 
 .legend-item {
@@ -2686,6 +3386,7 @@ html {
     font-size: 12px;
     color: #000000;
     font-weight: 500;
+    white-space: nowrap;
 }
 
 .legend-color {
@@ -2694,6 +3395,7 @@ html {
     border-radius: 5px;
     border: 2px solid rgba(0, 0, 0, 0.2);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
 }
 
 .legend-color.available {

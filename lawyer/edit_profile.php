@@ -87,7 +87,9 @@ $active_page = "profile";
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Profile - <?php echo htmlspecialchars($_SESSION['lawyer_name']); ?></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <link rel="stylesheet" href="../src/lawyer/css/styles.css">
+    <link rel="stylesheet" href="../src/lawyer/css/mobile-responsive.css">
     <link rel="stylesheet" href="../includes/confirmation-modal.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -526,7 +528,8 @@ $active_page = "profile";
         
         function toggleEditMode() {
             isEditMode = !isEditMode;
-            const formInputs = document.querySelectorAll('.form-input, .form-textarea');
+            // Only select form inputs within the profile form, not the password modal
+            const formInputs = document.querySelectorAll('#profileForm .form-input, #profileForm .form-textarea');
             const editBtn = document.querySelector('.btn-edit-toggle:not(.btn-edit-specializations)');
             
             formInputs.forEach(input => {
@@ -578,8 +581,8 @@ $active_page = "profile";
         
         // Initialize selected count
         document.addEventListener('DOMContentLoaded', function() {
-            // Disable personal info fields on page load
-            const formInputs = document.querySelectorAll('.form-input, .form-textarea');
+            // Disable personal info fields on page load (only within profile form, not password modal)
+            const formInputs = document.querySelectorAll('#profileForm .form-input, #profileForm .form-textarea');
             formInputs.forEach(input => {
                 input.disabled = true;
             });
@@ -1023,8 +1026,8 @@ $active_page = "profile";
                 profileForm.addEventListener('submit', async function(e) {
                     e.preventDefault();
 
-                    // Always enable ALL fields before submission to ensure all data is sent
-                    const allFormInputs = document.querySelectorAll('.form-input, .form-textarea');
+                    // Always enable ALL fields before submission to ensure all data is sent (only profile form fields)
+                    const allFormInputs = document.querySelectorAll('#profileForm .form-input, #profileForm .form-textarea');
                     const allSpecializations = document.querySelectorAll('input[name="specializations[]"]');
                     
                     // Temporarily enable everything for submission

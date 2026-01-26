@@ -731,9 +731,10 @@ $active_page = "availability";
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Manage Availability - <?php echo htmlspecialchars($lawyer_name); ?></title>
     <link rel="stylesheet" href="../src/lawyer/css/styles.css">
+    <link rel="stylesheet" href="../src/lawyer/css/mobile-responsive.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* Schedule Modal Tab Styles */
