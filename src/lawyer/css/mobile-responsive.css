@@ -340,16 +340,23 @@ body.lawyer-page {
         line-height: 1.4;
     }
     
-    /* Schedule stats bar - Centered */
+    /* Schedule stats bar - Vertical on mobile */
     .schedule-stats-bar {
-        display: flex;
-        flex-direction: column;
+        display: flex !important;
+        flex-direction: column !important;
         align-items: center;
         gap: 12px;
         width: 100%;
         max-width: 100%;
         margin: 0 auto 20px auto;
         padding: 0;
+        grid-template-columns: none !important;
+    }
+    
+    /* Add margin-top only to the first stat item */
+    .schedule-stats-bar > div:first-child,
+    .schedule-stats-bar .stat-item:first-child {
+        margin-top: 80px;
     }
     
     .schedule-stats-bar > div,
@@ -359,6 +366,21 @@ body.lawyer-page {
         margin: 0 auto;
         padding: 20px 15px;
         box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    /* Center icons in stat items */
+    .schedule-stats-bar .stat-item i {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 60px !important;
+        height: 60px !important;
+        flex-shrink: 0;
+        font-size: 1.5rem !important;
+        padding: 0 !important;
     }
     
     /* Dashboard grid - Single column, centered */
@@ -389,6 +411,11 @@ body.lawyer-page {
         flex-direction: column;
         background: white;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    /* Add margin-top only to the first dashboard card */
+    .dashboard-card:first-of-type {
+        margin-top: 80px;
     }
     
     /* Card headers */
@@ -727,6 +754,11 @@ body.lawyer-page {
         overflow: visible !important;
         width: 100% !important;
         max-width: 100% !important;
+    }
+    
+    /* Add margin-top to first lawyer-availability-section (for consultations page) */
+    .lawyer-availability-section:first-of-type {
+        margin-top: 80px;
     }
     
     /* Remove horizontal scroll from table wrapper */
@@ -1186,6 +1218,41 @@ body.lawyer-page {
         border-radius: 6px;
     }
     
+    /* Pagination - Center horizontally on mobile */
+    .lawyer-availability-section > div[style*="display:flex"][style*="justify-content:center"] {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 12px !important;
+        margin-top: 16px !important;
+        width: 100% !important;
+    }
+    
+    .pagination-btn {
+        width: 48px !important;
+        height: 48px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-shrink: 0 !important;
+        flex-direction: row !important;
+    }
+    
+    .pagination-btn i {
+        font-size: 1rem !important;
+    }
+    
+    /* Page number display */
+    .lawyer-availability-section > div[style*="display:flex"] > span:not(.pagination-btn) {
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        color: var(--navy) !important;
+        min-width: 40px !important;
+        text-align: center !important;
+        display: inline-block !important;
+    }
+    
     /* Empty state */
     .lawyer-availability-section p {
         font-size: 14px;
@@ -1481,6 +1548,11 @@ body.lawyer-page {
         height: auto !important;
         min-height: auto !important;
         margin-bottom: 15px !important;
+    }
+    
+    /* Add margin-top to first form-card (for profile page) */
+    .form-card:first-of-type {
+        margin-top: 80px;
     }
     
     .form-card .card-body {
