@@ -2713,21 +2713,25 @@ input[type="radio"]:focus {
     padding: 12px 8px; /* Reduced padding */
     vertical-align: middle;
     overflow: visible;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
 }
 
 .lawyers-table td:nth-child(9) form {
-    display: inline-block;
-    margin: 2px 1px; /* Reduced margin */
+    display: contents;
 }
 
 .lawyers-table td:nth-child(9) .btn {
     padding: 6px 10px; /* Reduced from 8px 12px */
     font-size: 12px; /* Reduced from 13px */
-    margin: 1px; /* Reduced from 2px */
+    margin: 0; /* Remove margin for grid */
     white-space: nowrap;
     min-width: 40px; /* Reduced from 44px */
     height: 32px; /* Reduced from 36px */
-    display: inline-flex;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     align-items: center;
     justify-content: center;
     border-radius: 6px;
@@ -3804,6 +3808,7 @@ input[type="radio"]:focus {
     
     /* Lawyer Management - Table wrapper */
     body:has(.lawyers-table) .table-wrapper {
+        width: 100%;
         margin: 0 -15px;
         padding: 0 15px;
         overflow-x: auto;
@@ -3916,6 +3921,11 @@ input[type="radio"]:focus {
     #openCreateLawyerModal {
         padding: 10px 20px !important;
         font-size: 0.9rem !important;
+    }
+    
+    /* Lawyer Management - Table wrapper 105% for small screens */
+    body:has(.lawyers-table) .table-wrapper {
+        width: 105%;
     }
     
     #openCreateLawyerModal i {

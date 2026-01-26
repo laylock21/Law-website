@@ -437,7 +437,7 @@ $active_page = "consultations";
                                     </div>
                                     <!-- Status Filter Dropdown -->
                                     <select name="status" class="admin-dropdown" onchange="this.form.submit()" style="margin-left: 10px; min-width: 150px;">
-                                        <option value="all" <?php echo $status_filter === 'all' ? 'selected' : ''; ?>>All Status</option>
+                                        <option value="all" <?php echo $status_filter === 'all' ? 'selected' : ''; ?>>Status Filter</option>
                                         <option value="pending" <?php echo $status_filter === 'pending' ? 'selected' : ''; ?>>Pending</option>
                                         <option value="confirmed" <?php echo $status_filter === 'confirmed' ? 'selected' : ''; ?>>Confirmed</option>
                                         <option value="completed" <?php echo $status_filter === 'completed' ? 'selected' : ''; ?>>Completed</option>
@@ -454,7 +454,8 @@ $active_page = "consultations";
                         <div class="bulk-actions-section consult-mobile-bulk-section" id="bulk-actions-section">
                             <form method="POST" id="bulk-form" class="bulk-form">
                                 <select name="bulk_action" id="bulk_action" class="admin-dropdown admin-dropdown-primary">
-                                    <option value="pending" selected>Set to Pending</option>
+                                    <option value="" selected>Sort</option>
+                                    <option value="pending">Set to Pending</option>
                                     <option value="confirm">Set to Confirmed</option>
                                     <option value="complete">Set to Completed</option>
                                     <option value="cancelled">Set to Cancelled</option>
