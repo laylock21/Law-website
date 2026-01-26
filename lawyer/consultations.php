@@ -17,108 +17,7 @@ require_once '../config/database.php';
 $lawyer_id = $_SESSION['lawyer_id'];
 $lawyer_name = $_SESSION['lawyer_name'] ?? 'Lawyer';
 
-// Handle bulk actions
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
-    $action = $_POST['bulk_action'];
-    $selected_consultations = $_POST['selected_consultations'] ?? [];
-    
-    if (!empty($selected_consultations) && in_array($action, ['confirm', 'complete', 'cancel'])) {
-        try {
-            $pdo = getDBConnection();
-            require_once '../includes/EmailNotification.php';
-            $emailNotification = new EmailNotification($pdo);
-            
-            $updated_count = 0;
-            $email_count = 0;
-            
-            foreach ($selected_consultations as $consultation_id) {
-                $consultation_id = (int)$consultation_id;
-                
-                // Ensure this consultation belongs to the lawyer OR is designated as 'Any'
-                $check_stmt = $pdo->prepare('SELECT id, status, lawyer_id FROM consultations WHERE id = ? AND (lawyer_id = ? OR lawyer_id IS NULL)');
-                $check_stmt->execute([$consultation_id, $lawyer_id]);
-                $current_consultation = $check_stmt->fetch();
-                
-                if ($current_consultation) {
-                    $old_status = $current_consultation['status'];
-                    $new_status = ($action === 'confirm') ? 'confirmed' : (($action === 'cancel') ? 'cancelled' : 'completed');
-                    
-                    // Only update if status is different
-                    if ($old_status !== $new_status) {
-                        // Update status
-                        $update_stmt = $pdo->prepare('UPDATE consultations SET status = ? WHERE id = ?');
-                        $update_stmt->execute([$new_status, $consultation_id]);
-                        
-                        if ($update_stmt->rowCount() > 0) {
-                            $updated_count++;
-                            
-                            // If completing and no lawyer assigned, assign current lawyer
-                            if ($new_status === 'completed' && !$current_consultation['lawyer_id']) {
-                                $assign_stmt = $pdo->prepare('UPDATE consultations SET lawyer_id = ? WHERE id = ?');
-                                $assign_stmt->execute([$lawyer_id, $consultation_id]);
-                            }
-                            
-                            // Send email notification
-                            $queued = false;
-                            if ($new_status === 'confirmed') {
-                                $queued = $emailNotification->notifyAppointmentConfirmed($consultation_id);
-                            } elseif ($new_status === 'completed') {
-                                $queued = $emailNotification->notifyAppointmentCompleted($consultation_id);
-                            } elseif ($new_status === 'cancelled') {
-                                $queued = $emailNotification->notifyAppointmentCancelled($consultation_id);
-                            }
-                            
-                            if ($queued) {
-                                $email_count++;
-                            }
-                        }
-                    }
-                }
-            }
-            
-            if ($email_count > 0) {
-                // Trigger async email processing
-                $async_script = "
-                <script>
-                setTimeout(function() {
-                    fetch('../process_emails_async.php', {
-                        method: 'POST',
-                        headers: {'X-Requested-With': 'XMLHttpRequest'}
-                    }).then(response => response.json())
-                    .then(data => {
-                        if (data.sent > 0) {
-                            console.log('Bulk emails sent successfully');
-                        }
-                    }).catch(error => {
-                        console.log('Email processing error:', error);
-                    });
-                }, 100);
-                </script>";
-                
-                $_SESSION['async_email_script'] = $async_script;
-            }
-            
-            $action_name = ($action === 'confirm') ? 'confirmed' : (($action === 'cancel') ? 'cancelled' : 'completed');
-            $_SESSION['bulk_message'] = "Successfully {$action_name} {$updated_count} consultation(s). {$email_count} email(s) sent.";
-            
-        } catch (Exception $e) {
-            $_SESSION['bulk_error'] = "Error processing bulk action: " . $e->getMessage();
-        }
-        
-        header('Location: consultations.php?page=' . ($_GET['page'] ?? 1));
-        exit;
-    }
-}
-
-// Check for session messages
-if (isset($_SESSION['bulk_message'])) {
-    $success_message = $_SESSION['bulk_message'];
-    unset($_SESSION['bulk_message']);
-}
-if (isset($_SESSION['bulk_error'])) {
-    $error_message = $_SESSION['bulk_error'];
-    unset($_SESSION['bulk_error']);
-}
+// No more server-side bulk action handling - moved to JavaScript/API
 
 // Pagination
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -238,6 +137,166 @@ $active_page = "consultations";
 			transform: translateY(0);
 			max-height: 100px;
 		}
+		
+		/* Toast Notification Styles */
+		#toast-container {
+			position: fixed;
+			top: 20px;
+			right: 20px;
+			z-index: 9999;
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+			max-width: 400px;
+		}
+		
+		.toast {
+			background: white;
+			border-radius: 8px;
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+			padding: 16px 20px;
+			display: flex;
+			align-items: flex-start;
+			gap: 12px;
+			animation: slideIn 0.3s ease-out forwards;
+			border-left: 4px solid;
+			min-width: 300px;
+			max-width: 400px;
+			opacity: 1;
+			transform: translateX(0);
+			position: relative;
+			overflow: hidden;
+		}
+		
+		.toast::after {
+			content: '';
+			position: absolute;
+			bottom: 0;
+			left: 0;
+			height: 3px;
+			background: currentColor;
+			width: 100%;
+			transform-origin: left;
+			animation: progressBar linear forwards;
+		}
+		
+		.toast.success::after {
+			color: #28a745;
+		}
+		
+		.toast.error::after {
+			color: #dc3545;
+		}
+		
+		@keyframes progressBar {
+			from {
+				transform: scaleX(1);
+			}
+			to {
+				transform: scaleX(0);
+			}
+		}
+		
+		.toast.success {
+			border-left-color: #28a745;
+		}
+		
+		.toast.error {
+			border-left-color: #dc3545;
+		}
+		
+		.toast-icon {
+			font-size: 20px;
+			flex-shrink: 0;
+			margin-top: 2px;
+		}
+		
+		.toast.success .toast-icon {
+			color: #28a745;
+		}
+		
+		.toast.error .toast-icon {
+			color: #dc3545;
+		}
+		
+		.toast-content {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+		}
+		
+		.toast-title {
+			font-weight: 600;
+			font-size: 14px;
+			color: #dc3545;
+		}
+		
+		.toast-message {
+			font-size: 13px;
+			color: #666;
+			line-height: 1.4;
+		}
+		
+		.toast-close {
+			background: none;
+			border: none;
+			color: #999;
+			cursor: pointer;
+			font-size: 18px;
+			padding: 0;
+			width: 20px;
+			height: 20px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex-shrink: 0;
+			transition: color 0.2s;
+		}
+		
+		.toast-close:hover {
+			color: #dc3545;
+		}
+		
+		@keyframes slideIn {
+			from {
+				transform: translateX(400px);
+				opacity: 0;
+			}
+			to {
+				transform: translateX(0);
+				opacity: 1;
+			}
+		}
+		
+		@keyframes slideOut {
+			from {
+				transform: translateX(0);
+				opacity: 1;
+			}
+			to {
+				transform: translateX(400px);
+				opacity: 0;
+			}
+		}
+		
+		.toast.hiding {
+			animation: slideOut 0.3s ease-out forwards;
+		}
+		
+		@media (max-width: 768px) {
+			#toast-container {
+				top: 10px;
+				right: 10px;
+				left: 10px;
+				max-width: none;
+			}
+			
+			.toast {
+				min-width: auto;
+				max-width: none;
+			}
+		}
 	</style>
 </head>
 <body class="lawyer-page">
@@ -245,13 +304,9 @@ $active_page = "consultations";
 	<div class="lawyer-dashboard">
 
 		<main class="lawyer-main-content">
-			<?php if (isset($success_message)): ?>
-				<div class="lawyer-alert lawyer-alert-success"><?php echo htmlspecialchars($success_message); ?></div>
-			<?php endif; ?>
-			<?php if (isset($error_message)): ?>
-				<div class="lawyer-alert lawyer-alert-error"><?php echo htmlspecialchars($error_message); ?></div>
-			<?php endif; ?>
-
+			<!-- Toast notifications will appear here -->
+			<div id="toast-container"></div>
+			
 			<div class="lawyer-availability-section">
 				<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
 					<h3>Consultation Requests</h3>
@@ -440,31 +495,164 @@ $active_page = "consultations";
 				});
 
 				if (confirmed) {
-					// Create and submit form
-					const form = document.createElement('form');
-					form.method = 'POST';
-					form.style.display = 'none';
-
-					const actionInput = document.createElement('input');
-					actionInput.type = 'hidden';
-					actionInput.name = 'bulk_action';
-					actionInput.value = bulkAction;
-			form.appendChild(actionInput);
-
-			selectedCheckboxes.forEach(checkbox => {
-				const input = document.createElement('input');
-				input.type = 'hidden';
-				input.name = 'selected_consultations[]';
-				input.value = checkbox.value;
-				form.appendChild(input);
-			});
-
-			document.body.appendChild(form);
-			form.submit();
-		}
+					// Process bulk action via API
+					await processBulkAction(selectedCheckboxes, bulkAction);
+				}
 			});
 		}
 	});
+
+	// Process bulk action by calling API for each consultation
+	async function processBulkAction(checkboxes, action) {
+		const statusMap = {
+			'confirm': 'confirmed',
+			'complete': 'completed',
+			'cancel': 'cancelled'
+		};
+		const newStatus = statusMap[action];
+		
+		let successCount = 0;
+		let skippedCount = 0;
+		let errorCount = 0;
+		const skippedReasons = [];
+		const errorReasons = [];
+		
+		// Process each consultation
+		for (const checkbox of checkboxes) {
+			const consultationId = checkbox.value;
+			
+			try {
+				const formData = new FormData();
+				formData.append('consultation_id', consultationId);
+				formData.append('new_status', newStatus);
+				formData.append('cancellation_reason', 'Bulk action by lawyer');
+				
+				const response = await fetch('../api/lawyer/update_consultation_status.php', {
+					method: 'POST',
+					body: formData
+				});
+				
+				const data = await response.json();
+				
+				if (data.success) {
+					successCount++;
+				} else {
+					skippedCount++;
+					skippedReasons.push(`#${consultationId}: ${data.message}`);
+				}
+			} catch (error) {
+				errorCount++;
+				errorReasons.push(`#${consultationId}: Network error`);
+			}
+		}
+		
+		// Trigger async email processing
+		if (successCount > 0) {
+			fetch('../process_emails_async.php', {
+				method: 'POST',
+				headers: {'X-Requested-With': 'XMLHttpRequest'}
+			}).catch(error => {
+				console.log('Email processing error:', error);
+			});
+		}
+		
+		// Build result message
+		const actionName = action === 'confirm' ? 'confirmed' : (action === 'cancel' ? 'cancelled' : 'completed');
+		let resultMessage = '';
+		
+		if (successCount > 0) {
+			resultMessage += `✅ Successfully ${actionName} ${successCount} consultation(s).\n`;
+		}
+		if (skippedCount > 0) {
+			resultMessage += `⚠️ ${skippedCount} consultation(s) skipped:\n${skippedReasons.join('\n')}\n`;
+		}
+		if (errorCount > 0) {
+			resultMessage += `❌ ${errorCount} error(s):\n${errorReasons.join('\n')}`;
+		}
+		
+		// Show result as toast
+		const toastType = successCount > 0 ? 'success' : (errorCount > 0 ? 'error' : 'warning');
+		showToast(resultMessage.trim(), toastType);
+		
+		// Reload page to show updated statuses
+		if (successCount > 0) {
+			setTimeout(() => {
+				location.reload();
+			}, 2000);
+		}
+	}
+	
+	// Toast notification function
+	function showToast(message, type = 'info') {
+		const container = document.getElementById('toast-container');
+		if (!container) {
+			console.error('Toast container not found!');
+			return;
+		}
+		
+		// Create toast element
+		const toast = document.createElement('div');
+		toast.className = `toast ${type}`;
+		
+		const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+		const title = type === 'success' ? 'Success' : 'Error';
+		
+		// Set icon color based on type
+		const iconColor = type === 'success' ? '#28a745' : '#dc3545';
+		
+		toast.innerHTML = `
+			<i class="fas ${icon} toast-icon" style="color: ${iconColor};"></i>
+			<div class="toast-content">
+				<div class="toast-title">${title}</div>
+				<div class="toast-message">${message}</div>
+			</div>
+			<button class="toast-close" onclick="closeToast(this)">×</button>
+		`;
+		
+		// Set the progress bar animation duration
+		const duration = 5000;
+		toast.style.setProperty('--duration', duration + 'ms');
+		const style = document.createElement('style');
+		const toastId = Date.now();
+		style.textContent = `
+			.toast[data-id="${toastId}"]::after {
+				animation-duration: ${duration}ms;
+			}
+		`;
+		toast.dataset.id = toastId;
+		document.head.appendChild(style);
+		
+		container.appendChild(toast);
+		
+		// Force a reflow to ensure the toast is visible
+		toast.offsetHeight;
+		
+		// Auto-remove after duration
+		const timeoutId = setTimeout(() => {
+			closeToast(toast.querySelector('.toast-close'));
+		}, duration);
+		
+		// Store timeout ID on toast element so we can cancel it if needed
+		toast.dataset.timeoutId = timeoutId;
+	}
+	
+	function closeToast(button) {
+		const toast = button.closest ? button.closest('.toast') : button;
+		if (!toast) {
+			console.error('Toast element not found');
+			return;
+		}
+		
+		// Clear the auto-close timeout if it exists
+		if (toast.dataset && toast.dataset.timeoutId) {
+			clearTimeout(parseInt(toast.dataset.timeoutId));
+		}
+		
+		toast.classList.add('hiding');
+		setTimeout(() => {
+			toast.remove();
+		}, 300);
+	}
 
 	// Modal functionality for consultation details
 	function openConsultationModal(consultationId) {
@@ -538,12 +726,6 @@ $active_page = "consultations";
 				.then(response => response.json())
 				.then(data => {
 					if (data.success) {
-						// Show success message
-						const successDiv = document.createElement('div');
-						successDiv.className = 'lawyer-alert lawyer-alert-success';
-						successDiv.textContent = data.message;
-						statusForm.insertBefore(successDiv, statusForm.firstChild);
-						
 						// Update the status badge in the modal
 						const statusBadge = document.querySelector('.modal-status-badge');
 						if (statusBadge && data.new_status) {
@@ -551,26 +733,24 @@ $active_page = "consultations";
 							statusBadge.textContent = data.new_status.charAt(0).toUpperCase() + data.new_status.slice(1);
 						}
 						
-						// Refresh the consultations table after a short delay
+						// Show success toast
+						showToast(data.message, 'success');
+						
+						// Close modal and refresh after a short delay
 						setTimeout(() => {
+							closeConsultationModal();
 							location.reload();
-						}, 2000);
+						}, 1500);
 					} else {
-						// Show error message
-						const errorDiv = document.createElement('div');
-						errorDiv.className = 'lawyer-alert lawyer-alert-error';
-						errorDiv.textContent = data.message;
-						statusForm.insertBefore(errorDiv, statusForm.firstChild);
+						// Show error toast
+						showToast(data.message, 'error');
+						submitBtn.disabled = false;
+						submitBtn.textContent = originalText;
 					}
 				})
 				.catch(error => {
 					console.error('Error:', error);
-					const errorDiv = document.createElement('div');
-					errorDiv.className = 'lawyer-alert lawyer-alert-error';
-					errorDiv.textContent = 'Error updating status. Please try again.';
-					statusForm.insertBefore(errorDiv, statusForm.firstChild);
-				})
-				.finally(() => {
+					showToast('Error updating status. Please try again.', 'error');
 					submitBtn.disabled = false;
 					submitBtn.textContent = originalText;
 				});
@@ -581,13 +761,9 @@ $active_page = "consultations";
 	// Close modal when clicking outside of it
 	document.addEventListener('click', function(event) {
 		const consultationModal = document.getElementById('consultationModal');
-		const bulkWarningModal = document.getElementById('bulkWarningModal');
 		
 		if (consultationModal && event.target === consultationModal) {
 			closeConsultationModal();
-		}
-		if (bulkWarningModal && event.target === bulkWarningModal) {
-			closeBulkWarningModal();
 		}
 	});
 
@@ -601,7 +777,7 @@ $active_page = "consultations";
 		}
 	});
 
-	// Prevent modal content clicks from closing the modals
+	// Prevent modal content clicks from closing the modal
 	document.addEventListener('DOMContentLoaded', function() {
 		const consultationModal = document.getElementById('consultationModal');
 		if (consultationModal) {
@@ -612,20 +788,8 @@ $active_page = "consultations";
 				});
 			}
 		}
-		
-		const bulkWarningModal = document.getElementById('bulkWarningModal');
-		if (bulkWarningModal) {
-			const bulkContent = bulkWarningModal.querySelector('.modal-content');
-			if (bulkContent) {
-				bulkContent.addEventListener('click', function(event) {
-					event.stopPropagation();
-				});
-			}
-		}
 	});
 	</script>
-
-	<!-- Old modals removed - now using unified ConfirmModal system -->
 
 	<!-- Consultation Details Modal -->
 	<div id="consultationModal" class="consultation-modal" style="display: none;">
@@ -636,22 +800,6 @@ $active_page = "consultations";
 			</div>
 			<div class="modal-body" id="modalConsultationContent">
 				<!-- Content will be loaded here via AJAX -->
-			</div>
-		</div>
-	</div>
-
-	<!-- Bulk selection warning modal -->
-	<div id="bulkWarningModal" class="consultation-modal" style="display: none;">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h2>Nothing selected</h2>
-				<span class="modal-close" onclick="closeBulkWarningModal()">&times;</span>
-			</div>
-			<div class="modal-body">
-				<p>Please select at least one consultation before applying a bulk action.</p>
-				<div style="margin-top: 15px; display:flex; justify-content:flex-end;">
-					<button type="button" class="lawyer-btn" onclick="closeBulkWarningModal()">OK</button>
-				</div>
 			</div>
 		</div>
 	</div>
