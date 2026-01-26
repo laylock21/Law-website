@@ -751,11 +751,11 @@ function createLawyerCardHTML(lawyer) {
         ? lawyerDescRaw.substring(0, 150) + '...' 
         : lawyerDescRaw;
 
-    // Create tags for front card (show first 4 + More)
-    const frontTags = specializations.slice(0, 4).map(spec => 
+    // Create tags for front card (show first 2 + More)
+    const frontTags = specializations.slice(0, 2).map(spec => 
         `<span class="lawprof-tag">${spec}</span>`
     ).join('');
-    const moreTag = specializations.length > 4 ? '<span class="lawprof-tag lawprof-tag-more">+More</span>' : '';
+    const moreTag = specializations.length > 2 ? '<span class="lawprof-tag lawprof-tag-more">+More</span>' : '';
     
     // Create tags for back card (show all)
     const backTags = specializations.map(spec => 

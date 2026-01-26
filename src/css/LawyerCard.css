@@ -153,6 +153,28 @@
 
 .lawprof-tags-section {
     margin-bottom: 20px;
+    max-height: 150px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Custom scrollbar for tags section */
+.lawprof-tags-section::-webkit-scrollbar {
+    width: 6px;
+}
+
+.lawprof-tags-section::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+.lawprof-tags-section::-webkit-scrollbar-thumb {
+    background: rgba(44, 44, 44, 0.5);
+    border-radius: 10px;
+}
+
+.lawprof-tags-section::-webkit-scrollbar-thumb:hover {
+    background: rgba(44, 44, 44, 0.7);
 }
 
 .lawprof-tags-container {
