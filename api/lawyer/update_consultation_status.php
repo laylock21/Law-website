@@ -46,6 +46,38 @@ try {
     
     $old_status = $current_consultation['status'];
     
+    // Validate status transitions
+    $allowed_transitions = [
+        'pending' => ['confirmed', 'cancelled', 'completed'],
+        'confirmed' => ['completed'], // Can only complete, cannot cancel
+        'cancelled' => [], // Final state, no changes allowed
+        'completed' => []  // Final state, no changes allowed
+    ];
+    
+    // Check if the transition is allowed
+    if (!isset($allowed_transitions[$old_status])) {
+        echo json_encode(['success' => false, 'message' => 'Invalid current status']);
+        exit;
+    }
+    
+    if (!in_array($new_status, $allowed_transitions[$old_status])) {
+        $status_messages = [
+            'cancelled' => 'Cannot change status - consultation is already cancelled',
+            'completed' => 'Cannot change status - consultation is already completed',
+            'confirmed' => 'Cannot cancel a confirmed consultation - only completion is allowed'
+        ];
+        
+        $message = $status_messages[$old_status] ?? 'Status transition not allowed';
+        echo json_encode(['success' => false, 'message' => $message]);
+        exit;
+    }
+    
+    // If trying to change to the same status, skip
+    if ($old_status === $new_status) {
+        echo json_encode(['success' => false, 'message' => 'Consultation is already ' . $new_status]);
+        exit;
+    }
+    
     // Update status and cancellation reason if applicable
     if ($new_status === 'cancelled') {
         $upd = $pdo->prepare('UPDATE consultations SET status = ?, cancellation_reason = ? WHERE id = ?');

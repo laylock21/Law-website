@@ -52,6 +52,184 @@ const yearEl = document.getElementById('year');
 if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
 // ============================================
+// PRACTICE AREAS DYNAMIC LOADING
+// ============================================
+
+/**
+ * Icon mapping for practice areas
+ * Maps practice area names to appropriate Font Awesome icons
+ */
+const practiceAreaIcons = {
+	'Criminal Defense': 'fa-gavel',
+	'Criminal Law': 'fa-gavel',
+	'Family Law': 'fa-users',
+	'Corporate Law': 'fa-building',
+	'Business Law': 'fa-building',
+	'Real Estate': 'fa-home',
+	'Real Estate Law': 'fa-home',
+	'Health Care Law': 'fa-heartbeat',
+	'Healthcare Law': 'fa-heartbeat',
+	'Educational Law': 'fa-graduation-cap',
+	'Education Law': 'fa-graduation-cap',
+	'Immigration Law': 'fa-passport',
+	'Tax Law': 'fa-file-invoice-dollar',
+	'Intellectual Property': 'fa-lightbulb',
+	'Employment Law': 'fa-briefcase',
+	'Environmental Law': 'fa-leaf',
+	'default': 'fa-balance-scale'
+};
+
+/**
+ * Get icon class for a practice area
+ * @param {string} areaName - Name of the practice area
+ * @returns {string} Font Awesome icon class
+ */
+function getPracticeAreaIcon(areaName) {
+	// Try exact match first
+	if (practiceAreaIcons[areaName]) {
+		return practiceAreaIcons[areaName];
+	}
+	
+	// Try partial match
+	for (const [key, icon] of Object.entries(practiceAreaIcons)) {
+		if (areaName.toLowerCase().includes(key.toLowerCase())) {
+			return icon;
+		}
+	}
+	
+	// Return default icon
+	return practiceAreaIcons.default;
+}
+
+/**
+ * Load and display practice areas from the database
+ */
+async function loadPracticeAreas() {
+	const servicesGrid = document.getElementById('services-grid');
+	const showMoreContainer = document.getElementById('show-more-container');
+	const showMoreBtn = document.getElementById('show-more-btn');
+	
+	if (!servicesGrid) {
+		console.error('Services grid element not found');
+		return;
+	}
+	
+	let allPracticeAreas = [];
+	let isShowingAll = false;
+	const INITIAL_DISPLAY_COUNT = 6;
+	
+	try {
+		const response = await fetch('api/get_all_practice_areas.php');
+		
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+		
+		const data = await response.json();
+		
+		if (data.success && data.practice_areas && data.practice_areas.length > 0) {
+			allPracticeAreas = data.practice_areas;
+			
+			// Function to render practice areas
+			const renderPracticeAreas = (count) => {
+				// Clear grid
+				servicesGrid.innerHTML = '';
+				
+				// Get areas to display
+				const areasToDisplay = allPracticeAreas.slice(0, count);
+				
+				// Create service cards for each practice area
+				areasToDisplay.forEach(area => {
+					const iconClass = getPracticeAreaIcon(area.area_name);
+					
+					const serviceCard = document.createElement('div');
+					serviceCard.className = 'service-card';
+					serviceCard.innerHTML = `
+						<div class="service-icon">
+							<i class="fas ${iconClass}" style="font-size: 32px; color: white;"></i>
+						</div>
+						<h3>${escapeHtml(area.area_name)}</h3>
+						<p>${escapeHtml(area.description || 'Expert legal services in ' + area.area_name)}</p>
+					`;
+					
+					servicesGrid.appendChild(serviceCard);
+				});
+			};
+			
+			// Initial render - show only first 6
+			renderPracticeAreas(INITIAL_DISPLAY_COUNT);
+			
+			// Show "Show More" button if there are more than 6 practice areas
+			if (allPracticeAreas.length > INITIAL_DISPLAY_COUNT) {
+				showMoreContainer.style.display = 'block';
+				
+				// Handle Show More button click
+				showMoreBtn.addEventListener('click', () => {
+					if (!isShowingAll) {
+						// Show all practice areas
+						renderPracticeAreas(allPracticeAreas.length);
+						showMoreBtn.innerHTML = '<i class="fas fa-minus-circle me-2"></i>Show Less';
+						isShowingAll = true;
+					} else {
+						// Show only first 6
+						renderPracticeAreas(INITIAL_DISPLAY_COUNT);
+						showMoreBtn.innerHTML = '<i class="fas fa-plus-circle me-2"></i>Show More Practice Areas';
+						isShowingAll = false;
+						
+						// Scroll to services section
+						document.getElementById('services').scrollIntoView({ behavior: 'smooth', block: 'start' });
+					}
+				});
+			}
+			
+			console.log(`Loaded ${allPracticeAreas.length} practice areas (showing ${Math.min(INITIAL_DISPLAY_COUNT, allPracticeAreas.length)} initially)`);
+		} else {
+			// No practice areas found
+			servicesGrid.innerHTML = `
+				<div class="service-card">
+					<div class="service-icon">
+						<i class="fas fa-info-circle" style="font-size: 32px; color: white;"></i>
+					</div>
+					<h3>No Practice Areas Available</h3>
+					<p>We are currently updating our practice areas. Please check back soon.</p>
+				</div>
+			`;
+		}
+	} catch (error) {
+		console.error('Error loading practice areas:', error);
+		
+		// Show error message
+		servicesGrid.innerHTML = `
+			<div class="service-card">
+				<div class="service-icon">
+					<i class="fas fa-exclamation-triangle" style="font-size: 32px; color: white;"></i>
+				</div>
+				<h3>Unable to Load Practice Areas</h3>
+				<p>We're experiencing technical difficulties. Please try refreshing the page.</p>
+			</div>
+		`;
+	}
+}
+
+/**
+ * Escape HTML to prevent XSS attacks
+ * @param {string} text - Text to escape
+ * @returns {string} Escaped text
+ */
+function escapeHtml(text) {
+	const div = document.createElement('div');
+	div.textContent = text;
+	return div.innerHTML;
+}
+
+// Load practice areas when DOM is ready
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', loadPracticeAreas);
+} else {
+	loadPracticeAreas();
+}
+
+// ============================================
 // TOAST NOTIFICATION SYSTEM
 // ============================================
 

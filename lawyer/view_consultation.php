@@ -23,80 +23,7 @@ if (!$consultation_id) {
 	exit;
 }
 
-// Handle status update (restricted to this lawyer)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_status') {
-	$new_status = $_POST['new_status'] ?? '';
-	$cancellation_reason = $_POST['cancellation_reason'] ?? 'Lawyer decision';
-	try {
-		$pdo = getDBConnection();
-		$check = $pdo->prepare('SELECT id, status, lawyer_id FROM consultations WHERE id = ? AND (lawyer_id = ? OR lawyer_id IS NULL)');
-		$check->execute([$consultation_id, $lawyer_id]);
-		$current_consultation = $check->fetch();
-		
-		if ($current_consultation && in_array($new_status, ['pending','confirmed','cancelled','completed'], true)) {
-			$old_status = $current_consultation['status'];
-			
-			// Update status and cancellation reason if applicable
-			if ($new_status === 'cancelled') {
-				$upd = $pdo->prepare('UPDATE consultations SET status = ?, cancellation_reason = ? WHERE id = ?');
-				$upd->execute([$new_status, $cancellation_reason, $consultation_id]);
-			} else {
-				// Clear cancellation reason if status is not cancelled
-				$upd = $pdo->prepare('UPDATE consultations SET status = ?, cancellation_reason = NULL WHERE id = ?');
-				$upd->execute([$new_status, $consultation_id]);
-			}
-			
-			// Send email notifications for status changes
-			require_once '../includes/EmailNotification.php';
-			$emailNotification = new EmailNotification($pdo);
-			$queued = false;
-			
-			if ($new_status === 'confirmed' && $old_status !== 'confirmed') {
-				$queued = $emailNotification->notifyAppointmentConfirmed($consultation_id);
-			} elseif ($new_status === 'cancelled' && $old_status !== 'cancelled') {
-				$queued = $emailNotification->notifyAppointmentCancelled($consultation_id, $cancellation_reason);
-			} elseif ($new_status === 'completed' && $old_status !== 'completed') {
-				// If consultation has no assigned lawyer, assign current lawyer
-				if (!$current_consultation['lawyer_id']) {
-					$assign_stmt = $pdo->prepare('UPDATE consultations SET lawyer_id = ? WHERE id = ?');
-					$assign_stmt->execute([$lawyer_id, $consultation_id]);
-				}
-				$queued = $emailNotification->notifyAppointmentCompleted($consultation_id);
-			}
-			
-			if ($queued) {
-				// Trigger async email processing
-				$async_script = "
-				<script>
-				setTimeout(function() {
-					fetch('../api/process_emails_async.php', {
-						method: 'POST',
-						headers: {'X-Requested-With': 'XMLHttpRequest'}
-					}).then(response => response.json())
-					.then(data => {
-						if (data.sent > 0) {
-							console.log('Email sent successfully');
-						}
-					}).catch(error => {
-						console.log('Email processing error:', error);
-					});
-				}, 100);
-				</script>";
-				
-				$_SESSION['async_email_script'] = $async_script;
-				$email_type = ($new_status === 'confirmed') ? 'Confirmation' : 
-			             (($new_status === 'cancelled') ? 'Cancellation' : 'Completion');
-				$_SESSION['consultation_message'] = "Status updated successfully! {$email_type} email sent to client.";
-			} else {
-				$_SESSION['consultation_message'] = 'Status updated successfully!';
-			}
-		} else {
-			$error_message = 'You are not authorized to update this consultation.';
-		}
-	} catch (Exception $e) {
-		$error_message = 'Error updating status: ' . $e->getMessage();
-	}
-}
+// No more server-side status update handling - moved to JavaScript/API
 
 // Load consultation details (restricted) - Include consultations assigned to this lawyer OR designated as 'Any' (lawyer_id IS NULL)
 try {
@@ -140,13 +67,6 @@ $active_page = "consultations";
 			<div style="margin-bottom: 16px;">
 				<a href="consultations.php" class="lawyer-btn" style="text-decoration:none;">← Back to List</a>
 			</div>
-
-			<?php if (isset($success_message)): ?>
-				<div class="lawyer-alert lawyer-alert-success"><?php echo htmlspecialchars($success_message); ?></div>
-			<?php endif; ?>
-			<?php if (isset($error_message)): ?>
-				<div class="lawyer-alert lawyer-alert-error"><?php echo htmlspecialchars($error_message); ?></div>
-			<?php endif; ?>
 
 			<?php if ($consultation): ?>
 				<div class="lawyer-availability-section">
@@ -218,8 +138,8 @@ $active_page = "consultations";
 
 				<div class="lawyer-availability-section" style="margin-top: 16px;">
 					<h3>Update Status</h3>
-					<form method="POST">
-						<input type="hidden" name="action" value="update_status">
+					<form id="statusUpdateForm">
+						<input type="hidden" name="consultation_id" value="<?php echo $consultation_id; ?>">
 						<div class="lawyer-form-group">
 							<label for="new_status">Status</label>
 							<select name="new_status" id="new_status" onchange="toggleCancellationReason()">
@@ -245,35 +165,119 @@ $active_page = "consultations";
 						</div>
 						
 						<button type="submit" class="lawyer-btn">Update Status</button>
-						
-						<script>
-						function toggleCancellationReason() {
-							const statusSelect = document.getElementById('new_status');
-							const reasonGroup = document.getElementById('cancellation_reason_group');
-							
-							if (statusSelect.value === 'cancelled') {
-								reasonGroup.style.display = 'block';
-							} else {
-								reasonGroup.style.display = 'none';
-							}
-						}
-						
-						// Show reason field if cancelled is already selected
-						document.addEventListener('DOMContentLoaded', function() {
-							toggleCancellationReason();
-							
-							// If status is cancelled, show the reason field immediately
-							const statusSelect = document.getElementById('new_status');
-							if (statusSelect.value === 'cancelled') {
-								document.getElementById('cancellation_reason_group').style.display = 'block';
-							}
-						});
-						</script>
 					</form>
 				</div>
 			<?php endif; ?>
 		</main>
 	</div>
+	
+	<script>
+	function toggleCancellationReason() {
+		const statusSelect = document.getElementById('new_status');
+		const reasonGroup = document.getElementById('cancellation_reason_group');
+		
+		if (statusSelect.value === 'cancelled') {
+			reasonGroup.style.display = 'block';
+		} else {
+			reasonGroup.style.display = 'none';
+		}
+	}
+	
+	// Show reason field if cancelled is already selected
+	document.addEventListener('DOMContentLoaded', function() {
+		toggleCancellationReason();
+		
+		// If status is cancelled, show the reason field immediately
+		const statusSelect = document.getElementById('new_status');
+		if (statusSelect.value === 'cancelled') {
+			document.getElementById('cancellation_reason_group').style.display = 'block';
+		}
+		
+		// Handle form submission via API
+		const statusForm = document.getElementById('statusUpdateForm');
+		if (statusForm) {
+			statusForm.addEventListener('submit', async function(e) {
+				e.preventDefault();
+				
+				const formData = new FormData(statusForm);
+				const submitBtn = statusForm.querySelector('button[type="submit"]');
+				const originalText = submitBtn.textContent;
+				
+				submitBtn.disabled = true;
+				submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+				
+				try {
+					const response = await fetch('../api/lawyer/update_consultation_status.php', {
+						method: 'POST',
+						body: formData
+					});
+					
+					const data = await response.json();
+					
+					if (data.success) {
+						// Update status badge on page
+						const statusBadge = document.querySelector('.lawyer-status-badge');
+						if (statusBadge && data.new_status) {
+							statusBadge.className = `lawyer-status-badge lawyer-status-${data.new_status}`;
+							statusBadge.textContent = data.new_status.charAt(0).toUpperCase() + data.new_status.slice(1);
+						}
+						
+						// Show success modal
+						if (typeof ConfirmModal !== 'undefined') {
+							await ConfirmModal.alert({
+								title: 'Success',
+								message: data.message,
+								type: 'success'
+							});
+						} else {
+							alert(data.message);
+						}
+						
+						// Trigger async email processing
+						fetch('../process_emails_async.php', {
+							method: 'POST',
+							headers: {'X-Requested-With': 'XMLHttpRequest'}
+						}).catch(error => {
+							console.log('Email processing error:', error);
+						});
+						
+						submitBtn.disabled = false;
+						submitBtn.textContent = originalText;
+					} else {
+						// Show error modal
+						if (typeof ConfirmModal !== 'undefined') {
+							await ConfirmModal.alert({
+								title: 'Error',
+								message: data.message,
+								type: 'error'
+							});
+						} else {
+							alert(data.message);
+						}
+						
+						submitBtn.disabled = false;
+						submitBtn.textContent = originalText;
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					
+					if (typeof ConfirmModal !== 'undefined') {
+						await ConfirmModal.alert({
+							title: 'Error',
+							message: 'Error updating status. Please try again.',
+							type: 'error'
+						});
+					} else {
+						alert('Error updating status. Please try again.');
+					}
+					
+					submitBtn.disabled = false;
+					submitBtn.textContent = originalText;
+				}
+			});
+		}
+	});
+	</script>
 	
 	<?php 
 	// Output async email script if present

@@ -111,6 +111,7 @@ $active_page = "profile";
             align-items: center;
             justify-content: center;
             font-size: 14px;
+            gap: 6px;
         }
         
         .btn-edit-toggle:hover {
@@ -122,6 +123,36 @@ $active_page = "profile";
             font-size: 14px;
         }
         
+        .btn-update-toggle {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            gap: 6px;
+        }
+        
+        .btn-update-toggle:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+        
+        .btn-update-toggle i {
+            font-size: 14px;
+        }
+        
+        .card-header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
         .form-input:disabled,
         .form-textarea:disabled,
         input[name="specializations[]"]:disabled {
@@ -129,42 +160,196 @@ $active_page = "profile";
             cursor: not-allowed;
             opacity: 0.7;
         }
+        
+        /* Toast Notification Styles */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+        }
+        
+        .toast {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 16px 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            animation: slideIn 0.3s ease-out forwards;
+            border-left: 4px solid;
+            min-width: 300px;
+            max-width: 400px;
+            opacity: 1;
+            transform: translateX(0);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .toast::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: currentColor;
+            width: 100%;
+            transform-origin: left;
+            animation: progressBar linear forwards;
+        }
+        
+        .toast.success::after {
+            color: #28a745;
+        }
+        
+        .toast.error::after {
+            color: #dc3545;
+        }
+        
+        @keyframes progressBar {
+            from {
+                transform: scaleX(1);
+            }
+            to {
+                transform: scaleX(0);
+            }
+        }
+        
+        .toast.success {
+            border-left-color: #28a745;
+        }
+        
+        .toast.error {
+            border-left-color: #dc3545;
+        }
+        
+        .toast-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        
+        .toast.success .toast-icon {
+            color: #28a745;
+        }
+        
+        .toast.error .toast-icon {
+            color: #dc3545;
+        }
+        
+        .toast-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .toast-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .toast-message {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.4;
+        }
+        
+        .toast-close {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: color 0.2s;
+        }
+        
+        .toast-close:hover {
+            color: #333;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+        
+        .toast.hiding {
+            animation: slideOut 0.3s ease-out forwards;
+        }
+        
+        @media (max-width: 768px) {
+            #toast-container {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+            
+            .toast {
+                min-width: auto;
+                max-width: none;
+            }
+        }
     </style>
 </head>
 <body class="lawyer-page edit-profile-page">
     <?php include 'partials/sidebar.php'; ?> 
 
+    <!-- Toast notifications container -->
+    <div id="toast-container"></div>
+
     <!-- Main Content -->
     <div class="edit-profile-content">
         <div class="container">
         
-        <?php if ($message): ?>
-            <div class="alert alert-success">
-                <div class="alert-icon">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <div class="alert-content">
-                    <strong>Success!</strong>
-                    <p><?php echo htmlspecialchars($message); ?></p>
-                </div>
-            </div>
-        <?php endif; ?>
+        <!-- Remove old alert boxes, now using toast -->
+        <?php 
+        // Store messages for toast display
+        $toast_message = '';
+        $toast_type = '';
         
-        <?php if ($error): ?>
-            <div class="alert alert-error">
-                <div class="alert-icon">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </div>
-                <div class="alert-content">
-                    <strong>Error!</strong>
-                    <p><?php echo htmlspecialchars($error); ?></p>
-                </div>
-            </div>
-        <?php endif; ?>
+        if ($message) {
+            $toast_message = $message;
+            $toast_type = 'success';
+        }
+        
+        if ($error) {
+            $toast_message = $error;
+            $toast_type = 'error';
+        }
+        ?>
         
         <?php if (isset($lawyer) && $lawyer): ?>
-        <!-- Profile Information Form -->
-        <form action="../api/lawyer/process_profile_edit.php" method="POST" id="profileForm" class="profile-form">
             
             <!-- Top Row - Small Cards -->
             <div class="form-cards-top-row">
@@ -239,181 +424,160 @@ $active_page = "profile";
 
             <!-- Bottom Row - Large Cards -->
             <div class="form-cards-bottom-row">
-                <!-- Personal Information Card - Large -->
-                <div class="form-card personal-info-card large-card">
-                    <div class="card-header">
-                        <h3><i class="fas fa-user"></i> Personal Information</h3>
-                        <button type="button" class="btn-edit-toggle" onclick="toggleEditMode()" title="Edit Profile">
-                            <i class="fas fa-edit"></i> Edit
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-grid-large">
-                            <div class="form-group">
-                                <label for="prefix">
-                                    <i class="fas fa-id-badge"></i>
-                                    <span>Prefix</span>
-                                </label>
-                                <select id="prefix" name="prefix" class="form-input">
-                                    <option value="">Select Prefix</option>
-                                    <option value="Atty." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Atty.') ? 'selected' : ''; ?>>Atty.</option>
-                                    <option value="Mr." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Mr.') ? 'selected' : ''; ?>>Mr.</option>
-                                    <option value="Ms." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Ms.') ? 'selected' : ''; ?>>Ms.</option>
-                                    <option value="Mrs." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Mrs.') ? 'selected' : ''; ?>>Mrs.</option>
-                                    <option value="Dr." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Dr.') ? 'selected' : ''; ?>>Dr.</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="first_name">
-                                    <i class="fas fa-user"></i>
-                                    <span>First Name</span>
-                                    <span class="required">*</span>
-                                </label>
-                                <input type="text" id="first_name" name="first_name" 
-                                       value="<?php echo htmlspecialchars($lawyer['first_name'] ?? ''); ?>" 
-                                       required class="form-input">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="last_name">
-                                    <i class="fas fa-user"></i>
-                                    <span>Last Name</span>
-                                    <span class="required">*</span>
-                                </label>
-                                <input type="text" id="last_name" name="last_name" 
-                                       value="<?php echo htmlspecialchars($lawyer['last_name'] ?? ''); ?>" 
-                                       required class="form-input">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="email">
-                                    <i class="fas fa-envelope"></i>
-                                    <span>Email Address</span>
-                                    <span class="required">*</span>
-                                </label>
-                                <input type="email" id="email" name="email" 
-                                       value="<?php echo htmlspecialchars($lawyer['email']); ?>" 
-                                       required class="form-input">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="phone">
-                                    <i class="fas fa-phone"></i>
-                                    <span>Phone Number</span>
-                                </label>
-                                <input type="tel" id="phone" name="phone" 
-                                       value="<?php echo htmlspecialchars($lawyer['phone'] ?? ''); ?>" 
-                                       placeholder="e.g., (+63) 917 123 4567" class="form-input">
+                <!-- Personal Information Form - Large -->
+                <form action="../api/lawyer/process_profile_edit.php" method="POST" id="personalInfoForm" class="profile-form">
+                    <input type="hidden" name="form_type" value="personal_info">
+                    <div class="form-card personal-info-card large-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-user"></i> Personal Information</h3>
+                            <div class="card-header-actions">
+                                <button type="button" class="btn-edit-toggle" onclick="toggleEditMode()" title="Edit Profile">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button type="button" class="btn-update-toggle btn-update-personal" onclick="submitPersonalInfo()" title="Update Personal Information">
+                                    <i class="fas fa-check"></i> Update
+                                </button>
                             </div>
                         </div>
-                        
-                        <div class="form-group full-width">
-                            <label for="description">
-                                <i class="fas fa-file-text"></i>
-                                <span>Professional Description</span>
-                            </label>
-                            <textarea id="description" name="description" class="form-textarea" rows="3"
-                                      placeholder="Describe your experience, expertise, and professional background..."><?php echo htmlspecialchars($lawyer['description'] ?? ''); ?></textarea>
-                            <small class="form-hint">This will be displayed on your public profile</small>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Legal Specializations Card - Large -->
-                <div class="form-card specializations-card large-card">
-                    <div class="card-header">
-                        <h3><i class="fas fa-gavel"></i> Legal Specializations</h3>
-                        <button type="button" class="btn-edit-toggle btn-edit-specializations" onclick="toggleSpecializationsEditMode()">
-                            <i class="fas fa-edit"></i> Edit
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <?php if (!empty($all_practice_areas)): ?>
-                            <div class="specializations-scrollable-container">
-                                <!-- Specializations Scrollable Area -->
-                                <div class="specializations-scroll-area">
-                                    <?php foreach ($all_practice_areas as $area): ?>
-                                        <div class="specialization-item">
-                                            <input type="checkbox" 
-                                                   id="specialization_<?php echo $area['id']; ?>" 
-                                                   name="specializations[]" 
-                                                   value="<?php echo $area['id']; ?>"
-                                                   <?php echo in_array($area['id'], $current_specializations) ? 'checked' : ''; ?>>
-                                            <label for="specialization_<?php echo $area['id']; ?>">
-                                                <span class="checkmark">
-                                                    <i class="fas fa-check"></i>
-                                                </span>
-                                                <span class="specialization-name">
-                                                    <?php echo htmlspecialchars($area['area_name']); ?>
-                                                </span>
-                                            </label>
-                                        </div>
-                                    <?php endforeach; ?>
+                        <div class="card-body">
+                            <div class="form-grid-large">
+                                <div class="form-group">
+                                    <label for="prefix">
+                                        <i class="fas fa-id-badge"></i>
+                                        <span>Prefix</span>
+                                    </label>
+                                    <select id="prefix" name="prefix" class="form-input">
+                                        <option value="">Select Prefix</option>
+                                        <option value="Atty." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Atty.') ? 'selected' : ''; ?>>Atty.</option>
+                                        <option value="Mr." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Mr.') ? 'selected' : ''; ?>>Mr.</option>
+                                        <option value="Ms." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Ms.') ? 'selected' : ''; ?>>Ms.</option>
+                                        <option value="Mrs." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Mrs.') ? 'selected' : ''; ?>>Mrs.</option>
+                                        <option value="Dr." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Dr.') ? 'selected' : ''; ?>>Dr.</option>
+                                    </select>
                                 </div>
                                 
-                                <!-- Selected Count Display -->
-                                <div class="selected-count">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span id="selectedCount">0</span> specialization(s) selected
+                                <div class="form-group">
+                                    <label for="first_name">
+                                        <i class="fas fa-user"></i>
+                                        <span>First Name</span>
+                                        <span class="required">*</span>
+                                    </label>
+                                    <input type="text" id="first_name" name="first_name" 
+                                           value="<?php echo htmlspecialchars($lawyer['first_name'] ?? ''); ?>" 
+                                           required class="form-input">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="last_name">
+                                        <i class="fas fa-user"></i>
+                                        <span>Last Name</span>
+                                        <span class="required">*</span>
+                                    </label>
+                                    <input type="text" id="last_name" name="last_name" 
+                                           value="<?php echo htmlspecialchars($lawyer['last_name'] ?? ''); ?>" 
+                                           required class="form-input">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="email">
+                                        <i class="fas fa-envelope"></i>
+                                        <span>Email Address</span>
+                                        <span class="required">*</span>
+                                    </label>
+                                    <input type="email" id="email" name="email" 
+                                           value="<?php echo htmlspecialchars($lawyer['email']); ?>" 
+                                           required class="form-input">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="phone">
+                                        <i class="fas fa-phone"></i>
+                                        <span>Phone Number</span>
+                                    </label>
+                                    <input type="tel" id="phone" name="phone" 
+                                           value="<?php echo htmlspecialchars($lawyer['phone'] ?? ''); ?>" 
+                                           placeholder="e.g., (+63) 917 123 4567" class="form-input">
                                 </div>
                             </div>
                             
-                            <small class="form-hint">
-                                <i class="fas fa-info-circle"></i> 
-                                You must select at least one specialization. These will determine which consultations you can handle.
-                            </small>
-                        <?php else: ?>
-                            <div class="alert alert-error">
-                                <div class="alert-icon">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                </div>
-                                <div class="alert-content">
-                                    <strong>No Practice Areas Available</strong>
-                                    <p>Please contact administrator to add practice areas.</p>
-                                </div>
+                            <div class="form-group full-width">
+                                <label for="description">
+                                    <i class="fas fa-file-text"></i>
+                                    <span>Professional Description</span>
+                                </label>
+                                <textarea id="description" name="description" class="form-textarea" rows="3"
+                                          placeholder="Describe your experience, expertise, and professional background..."><?php echo htmlspecialchars($lawyer['description'] ?? ''); ?></textarea>
+                                <small class="form-hint">This will be displayed on your public profile</small>
                             </div>
-                        <?php endif; ?>
+                        </div>
                     </div>
-                </div>
+                </form>
+
+                <!-- Legal Specializations Form - Large -->
+                <form action="../api/lawyer/process_profile_edit.php" method="POST" id="specializationsForm" class="profile-form">
+                    <input type="hidden" name="form_type" value="specializations">
+                    <div class="form-card specializations-card large-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-gavel"></i> Legal Specializations</h3>
+                            <div class="card-header-actions">
+                                <button type="button" class="btn-edit-toggle btn-edit-specializations" onclick="toggleSpecializationsEditMode()">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button type="button" class="btn-update-toggle btn-update-specializations" onclick="submitSpecializations()" title="Update Specializations">
+                                    <i class="fas fa-check"></i> Update
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <?php if (!empty($all_practice_areas)): ?>
+                                <div class="specializations-scrollable-container">
+                                    <!-- Specializations Scrollable Area -->
+                                    <div class="specializations-scroll-area">
+                                        <?php foreach ($all_practice_areas as $area): ?>
+                                            <div class="specialization-item">
+                                                <input type="checkbox" 
+                                                       id="specialization_<?php echo $area['id']; ?>" 
+                                                       name="specializations[]" 
+                                                       value="<?php echo $area['id']; ?>"
+                                                       <?php echo in_array($area['id'], $current_specializations) ? 'checked' : ''; ?>>
+                                                <label for="specialization_<?php echo $area['id']; ?>">
+                                                    <span class="checkmark">
+                                                        <i class="fas fa-check"></i>
+                                                    </span>
+                                                    <span class="specialization-name">
+                                                        <?php echo htmlspecialchars($area['area_name']); ?>
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    
+                                    <!-- Selected Count Display -->
+                                    <div class="selected-count">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span id="selectedCount">0</span> specialization(s) selected
+                                    </div>
+                                </div>
+                                
+                                <small class="form-hint">
+                                    <i class="fas fa-info-circle"></i> 
+                                    You must select at least one specialization. These will determine which consultations you can handle.
+                                </small>
+                            <?php else: ?>
+                                <div class="alert alert-error">
+                                    <div class="alert-icon">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <div class="alert-content">
+                                        <strong>No Practice Areas Available</strong>
+                                        <p>Please contact administrator to add practice areas.</p>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </form>
             </div>
-            
-            <!-- Form Actions -->
-            <div class="form-actions" id="formActions" style="display: none !important; justify-content: center !important; align-items: center !important; width: 100% !important; padding: 30px !important;">
-                <div style="display: flex; flex-direction: row; gap: 12px; width: 100%;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1; justify-content: center;">
-                        <i class="fas fa-save"></i> Update Profile
-                    </button>
-                    <button type="button" class="btn btn-secondary" onclick="cancelEdit()" style="flex: 1; justify-content: center;">
-                        <i class="fas fa-times"></i> Cancel
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Personal Info Only Actions -->
-            <div class="form-actions" id="personalInfoActions" style="display: none !important; justify-content: center !important; align-items: center !important; width: 100% !important; padding: 30px !important;">
-                <div style="display: flex; flex-direction: row; gap: 12px; width: 100%;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1; justify-content: center;">
-                        <i class="fas fa-save"></i> Update Personal Information
-                    </button>
-                    <button type="button" class="btn btn-secondary" onclick="cancelEdit()" style="flex: 1; justify-content: center;">
-                        <i class="fas fa-times"></i> Cancel
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Specializations Only Actions -->
-            <div class="form-actions" id="specializationsActions" style="display: none !important; justify-content: center !important; align-items: center !important; width: 100% !important; padding: 30px !important;">
-                <div style="display: flex; flex-direction: row; gap: 12px; width: 100%;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1; justify-content: center;">
-                        <i class="fas fa-save"></i> Update Specializations
-                    </button>
-                    <button type="button" class="btn btn-secondary" onclick="cancelEdit()" style="flex: 1; justify-content: center;">
-                        <i class="fas fa-times"></i> Cancel
-                    </button>
-                </div>
-            </div>
-        </form>
         <?php endif; ?>
         </div>
     </div>
@@ -484,6 +648,78 @@ $active_page = "profile";
     <script src="../includes/confirmation-modal.js?v=2"></script>
     
     <script>
+        // Toast Notification System
+        function showToast(message, type = 'success', duration = 5000) {
+            console.log('showToast called:', message, type, duration);
+            const container = document.getElementById('toast-container');
+            if (!container) {
+                console.error('Toast container not found!');
+                return;
+            }
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+            const title = type === 'success' ? 'Success' : 'Error';
+            
+            toast.innerHTML = `
+                <i class="fas ${icon} toast-icon"></i>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="closeToast(this)">×</button>
+            `;
+            
+            // Set the progress bar animation duration
+            toast.style.setProperty('--duration', duration + 'ms');
+            const style = document.createElement('style');
+            style.textContent = `
+                .toast[data-id="${Date.now()}"]::after {
+                    animation-duration: ${duration}ms;
+                }
+            `;
+            toast.dataset.id = Date.now();
+            document.head.appendChild(style);
+            
+            container.appendChild(toast);
+            console.log('Toast added to container, will auto-close in', duration, 'ms');
+            
+            // Force a reflow to ensure the toast is visible
+            toast.offsetHeight;
+            
+            // Auto-remove after duration
+            const timeoutId = setTimeout(() => {
+                console.log('Auto-closing toast');
+                closeToast(toast.querySelector('.toast-close'));
+            }, duration);
+            
+            // Store timeout ID on toast element so we can cancel it if needed
+            toast.dataset.timeoutId = timeoutId;
+        }
+        
+        function closeToast(button) {
+            const toast = button.closest ? button.closest('.toast') : button;
+            if (!toast) {
+                console.error('Toast element not found');
+                return;
+            }
+            
+            console.log('Closing toast');
+            
+            // Clear the auto-close timeout if it exists
+            if (toast.dataset && toast.dataset.timeoutId) {
+                clearTimeout(parseInt(toast.dataset.timeoutId));
+            }
+            
+            toast.classList.add('hiding');
+            setTimeout(() => {
+                toast.remove();
+                console.log('Toast removed');
+            }, 300);
+        }
+        
         // Debug: Check if ConfirmModal is loaded
         console.log('ConfirmModal loaded:', typeof ConfirmModal !== 'undefined');
         if (typeof ConfirmModal !== 'undefined') {
@@ -494,79 +730,116 @@ $active_page = "profile";
         let isEditMode = false;
         let isSpecializationsEditMode = false;
         
-        function updateFormActionsVisibility() {
-            const formActions = document.getElementById('formActions');
-            const personalInfoActions = document.getElementById('personalInfoActions');
-            const specializationsActions = document.getElementById('specializationsActions');
-            
-            // Hide all action buttons first
-            formActions.style.display = 'none';
-            personalInfoActions.style.display = 'none';
-            specializationsActions.style.display = 'none';
-            
-            // Show appropriate action buttons based on edit mode
-            if (isEditMode && isSpecializationsEditMode) {
-                // Both sections being edited - show combined actions
-                formActions.style.display = 'flex';
-                setTimeout(() => {
-                    formActions.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 100);
-            } else if (isEditMode && !isSpecializationsEditMode) {
-                // Only personal info being edited
-                personalInfoActions.style.display = 'flex';
-                setTimeout(() => {
-                    personalInfoActions.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 100);
-            } else if (!isEditMode && isSpecializationsEditMode) {
-                // Only specializations being edited
-                specializationsActions.style.display = 'flex';
-                setTimeout(() => {
-                    specializationsActions.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 100);
-            }
-        }
-        
         function toggleEditMode() {
             isEditMode = !isEditMode;
-            // Only select form inputs within the profile form, not the password modal
-            const formInputs = document.querySelectorAll('#profileForm .form-input, #profileForm .form-textarea');
+            const formInputs = document.querySelectorAll('#personalInfoForm .form-input, #personalInfoForm .form-textarea');
             const editBtn = document.querySelector('.btn-edit-toggle:not(.btn-edit-specializations)');
+            const updateBtn = document.querySelector('.btn-update-personal');
             
             formInputs.forEach(input => {
                 input.disabled = !isEditMode;
             });
             
             if (isEditMode) {
-                editBtn.innerHTML = '<i class="fas fa-times"></i> Cancel';
+                editBtn.innerHTML = '<i class="fas fa-times"></i>';
                 editBtn.title = 'Cancel Edit';
+                updateBtn.style.display = 'flex';
             } else {
                 editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit';
                 editBtn.title = 'Edit Profile';
+                updateBtn.style.display = 'none';
             }
-            
-            updateFormActionsVisibility();
         }
         
         function toggleSpecializationsEditMode() {
             isSpecializationsEditMode = !isSpecializationsEditMode;
             const specializationInputs = document.querySelectorAll('input[name="specializations[]"]');
             const editBtn = document.querySelector('.btn-edit-specializations');
+            const updateBtn = document.querySelector('.btn-update-specializations');
             
             specializationInputs.forEach(input => {
                 input.disabled = !isSpecializationsEditMode;
             });
             
             if (isSpecializationsEditMode) {
-                editBtn.innerHTML = '<i class="fas fa-times"></i> Cancel';
+                editBtn.innerHTML = '<i class="fas fa-times"></i>';
                 editBtn.title = 'Cancel Edit';
                 editBtn.classList.add('active');
+                updateBtn.style.display = 'flex';
             } else {
                 editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit';
                 editBtn.title = 'Edit Specializations';
                 editBtn.classList.remove('active');
+                updateBtn.style.display = 'none';
+            }
+        }
+        
+        async function submitPersonalInfo() {
+            // Enable all personal info fields for submission
+            const formInputs = document.querySelectorAll('#personalInfoForm .form-input, #personalInfoForm .form-textarea');
+            formInputs.forEach(input => {
+                input.disabled = false;
+            });
+            
+            // Confirm before submitting
+            const confirmed = await ConfirmModal.confirm({
+                title: 'Confirm Update',
+                message: 'Are you sure you want to update your personal information?',
+                confirmText: 'Update',
+                cancelText: 'Cancel',
+                type: 'info'
+            });
+            
+            if (confirmed) {
+                document.getElementById('personalInfoForm').submit();
+            } else {
+                // Re-disable if cancelled
+                if (!isEditMode) {
+                    formInputs.forEach(input => {
+                        input.disabled = true;
+                    });
+                }
+            }
+        }
+        
+        async function submitSpecializations() {
+            // Validate specializations
+            const specializations = document.querySelectorAll('input[name="specializations[]"]:checked');
+            
+            if (specializations.length === 0) {
+                await ConfirmModal.alert({
+                    title: 'Validation Error',
+                    message: 'Please select at least one legal specialization.',
+                    type: 'warning'
+                });
+                return;
             }
             
-            updateFormActionsVisibility();
+            // Enable all specializations for submission
+            const allSpecializations = document.querySelectorAll('input[name="specializations[]"]');
+            allSpecializations.forEach(input => {
+                input.disabled = false;
+            });
+            
+            // Confirm before submitting
+            const confirmed = await ConfirmModal.confirm({
+                title: 'Confirm Update',
+                message: 'Are you sure you want to update your specializations?',
+                confirmText: 'Update',
+                cancelText: 'Cancel',
+                type: 'info'
+            });
+            
+            if (confirmed) {
+                document.getElementById('specializationsForm').submit();
+            } else {
+                // Re-disable if cancelled
+                if (!isSpecializationsEditMode) {
+                    allSpecializations.forEach(input => {
+                        input.disabled = true;
+                    });
+                }
+            }
         }
         
         function cancelEdit() {
@@ -581,8 +854,8 @@ $active_page = "profile";
         
         // Initialize selected count
         document.addEventListener('DOMContentLoaded', function() {
-            // Disable personal info fields on page load (only within profile form, not password modal)
-            const formInputs = document.querySelectorAll('#profileForm .form-input, #profileForm .form-textarea');
+            // Disable personal info fields on page load
+            const formInputs = document.querySelectorAll('#personalInfoForm .form-input, #personalInfoForm .form-textarea');
             formInputs.forEach(input => {
                 input.disabled = true;
             });
@@ -592,21 +865,6 @@ $active_page = "profile";
             specializationInputs.forEach(input => {
                 input.disabled = true;
             });
-            
-            // Hide form actions on page load
-            const formActions = document.getElementById('formActions');
-            const personalInfoActions = document.getElementById('personalInfoActions');
-            const specializationsActions = document.getElementById('specializationsActions');
-            
-            if (formActions) {
-                formActions.style.display = 'none';
-            }
-            if (personalInfoActions) {
-                personalInfoActions.style.display = 'none';
-            }
-            if (specializationsActions) {
-                specializationsActions.style.display = 'none';
-            }
             
             updateSelectedCount();
             
@@ -1021,86 +1279,38 @@ $active_page = "profile";
             }
             
             // Profile form validation using unified modal system
-            const profileForm = document.getElementById('profileForm');
-            if (profileForm) {
-                profileForm.addEventListener('submit', async function(e) {
+            const personalInfoForm = document.getElementById('personalInfoForm');
+            if (personalInfoForm) {
+                personalInfoForm.addEventListener('submit', async function(e) {
                     e.preventDefault();
 
-                    // Always enable ALL fields before submission to ensure all data is sent (only profile form fields)
-                    const allFormInputs = document.querySelectorAll('#profileForm .form-input, #profileForm .form-textarea');
-                    const allSpecializations = document.querySelectorAll('input[name="specializations[]"]');
+                    // Enable all fields before submission
+                    const allFormInputs = document.querySelectorAll('#personalInfoForm .form-input, #personalInfoForm .form-textarea');
                     
-                    // Temporarily enable everything for submission
                     allFormInputs.forEach(input => {
                         input.disabled = false;
                     });
+                    
+                    // Submit the form (validation already done in submit functions)
+                    this.submit();
+                });
+            }
+            
+            // Specializations form validation
+            const specializationsForm = document.getElementById('specializationsForm');
+            if (specializationsForm) {
+                specializationsForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+
+                    // Enable all fields before submission
+                    const allSpecializations = document.querySelectorAll('input[name="specializations[]"]');
                     
                     allSpecializations.forEach(input => {
                         input.disabled = false;
                     });
                     
-                    // Only validate specializations if that section is being edited
-                    if (isSpecializationsEditMode) {
-                        const specializations = document.querySelectorAll('input[name="specializations[]"]:checked');
-
-                        if (specializations.length === 0) {
-                            await ConfirmModal.alert({
-                                title: 'Validation Error',
-                                message: 'Please select at least one legal specialization.',
-                                type: 'warning'
-                            });
-                            
-                            // Re-disable fields that weren't being edited
-                            if (!isEditMode) {
-                                allFormInputs.forEach(input => {
-                                    input.disabled = true;
-                                });
-                            }
-                            if (!isSpecializationsEditMode) {
-                                allSpecializations.forEach(input => {
-                                    input.disabled = true;
-                                });
-                            }
-                            
-                            return false;
-                        }
-                    }
-
-                    // Show appropriate confirmation message
-                    let confirmMessage = 'Are you sure you want to update your profile?';
-                    if (isEditMode && isSpecializationsEditMode) {
-                        confirmMessage = 'Are you sure you want to update your profile information and specializations?';
-                    } else if (isEditMode) {
-                        confirmMessage = 'Are you sure you want to update your personal information?';
-                    } else if (isSpecializationsEditMode) {
-                        confirmMessage = 'Are you sure you want to update your specializations?';
-                    }
-
-                    // Show confirmation modal
-                    const confirmed = await ConfirmModal.confirm({
-                        title: 'Confirm Update',
-                        message: confirmMessage,
-                        confirmText: 'Update',
-                        cancelText: 'Cancel',
-                        type: 'info'
-                    });
-
-                    if (confirmed) {
-                        // All fields are already enabled, submit the form
-                        this.submit();
-                    } else {
-                        // Re-disable fields based on edit mode if user cancels
-                        if (!isEditMode) {
-                            allFormInputs.forEach(input => {
-                                input.disabled = true;
-                            });
-                        }
-                        if (!isSpecializationsEditMode) {
-                            allSpecializations.forEach(input => {
-                                input.disabled = true;
-                            });
-                        }
-                    }
+                    // Submit the form (validation already done in submit functions)
+                    this.submit();
                 });
             }
             
@@ -1181,17 +1391,12 @@ $active_page = "profile";
             }
             
             // Auto-open info modal if server indicated a success message
-            const serverMessage = <?php echo json_encode($message ?: ''); ?>;
-            if (serverMessage) {
-                // Delay slightly so page finishes rendering
-                setTimeout(async function() {
-                    await ConfirmModal.alert({
-                        title: 'Success',
-                        message: serverMessage,
-                        type: 'success'
-                    });
-                }, 250);
-            }
+            <?php if (!empty($toast_message) && !empty($toast_type)): ?>
+                console.log('Toast message found from server');
+                setTimeout(function() {
+                    showToast(<?php echo json_encode($toast_message); ?>, <?php echo json_encode($toast_type); ?>, 5000);
+                }, 100);
+            <?php endif; ?>
         });
         
         // Close password modal when clicking outside
