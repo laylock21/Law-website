@@ -83,13 +83,21 @@ html {
 .site-header .nav-list a {
 	border-bottom: none !important;
 	border: none !important;
+	text-decoration: none !important;
+	box-shadow: none !important;
+	outline: none !important;
 }
 
 .site-header .nav-list a:hover,
 .site-header .nav-list a:focus,
-.site-header .nav-list a:active {
+.site-header .nav-list a:active,
+.site-header .nav-list a.active,
+.site-header .nav-list a[aria-current="page"] {
 	border-bottom: none !important;
 	border: none !important;
+	text-decoration: none !important;
+	box-shadow: none !important;
+	outline: none !important;
 }
 
 /* Scrolled state - enhanced styling */
@@ -396,10 +404,27 @@ html {
 	/* border-bottom: 2px solid transparent; */ /* Removed border */
 	height: 44px;
 	vertical-align: top;
+	border: none !important;
+	border-bottom: none !important;
+	box-shadow: none !important;
+	outline: none !important;
+}
+
+.nav-list a:hover,
+.nav-list a:focus,
+.nav-list a:active,
+.nav-list a.active,
+.nav-list a[aria-current="page"] {
+	border: none !important;
+	border-bottom: none !important;
+	box-shadow: none !important;
+	outline: none !important;
+	text-decoration: none !important;
 }
 
 .nav-list a:hover {
 	color: var(--gold);
+	text-decoration: none !important;
 	/* border-bottom-color: var(--gold); */ /* Removed underline on hover */
 }
 

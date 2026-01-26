@@ -29,13 +29,14 @@ try {
         throw new Exception('Database connection failed');
     }
     
-    // Get all practice areas that have at least one active lawyer
+    // Get all active practice areas that have at least one active lawyer assigned
     $areas_stmt = $pdo->prepare("
         SELECT DISTINCT pa.id, pa.area_name, pa.description
         FROM practice_areas pa
         INNER JOIN lawyer_specializations ls ON pa.id = ls.practice_area_id
         INNER JOIN users u ON ls.user_id = u.id
-        WHERE u.role = 'lawyer' 
+        WHERE pa.is_active = 1
+        AND u.role = 'lawyer'
         AND u.is_active = 1
         ORDER BY pa.area_name
     ");
