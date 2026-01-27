@@ -27,18 +27,15 @@ try {
     echo "Enter admin email: ";
     $email = trim(fgets(STDIN));
     
-    echo "Enter admin first name: ";
-    $first_name = trim(fgets(STDIN));
-    
-    echo "Enter admin last name: ";
-    $last_name = trim(fgets(STDIN));
+    echo "Enter admin phone (optional): ";
+    $phone = trim(fgets(STDIN));
     
     echo "Enter admin password: ";
     $password = trim(fgets(STDIN));
     
     // Validate input
-    if (empty($username) || empty($email) || empty($first_name) || empty($last_name) || empty($password)) {
-        throw new Exception("All fields are required!");
+    if (empty($username) || empty($email) || empty($password)) {
+        throw new Exception("Username, email, and password are required!");
     }
     
     if (strlen($password) < 8) {
@@ -49,7 +46,7 @@ try {
     $hashed_password = password_hash($password, PASSWORD_BCRYPT);
     
     // Check if admin already exists
-    $check_stmt = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
+    $check_stmt = $pdo->prepare("SELECT user_id FROM users WHERE username = ? OR email = ?");
     $check_stmt->execute([$username, $email]);
     $existing_user = $check_stmt->fetch();
     
@@ -63,15 +60,14 @@ try {
             $update_stmt = $pdo->prepare("
                 UPDATE users 
                 SET password = ?, 
-                    first_name = ?, 
-                    last_name = ?, 
                     email = ?,
+                    phone = ?,
                     role = 'admin',
                     is_active = 1,
                     temporary_password = NULL
                 WHERE username = ?
             ");
-            $update_stmt->execute([$hashed_password, $first_name, $last_name, $email, $username]);
+            $update_stmt->execute([$hashed_password, $email, $phone ?: null, $username]);
             
             echo "\n✓ Admin account updated successfully!\n";
         } else {
@@ -81,10 +77,10 @@ try {
     } else {
         // Create new admin
         $insert_stmt = $pdo->prepare("
-            INSERT INTO users (username, email, password, first_name, last_name, role, is_active, temporary_password) 
-            VALUES (?, ?, ?, ?, ?, 'admin', 1, NULL)
+            INSERT INTO users (username, email, password, phone, role, is_active, temporary_password) 
+            VALUES (?, ?, ?, ?, 'admin', 1, NULL)
         ");
-        $insert_stmt->execute([$username, $email, $hashed_password, $first_name, $last_name]);
+        $insert_stmt->execute([$username, $email, $hashed_password, $phone ?: null]);
         
         echo "\n✓ Admin account created successfully!\n";
     }

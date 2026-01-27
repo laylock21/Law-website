@@ -11,8 +11,7 @@ echo "=== Quick Admin Account Creator ===\n\n";
 // Admin credentials - CHANGE THESE!
 $username = 'admin';
 $email = 'admin@lawfirm.com';
-$first_name = 'Admin';
-$last_name = 'User';
+$phone = ''; // Optional phone number
 $password = 'admin123'; // Change this to a secure password
 
 try {
@@ -28,7 +27,7 @@ try {
     $hashed_password = password_hash($password, PASSWORD_BCRYPT);
     
     // Check if admin already exists
-    $check_stmt = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
+    $check_stmt = $pdo->prepare("SELECT user_id FROM users WHERE username = ? OR email = ?");
     $check_stmt->execute([$username, $email]);
     $existing_user = $check_stmt->fetch();
     
@@ -37,24 +36,23 @@ try {
         $update_stmt = $pdo->prepare("
             UPDATE users 
             SET password = ?, 
-                first_name = ?, 
-                last_name = ?, 
                 email = ?,
+                phone = ?,
                 role = 'admin',
                 is_active = 1,
                 temporary_password = NULL
             WHERE username = ?
         ");
-        $update_stmt->execute([$hashed_password, $first_name, $last_name, $email, $username]);
+        $update_stmt->execute([$hashed_password, $email, $phone ?: null, $username]);
         
         echo "✓ Admin account updated successfully!\n\n";
     } else {
         // Create new admin
         $insert_stmt = $pdo->prepare("
-            INSERT INTO users (username, email, password, first_name, last_name, role, is_active, temporary_password) 
-            VALUES (?, ?, ?, ?, ?, 'admin', 1, NULL)
+            INSERT INTO users (username, email, password, phone, role, is_active, temporary_password) 
+            VALUES (?, ?, ?, ?, 'admin', 1, NULL)
         ");
-        $insert_stmt->execute([$username, $email, $hashed_password, $first_name, $last_name]);
+        $insert_stmt->execute([$username, $email, $hashed_password, $phone ?: null]);
         
         echo "✓ Admin account created successfully!\n\n";
     }
