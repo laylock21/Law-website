@@ -3,13 +3,13 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 27, 2026 at 03:17 AM
+-- Generation Time: Jan 27, 2026 at 04:16 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
-SET time_zone = "+08:00";
+SET time_zone = "+00:00";
 
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -104,7 +104,7 @@ CREATE TABLE `notification_queue` (
   `email` varchar(255) NOT NULL,
   `subject` varchar(255) NOT NULL,
   `message` text NOT NULL,
-  `notification_type` enum('appointment_cancelled','schedule_changed','other') DEFAULT 'other',
+  `notification_type` enum('confirmation','appointment_cancelled','schedule_changed','appointment_completed','other') DEFAULT 'other',
   `nq_status` enum('pending','sent','failed') DEFAULT 'pending',
   `attempts` int(11) DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -128,6 +128,23 @@ CREATE TABLE `practice_areas` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `user_sessions`
+--
+
+CREATE TABLE `user_sessions` (
+  `id` varchar(64) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `ip_address` varchar(45) NOT NULL,
+  `user_agent` varchar(255) NOT NULL,
+  `status` enum('active','expired','invalid','logged_out') DEFAULT 'active',
+  `last_activity` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `expires_at` timestamp NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `users`
 --
 
@@ -142,6 +159,13 @@ CREATE TABLE `users` (
   `is_active` tinyint(1) DEFAULT 1,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `users`
+--
+
+INSERT INTO `users` (`user_id`, `username`, `password`, `temporary_password`, `email`, `phone`, `role`, `is_active`, `created_at`) VALUES
+(1, 'admin', '$2y$10$WJ9anXzaQ25hJaVFjf0BU.IUJH.vn1hooXxYEjH7e15O9rIpHNRpy', NULL, 'admin@lawfirm.com', NULL, 'admin', 1, '2026-01-27 02:31:18');
 
 --
 -- Indexes for dumped tables
@@ -197,6 +221,15 @@ ALTER TABLE `practice_areas`
   ADD KEY `idx_practice_area_active` (`is_active`);
 
 --
+-- Indexes for table `user_sessions`
+--
+ALTER TABLE `user_sessions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_user_sessions_user_id` (`user_id`),
+  ADD KEY `idx_user_sessions_status` (`status`),
+  ADD KEY `idx_user_sessions_expires` (`expires_at`);
+
+--
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
@@ -238,7 +271,7 @@ ALTER TABLE `practice_areas`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- Constraints for dumped tables
@@ -276,6 +309,12 @@ ALTER TABLE `notification_queue`
   ADD CONSTRAINT `notification_queue_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `notification_queue_ibfk_2` FOREIGN KEY (`consultation_id`) REFERENCES `consultations` (`c_id`) ON DELETE SET NULL;
 
+--
+-- Constraints for table `user_sessions`
+--
+ALTER TABLE `user_sessions`
+  ADD CONSTRAINT `user_sessions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
 DELIMITER $$
 --
 -- Events
@@ -284,11 +323,8 @@ CREATE DEFINER=`root`@`localhost` EVENT `delete_expired_schedules` ON SCHEDULE E
   WHERE
     (
       schedule_type = 'blocked'
-      AND (
-        (specific_date IS NOT NULL AND specific_date < CURDATE())
-        OR
-        (end_date IS NOT NULL AND end_date < CURDATE())
-      )
+      AND specific_date IS NOT NULL
+      AND specific_date < CURDATE()
     )
     OR
     (

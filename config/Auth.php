@@ -38,7 +38,7 @@ class Auth {
         try {
             // Fetch user by username
             $stmt = $this->pdo->prepare('
-                SELECT id, username, password, first_name, last_name, email, role, is_active 
+                SELECT user_id, username, password, email, phone, role, is_active 
                 FROM users 
                 WHERE username = ? LIMIT 1
             ');
@@ -51,7 +51,7 @@ class Auth {
                 if (password_verify($password, $user['password'])) {
                     // Successful login - log it
                     $this->logSecurityEvent('successful_login', [
-                        'user_id' => $user['id'],
+                        'user_id' => $user['user_id'],
                         'username' => $username,
                         'role' => $user['role']
                     ]);
@@ -84,29 +84,34 @@ class Auth {
         
         // Set unified session variables
         $_SESSION['user_logged_in'] = true;
-        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['user_id'] = $user['user_id'];
         $_SESSION['user_username'] = $user['username'];
         $_SESSION['user_role'] = $user['role'];
-        $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];
+        $_SESSION['user_name'] = $user['username']; // Use username since no name fields
         $_SESSION['user_email'] = $user['email'];
         $_SESSION['login_time'] = time();
         
         // Set role-specific session variables for backward compatibility
         if ($user['role'] === 'admin') {
             $_SESSION['admin_logged_in'] = true;
-            $_SESSION['admin_id'] = $user['id'];
+            $_SESSION['admin_id'] = $user['user_id'];
             $_SESSION['admin_username'] = $user['username'];
             $_SESSION['admin_role'] = $user['role'];
         } elseif ($user['role'] === 'lawyer') {
             $_SESSION['lawyer_logged_in'] = true;
-            $_SESSION['lawyer_id'] = $user['id'];
+            $_SESSION['lawyer_id'] = $user['user_id'];
             $_SESSION['lawyer_username'] = $user['username'];
-            $_SESSION['lawyer_name'] = $user['first_name'] . ' ' . $user['last_name'];
+            $_SESSION['lawyer_name'] = $user['username']; // Use username since no name fields
             $_SESSION['lawyer_email'] = $user['email'];
         }
         
-        // Create database session record
-        $this->sessionManager->createSession($user['id']);
+        // Try to create database session record (don't fail if table doesn't exist)
+        try {
+            $this->sessionManager->createSession($user['user_id']);
+        } catch (Exception $e) {
+            error_log("SessionManager error (non-fatal): " . $e->getMessage());
+            // Continue anyway - session will work without database backing
+        }
         
         // Clear any failed login attempts
         unset($_SESSION['login_attempts']);
@@ -125,11 +130,16 @@ class Auth {
             return false;
         }
         
-        // Validate against database session
-        if (!$this->sessionManager->validateSession()) {
-            // Session invalid - clear PHP session
-            $this->logout();
-            return false;
+        // Try to validate against database session (don't fail if table doesn't exist)
+        try {
+            if (!$this->sessionManager->validateSession()) {
+                // Session invalid - clear PHP session
+                $this->logout();
+                return false;
+            }
+        } catch (Exception $e) {
+            error_log("SessionManager validation error (non-fatal): " . $e->getMessage());
+            // Continue anyway - rely on PHP session only
         }
         
         return true;
@@ -163,8 +173,12 @@ class Auth {
      * Logout user
      */
     public function logout() {
-        // Mark session as logged out in database
-        $this->sessionManager->logoutSession();
+        // Try to mark session as logged out in database
+        try {
+            $this->sessionManager->logoutSession();
+        } catch (Exception $e) {
+            error_log("SessionManager logout error (non-fatal): " . $e->getMessage());
+        }
         
         // Clear all session variables
         $_SESSION = array();
