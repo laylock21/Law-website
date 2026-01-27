@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Insert one row per selected weekday
             $insert_stmt = $pdo->prepare("
-                INSERT INTO lawyer_availability (lawyer_id, schedule_type, weekday, start_time, end_time, max_appointments, time_slot_duration, is_active) 
+                INSERT INTO lawyer_availability (lawyer_id, schedule_type, weekday, start_time, end_time, max_appointments, time_slot_duration, la_is_active) 
                 VALUES (?, 'weekly', ?, ?, ?, ?, ?, 1)
             ");
             
@@ -139,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $day_name = date('l', strtotime($specific_date)); // Get day name (Monday, Tuesday, etc.)
             
             $insert_stmt = $pdo->prepare("
-                INSERT INTO lawyer_availability (lawyer_id, schedule_type, specific_date, weekday, start_time, end_time, max_appointments, time_slot_duration, is_active) 
+                INSERT INTO lawyer_availability (lawyer_id, schedule_type, specific_date, weekday, start_time, end_time, max_appointments, time_slot_duration, la_is_active) 
                 VALUES (?, 'one_time', ?, ?, ?, ?, ?, ?, 1)
             ");
             $insert_stmt->execute([$lawyer_id, $specific_date, $day_name, $start_time, $end_time, $max_appointments, $time_slot_duration]);
@@ -158,7 +158,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             // Soft delete (SET la_is_active = 0)
-            $delete_stmt = $pdo->prepare("UPDATE lawyer_availability SET la_is_active = 0 WHERE id = ? AND lawyer_id = ?");
+            $delete_stmt = $pdo->prepare("UPDATE lawyer_availability SET la_is_active = 0 WHERE la_id = ? AND lawyer_id = ?");
             $delete_stmt->execute([$availability_id, $lawyer_id]);
             
             if ($delete_stmt->rowCount() === 0) {
@@ -171,7 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $availability_id = (int)$_POST['availability_id'];
             
             // Verify ownership
-            $verify_stmt = $pdo->prepare("SELECT la_id FROM lawyer_availability WHERE id = ? AND lawyer_id = ?");
+            $verify_stmt = $pdo->prepare("SELECT la_id FROM lawyer_availability WHERE la_id = ? AND lawyer_id = ?");
             $verify_stmt->execute([$availability_id, $lawyer_id]);
             
             if (!$verify_stmt->fetch()) {
@@ -179,7 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             // Activate schedule
-            $activate_stmt = $pdo->prepare("UPDATE lawyer_availability SET la_is_active = 1 WHERE id = ? AND lawyer_id = ?");
+            $activate_stmt = $pdo->prepare("UPDATE lawyer_availability SET la_is_active = 1 WHERE la_id = ? AND lawyer_id = ?");
             $activate_stmt->execute([$availability_id, $lawyer_id]);
             
             if ($activate_stmt->rowCount() === 0) {
@@ -192,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $availability_id = (int)$_POST['availability_id'];
             
             // Verify ownership
-            $verify_stmt = $pdo->prepare("SELECT la_id FROM lawyer_availability WHERE id = ? AND lawyer_id = ?");
+            $verify_stmt = $pdo->prepare("SELECT la_id FROM lawyer_availability WHERE la_id = ? AND lawyer_id = ?");
             $verify_stmt->execute([$availability_id, $lawyer_id]);
             
             if (!$verify_stmt->fetch()) {
@@ -200,7 +200,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             // Permanently delete from database
-            $delete_stmt = $pdo->prepare("DELETE FROM lawyer_availability WHERE id = ? AND lawyer_id = ?");
+            $delete_stmt = $pdo->prepare("DELETE FROM lawyer_availability WHERE la_id = ? AND lawyer_id = ?");
             $delete_stmt->execute([$availability_id, $lawyer_id]);
             
             if ($delete_stmt->rowCount() === 0) {
@@ -229,7 +229,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Verify all IDs belong to this lawyer
             $verify_stmt = $pdo->prepare("
                 SELECT COUNT(*) as count FROM lawyer_availability 
-                WHERE id IN ($placeholders) AND lawyer_id = ?
+                WHERE la_id IN ($placeholders) AND lawyer_id = ?
             ");
             $verify_stmt->execute(array_merge($ids, [$lawyer_id]));
             $verified_count = (int)$verify_stmt->fetch()['count'];
@@ -241,7 +241,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Delete (unblock) selected dates
             $delete_stmt = $pdo->prepare("
                 DELETE FROM lawyer_availability 
-                WHERE id IN ($placeholders) AND lawyer_id = ?
+                WHERE la_id IN ($placeholders) AND lawyer_id = ?
             ");
             $delete_stmt->execute(array_merge($ids, [$lawyer_id]));
             
@@ -298,13 +298,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 error_log("Blocking date: Found " . count($affected_appointments) . " appointments to cancel");
                 
                 foreach ($affected_appointments as $appointment) {
-                    error_log("Queuing notification for appointment ID: " . $appointment['id']);
-                    $queued = $emailNotification->notifyAppointmentCancelled($appointment['id'], $reason);
+                    error_log("Queuing notification for appointment ID: " . $appointment['la_id']);
+                    $queued = $emailNotification->notifyAppointmentCancelled($appointment['la_id'], $reason);
                     if ($queued) {
                         $notification_count++;
-                        error_log("Notification queued successfully for appointment ID: " . $appointment['id']);
+                        error_log("Notification queued successfully for appointment ID: " . $appointment['la_id']);
                     } else {
-                        error_log("Failed to queue notification for appointment ID: " . $appointment['id']);
+                        error_log("Failed to queue notification for appointment ID: " . $appointment['la_id']);
                     }
                 }
             }
@@ -313,7 +313,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $cancelled_count = 0;
             if (!empty($affected_appointments)) {
                 // Batch cancel all appointments in single query (FASTER)
-                $appointment_ids = array_column($affected_appointments, 'id');
+                $appointment_ids = array_column($affected_appointments, 'la_id');
                 $placeholders = str_repeat('?,', count($appointment_ids) - 1) . '?';
                 
                 $cancel_stmt = $pdo->prepare("
@@ -411,13 +411,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 if (!empty($affected_appointments)) {
                     foreach ($affected_appointments as $appointment) {
-                        if (!in_array($appointment['id'], $all_affected_ids)) {
+                        if (!in_array($appointment['la_id'], $all_affected_ids)) {
                             // Queue notification
-                            $queued = $emailNotification->notifyAppointmentCancelled($appointment['id'], $reason);
+                            $queued = $emailNotification->notifyAppointmentCancelled($appointment['la_id'], $reason);
                             if ($queued) {
                                 $notification_count++;
                             }
-                            $all_affected_ids[] = $appointment['id'];
+                            $all_affected_ids[] = $appointment['la_id'];
                         }
                     }
                 }
@@ -432,8 +432,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Insert individual blocked date records for each date in the range
             $insert_stmt = $pdo->prepare("
                 INSERT INTO lawyer_availability 
-                (user_id, schedule_type, specific_date, blocked_reason)
-                VALUES (?, 'blocked', ?, ?)
+                (lawyer_id, schedule_type, specific_date, blocked_reason, start_time, end_time, time_slot_duration, la_is_active)
+                VALUES (?, 'blocked', ?, ?, '00:00:00', '23:59:59', 60, 1)
             ");
             
             $inserted_count = 0;
@@ -488,30 +488,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
         } elseif ($action === 'update_date_preferences') {
-            $default_weeks = (int)($_POST['default_booking_weeks'] ?? 52);
-            $max_weeks = (int)($_POST['max_booking_weeks'] ?? 104);
-            $enabled = isset($_POST['booking_window_enabled']) ? 1 : 0;
-            
-            // Validation
-            if ($default_weeks < 1 || $default_weeks > 208) { // 1 week to 4 years
-                throw new Exception('Default booking weeks must be between 1 and 208 weeks (4 years).');
-            }
-            
-            if ($max_weeks < $default_weeks || $max_weeks > 208) {
-                throw new Exception('Maximum booking weeks must be at least equal to default weeks and not exceed 208 weeks (4 years).');
-            }
-            
-            // Update lawyer's date preferences
-            $update_stmt = $pdo->prepare("
-                UPDATE users 
-                SET default_booking_weeks = ?, max_booking_weeks = ?, booking_window_enabled = ?
-                WHERE user_id = ? AND role = 'lawyer'
-            ");
-            $update_stmt->execute([$default_weeks, $max_weeks, $enabled, $lawyer_id]);
-            
-            if ($update_stmt->rowCount() === 0) {
-                throw new Exception('Failed to update date preferences. Please try again.');
-            }
+            // Booking preferences feature disabled (columns removed from database)
+            throw new Exception('Booking preferences feature is currently disabled.');
             
             $success_message = "Date range preferences updated successfully! Default: {$default_weeks} weeks, Maximum: {$max_weeks} weeks.";
         }
@@ -591,19 +569,10 @@ if (isset($_SESSION['availability_error'])) {
 try {
     $pdo = getDBConnection();
     
-    // Get lawyer's date preferences
-    $preferences_stmt = $pdo->prepare("
-        SELECT default_booking_weeks, max_booking_weeks, booking_window_enabled 
-        FROM users 
-        WHERE user_id = ? AND role = 'lawyer'
-    ");
-    $preferences_stmt->execute([$lawyer_id]);
-    $lawyer_preferences = $preferences_stmt->fetch();
-    
-    // Set defaults if not found
-    $default_booking_weeks = (int)($lawyer_preferences['default_booking_weeks'] ?? 52);
-    $max_booking_weeks = (int)($lawyer_preferences['max_booking_weeks'] ?? 104);
-    $booking_window_enabled = (bool)($lawyer_preferences['booking_window_enabled'] ?? true);
+    // Set default booking preferences (columns removed from database)
+    $default_booking_weeks = 52;
+    $max_booking_weeks = 104;
+    $booking_window_enabled = true;
     
     $availability_stmt = $pdo->prepare("
         SELECT * FROM lawyer_availability 
@@ -613,9 +582,8 @@ try {
             schedule_type = 'weekly' 
             OR (schedule_type = 'one_time' AND specific_date >= CURDATE())
             OR (schedule_type = 'blocked' AND specific_date >= CURDATE())
-            OR (schedule_type = 'blocked' AND start_date IS NOT NULL AND end_date >= CURDATE())
         )
-        ORDER BY schedule_type, COALESCE(specific_date, start_date)
+        ORDER BY schedule_type, specific_date
     ");
     $availability_stmt->execute([$lawyer_id]);
     $all_schedules = $availability_stmt->fetchAll();
@@ -629,21 +597,12 @@ try {
         if ($schedule['schedule_type'] === 'weekly') {
             $weekly_schedules[] = $schedule;
         } elseif ($schedule['schedule_type'] === 'blocked') {
-            // Blocked date or date range
-            // For single blocked dates, check specific_date
-            // For blocked ranges, check start_date/end_date
-            $is_future = false;
-            
+            // Blocked date (only specific_date is supported)
             if (!empty($schedule['specific_date'])) {
-                // Single blocked date
                 $is_future = strtotime($schedule['specific_date']) >= strtotime('today');
-            } elseif (!empty($schedule['start_date']) && !empty($schedule['end_date'])) {
-                // Blocked range - show if end_date is today or future
-                $is_future = strtotime($schedule['end_date']) >= strtotime('today');
-            }
-            
-            if ($is_future) {
-                $blocked_dates[] = $schedule;
+                if ($is_future) {
+                    $blocked_dates[] = $schedule;
+                }
             }
         } else {
             $onetime_schedules[] = $schedule;
@@ -1483,13 +1442,13 @@ $active_page = "availability";
                         <?php
                         $weekly_capacity = 0;
                         foreach ($weekly_schedules as $s) {
-                            if ($s['is_active']) {
+                            if ($s['la_is_active']) {
                                 $weekly_capacity += (int)$s['max_appointments'];
                             }
                         }
                         $onetime_capacity = 0;
                         foreach ($onetime_schedules as $s) {
-                            if ($s['is_active'] && strtotime($s['specific_date']) >= strtotime('today')) {
+                            if ($s['la_is_active'] && strtotime($s['specific_date']) >= strtotime('today')) {
                                 $onetime_capacity += (int)$s['max_appointments'];
                             }
                         }
@@ -1562,7 +1521,7 @@ $active_page = "availability";
                         <?php foreach ($weekly_schedules_paginated as $s): ?>
                             <tr>
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
-                                    <?php echo htmlspecialchars($s['weekdays']); ?>
+                                    <?php echo htmlspecialchars($s['weekday'] ?? 'N/A'); ?>
                                 </td>
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
                                     Active
@@ -1592,8 +1551,8 @@ $active_page = "availability";
                                     <?php echo (int)$s['max_appointments']; ?> / day
                                 </td>
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef; text-align: center;">
-                                    <form method="POST" style="display:inline; width: 88px;" id="delete-form-weekly-<?php echo $s['id']; ?>">
-                                        <input type="hidden" name="availability_id" value="<?php echo $s['id']; ?>">
+                                    <form method="POST" style="display:inline; width: 88px;" id="delete-form-weekly-<?php echo $s['la_id']; ?>">
+                                        <input type="hidden" name="availability_id" value="<?php echo $s['la_id']; ?>">
                                         <input type="hidden" name="action" value="permanent_delete">
                                         <?php if (isset($_GET['filter'])): ?>
                                             <input type="hidden" name="filter" value="<?php echo htmlspecialchars($_GET['filter']); ?>">
@@ -1601,7 +1560,7 @@ $active_page = "availability";
                                         <?php if (isset($_GET['page'])): ?>
                                             <input type="hidden" name="page" value="<?php echo htmlspecialchars($_GET['page']); ?>">
                                         <?php endif; ?>
-                                        <button type="button" class="lawyer-btn btn-delete-custom" onclick="showConfirmModal('Delete Schedule', 'Permanently delete this schedule?', function() { document.getElementById('delete-form-weekly-<?php echo $s['id']; ?>').submit(); })">Delete</button>
+                                        <button type="button" class="lawyer-btn btn-delete-custom" onclick="showConfirmModal('Delete Schedule', 'Permanently delete this schedule?', function() { document.getElementById('delete-form-weekly-<?php echo $s['la_id']; ?>').submit(); })">Delete</button>
                                     </form>
                                 </td>
                             </tr>
@@ -1640,8 +1599,8 @@ $active_page = "availability";
                                     <?php echo (int)$s['max_appointments']; ?>
                                 </td>
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef; text-align: center;">
-                                    <form method="POST" style="display:inline; width: 88px;" id="delete-form-onetime-<?php echo $s['id']; ?>">
-                                        <input type="hidden" name="availability_id" value="<?php echo $s['id']; ?>">
+                                    <form method="POST" style="display:inline; width: 88px;" id="delete-form-onetime-<?php echo $s['la_id']; ?>">
+                                        <input type="hidden" name="availability_id" value="<?php echo $s['la_id']; ?>">
                                         <input type="hidden" name="action" value="permanent_delete">
                                         <?php if (isset($_GET['filter'])): ?>
                                             <input type="hidden" name="filter" value="<?php echo htmlspecialchars($_GET['filter']); ?>">
@@ -1649,7 +1608,7 @@ $active_page = "availability";
                                         <?php if (isset($_GET['page'])): ?>
                                             <input type="hidden" name="page" value="<?php echo htmlspecialchars($_GET['page']); ?>">
                                         <?php endif; ?>
-                                        <button type="button" class="lawyer-btn btn-delete-custom" onclick="showConfirmModal('Delete Schedule', 'Permanently delete this schedule?', function() { document.getElementById('delete-form-onetime-<?php echo $s['id']; ?>').submit(); })">Delete</button>
+                                        <button type="button" class="lawyer-btn btn-delete-custom" onclick="showConfirmModal('Delete Schedule', 'Permanently delete this schedule?', function() { document.getElementById('delete-form-onetime-<?php echo $s['la_id']; ?>').submit(); })">Delete</button>
                                     </form>
                                 </td>
                             </tr>
@@ -1672,8 +1631,8 @@ $active_page = "availability";
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">—</td>
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef;">—</td>
                                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef; text-align: center;">
-                                    <form method="POST" style="display:inline; width: 88px;" id="unblock-form-<?php echo $s['id']; ?>">
-                                        <input type="hidden" name="availability_id" value="<?php echo $s['id']; ?>">
+                                    <form method="POST" style="display:inline; width: 88px;" id="unblock-form-<?php echo $s['la_id']; ?>">
+                                        <input type="hidden" name="availability_id" value="<?php echo $s['la_id']; ?>">
                                         <input type="hidden" name="action" value="permanent_delete">
                                         <?php if (isset($_GET['filter'])): ?>
                                             <input type="hidden" name="filter" value="<?php echo htmlspecialchars($_GET['filter']); ?>">
@@ -1681,7 +1640,7 @@ $active_page = "availability";
                                         <?php if (isset($_GET['page'])): ?>
                                             <input type="hidden" name="page" value="<?php echo htmlspecialchars($_GET['page']); ?>">
                                         <?php endif; ?>
-                                        <button type="button" class="lawyer-btn btn-unblock-custom" onclick="showConfirmModal('Unblock Date', 'Unblock this date?', function() { document.getElementById('unblock-form-<?php echo $s['id']; ?>').submit(); })">Unblock</button>
+                                        <button type="button" class="lawyer-btn btn-unblock-custom" onclick="showConfirmModal('Unblock Date', 'Unblock this date?', function() { document.getElementById('unblock-form-<?php echo $s['la_id']; ?>').submit(); })">Unblock</button>
                                     </form>
                                 </td>
                             </tr>
@@ -2053,7 +2012,7 @@ $active_page = "availability";
                                 <?php 
                                 $total_hours = 0;
                                 foreach ($weekly_schedules as $schedule) {
-                                    if ($schedule['is_active']) {
+                                    if ($schedule['la_is_active']) {
                                         $start = strtotime($schedule['start_time']);
                                         $end = strtotime($schedule['end_time']);
                                         $hours = ($end - $start) / 3600;
@@ -2072,7 +2031,7 @@ $active_page = "availability";
                                 <?php 
                                 $total_appointments = 0;
                                 foreach ($weekly_schedules as $schedule) {
-                                    if ($schedule['is_active']) {
+                                    if ($schedule['la_is_active']) {
                                         // Each schedule is for one day only
                                         $total_appointments += $schedule['max_appointments'];
                                     }
@@ -2104,16 +2063,16 @@ $active_page = "availability";
                                                     <i class="fas fa-calendar-week"></i>
                                                     WEEKLY SCHEDULE
                                                 </span>
-                                                <span class="schedule-badge <?php echo $schedule['is_active'] ? 'badge-active' : 'badge-inactive'; ?>">
-                                                    <i class="fas <?php echo $schedule['is_active'] ? 'fa-check-circle' : 'fa-pause-circle'; ?>"></i>
-                                                    <?php echo $schedule['is_active'] ? 'Active' : 'Inactive'; ?>
+                                                <span class="schedule-badge <?php echo $schedule['la_is_active'] ? 'badge-active' : 'badge-inactive'; ?>">
+                                                    <i class="fas <?php echo $schedule['la_is_active'] ? 'fa-check-circle' : 'fa-pause-circle'; ?>"></i>
+                                                    <?php echo $schedule['la_is_active'] ? 'Active' : 'Inactive'; ?>
                                                 </span>
                                             </div>
                                             <div class="schedule-actions">
-                                                <?php if (!$schedule['is_active']): ?>
+                                                <?php if (!$schedule['la_is_active']): ?>
                                                     <form method="POST" style="display: inline;">
                                                         <input type="hidden" name="action" value="activate">
-                                                        <input type="hidden" name="availability_id" value="<?php echo $schedule['id']; ?>">
+                                                        <input type="hidden" name="availability_id" value="<?php echo $schedule['la_id']; ?>">
                                                         <button type="submit" class="btn-action btn-activate" title="Activate">
                                                             <i class="fas fa-play"></i>
                                                         </button>
@@ -2121,7 +2080,7 @@ $active_page = "availability";
                                                 <?php endif; ?>
                                                 <form method="POST" style="display: inline;">
                                                     <input type="hidden" name="action" value="permanent_delete">
-                                                    <input type="hidden" name="availability_id" value="<?php echo $schedule['id']; ?>">
+                                                    <input type="hidden" name="availability_id" value="<?php echo $schedule['la_id']; ?>">
                                                     <button type="submit" class="btn-action btn-delete" 
                                                             onclick="return confirm('⚠️ PERMANENTLY DELETE this schedule?\n\nThis cannot be undone!')" title="Delete">
                                                         <i class="fas fa-trash"></i>
@@ -2135,8 +2094,8 @@ $active_page = "availability";
                                                 <span class="detail-label">Day:</span>
                                                 <span class="detail-value">
                                                     <?php 
-                                                    // weekdays is an ENUM storing a single day name
-                                                    echo htmlspecialchars($schedule['weekdays']);
+                                                    // weekday is an ENUM storing a single day name
+                                                    echo htmlspecialchars($schedule['weekday']);
                                                     ?>
                                                 </span>
                                             </div>
@@ -2221,7 +2180,7 @@ $active_page = "availability";
                                 <?php 
                                 $total_capacity = 0;
                                 foreach ($onetime_schedules as $schedule) {
-                                    if ($schedule['is_active'] && strtotime($schedule['specific_date']) >= strtotime('today')) {
+                                    if ($schedule['la_is_active'] && strtotime($schedule['specific_date']) >= strtotime('today')) {
                                         $total_capacity += $schedule['max_appointments'];
                                     }
                                 }
@@ -2252,9 +2211,9 @@ $active_page = "availability";
                                                     <i class="fas fa-calendar-day"></i>
                                                     ONE TIME AVAILABLE
                                                 </span>
-                                                <span class="schedule-badge <?php echo $schedule['is_active'] ? 'badge-active' : 'badge-inactive'; ?>">
-                                                    <i class="fas <?php echo $schedule['is_active'] ? 'fa-check-circle' : 'fa-pause-circle'; ?>"></i>
-                                                    <?php echo $schedule['is_active'] ? 'Active' : 'Inactive'; ?>
+                                                <span class="schedule-badge <?php echo $schedule['la_is_active'] ? 'badge-active' : 'badge-inactive'; ?>">
+                                                    <i class="fas <?php echo $schedule['la_is_active'] ? 'fa-check-circle' : 'fa-pause-circle'; ?>"></i>
+                                                    <?php echo $schedule['la_is_active'] ? 'Active' : 'Inactive'; ?>
                                                 </span>
                                                 <?php if (strtotime($schedule['specific_date']) >= strtotime('today')): ?>
                                                     <span class="schedule-badge badge-upcoming">
@@ -2264,10 +2223,10 @@ $active_page = "availability";
                                                 <?php endif; ?>
                                             </div>
                                             <div class="schedule-actions">
-                                                <?php if (!$schedule['is_active']): ?>
+                                                <?php if (!$schedule['la_is_active']): ?>
                                                     <form method="POST" style="display: inline;">
                                                         <input type="hidden" name="action" value="activate">
-                                                        <input type="hidden" name="availability_id" value="<?php echo $schedule['id']; ?>">
+                                                        <input type="hidden" name="availability_id" value="<?php echo $schedule['la_id']; ?>">
                                                         <button type="submit" class="btn-action btn-activate" title="Activate">
                                                             <i class="fas fa-play"></i>
                                                         </button>
@@ -2275,7 +2234,7 @@ $active_page = "availability";
                                                 <?php endif; ?>
                                                 <form method="POST" style="display: inline;">
                                                     <input type="hidden" name="action" value="permanent_delete">
-                                                    <input type="hidden" name="availability_id" value="<?php echo $schedule['id']; ?>">
+                                                    <input type="hidden" name="availability_id" value="<?php echo $schedule['la_id']; ?>">
                                                     <button type="submit" class="btn-action btn-delete" 
                                                             onclick="return confirm('⚠️ PERMANENTLY DELETE this schedule?\n\nThis cannot be undone!')" title="Delete">
                                                         <i class="fas fa-trash"></i>
@@ -2290,7 +2249,7 @@ $active_page = "availability";
                                                 <span class="detail-value">
                                                     <?php 
                                                     // Show the weekday name
-                                                    echo $schedule['weekdays'] ? htmlspecialchars($schedule['weekdays']) : date('l', strtotime($schedule['specific_date']));
+                                                    echo $schedule['weekday'] ? htmlspecialchars($schedule['weekday']) : date('l', strtotime($schedule['specific_date']));
                                                     ?>
                                                 </span>
                                             </div>
@@ -2466,7 +2425,7 @@ $active_page = "availability";
                                     <div class="schedule-card blocked-schedule enhanced" style="position: relative;">
                                         <!-- Checkbox for multi-select -->
                                         <div class="bulk-checkbox-container" style="position: absolute; top: 15px; left: 15px; display: none; z-index: 10;">
-                                            <input type="checkbox" class="blocked-checkbox" value="<?php echo $schedule['id']; ?>" 
+                                            <input type="checkbox" class="blocked-checkbox" value="<?php echo $schedule['la_id']; ?>" 
                                                    onchange="updateBulkActions()" 
                                                    style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--gold);">
                                         </div>
@@ -2491,7 +2450,7 @@ $active_page = "availability";
                                             <div class="schedule-actions">
                                                 <form method="POST" style="display: inline;">
                                                     <input type="hidden" name="action" value="permanent_delete">
-                                                    <input type="hidden" name="availability_id" value="<?php echo $schedule['id']; ?>">
+                                                    <input type="hidden" name="availability_id" value="<?php echo $schedule['la_id']; ?>">
                                                     <?php if (isset($_GET['filter'])): ?>
                                                         <input type="hidden" name="filter" value="<?php echo htmlspecialchars($_GET['filter']); ?>">
                                                     <?php endif; ?>
@@ -2816,3 +2775,4 @@ $active_page = "availability";
     </script>
 </body>
 </html>
+

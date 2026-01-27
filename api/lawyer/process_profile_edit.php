@@ -59,8 +59,8 @@ try {
         
         // Check if email is already taken by another user
         $email_check_stmt = $pdo->prepare("
-            SELECT id FROM users 
-            WHERE email = ? AND id != ? AND role = 'lawyer'
+            SELECT user_id FROM users 
+            WHERE email = ? AND user_id != ? AND role = 'lawyer'
         ");
         $email_check_stmt->execute([$email, $lawyer_id]);
         
@@ -71,27 +71,48 @@ try {
         // Update user information in users table
         $update_user_stmt = $pdo->prepare("
             UPDATE users 
-            SET lawyer_prefix = ?,
-                first_name = ?, 
-                last_name = ?, 
-                email = ?, 
-                phone = ?, 
-                description = ?
-            WHERE id = ? AND role = 'lawyer'
+            SET email = ?, 
+                phone = ?
+            WHERE user_id = ? AND role = 'lawyer'
         ");
         
         $update_result = $update_user_stmt->execute([
-            $prefix,
-            $first_name,
-            $last_name,
             $email,
             $phone,
-            $description,
             $lawyer_id
         ]);
         
         if (!$update_result) {
             throw new Exception("Failed to update profile information.");
+        }
+        
+        // Update lawyer_profile table
+        // Construct fullname: if prefix is provided, include it; otherwise just first + last name
+        $fullname_parts = [];
+        if (!empty($prefix)) {
+            $fullname_parts[] = $prefix;
+        }
+        $fullname_parts[] = $first_name;
+        $fullname_parts[] = $last_name;
+        $fullname = implode(' ', array_filter($fullname_parts)); // array_filter removes empty values
+        
+        $update_profile_stmt = $pdo->prepare("
+            UPDATE lawyer_profile 
+            SET lawyer_prefix = ?,
+                lp_fullname = ?,
+                lp_description = ?
+            WHERE lawyer_id = ?
+        ");
+        
+        $update_profile_result = $update_profile_stmt->execute([
+            $prefix,
+            $fullname,
+            $description,
+            $lawyer_id
+        ]);
+        
+        if (!$update_profile_result) {
+            throw new Exception("Failed to update lawyer profile.");
         }
         
         // Update session data with new name
@@ -113,21 +134,21 @@ try {
         // First, remove all existing specializations for this lawyer
         $delete_specializations_stmt = $pdo->prepare("
             DELETE FROM lawyer_specializations 
-            WHERE user_id = ?
+            WHERE lawyer_id = ?
         ");
         $delete_specializations_stmt->execute([$lawyer_id]);
         
         // Then, insert the new specializations
         $insert_specialization_stmt = $pdo->prepare("
-            INSERT INTO lawyer_specializations (user_id, practice_area_id) 
+            INSERT INTO lawyer_specializations (lawyer_id, pa_id) 
             VALUES (?, ?)
         ");
         
         foreach ($specializations as $practice_area_id) {
             // Validate that the practice area exists and is active
             $area_check_stmt = $pdo->prepare("
-                SELECT id FROM practice_areas 
-                WHERE id = ? AND is_active = 1
+                SELECT pa_id FROM practice_areas 
+                WHERE pa_id = ? AND is_active = 1
             ");
             $area_check_stmt->execute([$practice_area_id]);
             

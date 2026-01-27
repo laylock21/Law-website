@@ -108,7 +108,7 @@ try {
     } elseif ($new_status === 'completed' && $old_status !== 'completed') {
         // If consultation has no assigned lawyer, assign current lawyer
         if (!$current_consultation['lawyer_id']) {
-            $assign_stmt = $pdo->prepare('UPDATE consultations SET lawyer_id = ? WHERE id = ?');
+            $assign_stmt = $pdo->prepare('UPDATE consultations SET lawyer_id = ? WHERE c_id = ?');
             $assign_stmt->execute([$lawyer_id, $consultation_id]);
         }
         $queued = $emailNotification->notifyAppointmentCompleted($consultation_id);

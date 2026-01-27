@@ -30,24 +30,24 @@ try {
     
     $pdo = getDBConnection();
     
-    // Get current profile picture
-    $stmt = $pdo->prepare("SELECT profile_picture FROM users WHERE id = ? AND role = 'lawyer'");
+    // Get current profile picture from lawyer_profile table
+    $stmt = $pdo->prepare("SELECT profile FROM lawyer_profile WHERE lawyer_id = ?");
     $stmt->execute([$lawyer_id]);
     $user = $stmt->fetch();
     
     if (!$user) {
-        throw new Exception('User not found');
+        throw new Exception('User profile not found');
     }
     
-    $current_picture = $user['profile_picture'];
+    $current_picture = $user['profile'];
     
     // Remove file from filesystem if it exists
-    if ($current_picture && file_exists("../uploads/profile_pictures/" . $current_picture)) {
-        unlink("../uploads/profile_pictures/" . $current_picture);
+    if ($current_picture && file_exists("../../uploads/profile_pictures/" . $current_picture)) {
+        unlink("../../uploads/profile_pictures/" . $current_picture);
     }
     
     // Update database to remove profile picture reference
-    $update_stmt = $pdo->prepare("UPDATE users SET profile_picture = NULL WHERE id = ? AND role = 'lawyer'");
+    $update_stmt = $pdo->prepare("UPDATE lawyer_profile SET profile = NULL WHERE lawyer_id = ?");
     $update_stmt->execute([$lawyer_id]);
     
     if ($update_stmt->rowCount() === 0) {

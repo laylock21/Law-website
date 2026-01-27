@@ -82,29 +82,19 @@ try {
                 <div class="availability-header blocked-date-content" style="margin-left: 0; transition: margin-left 0.3s ease;">
                     <div class="availability-info">
                         <div style="margin-bottom: 8px;">
-                            <?php if (!empty($schedule['start_date']) && !empty($schedule['end_date'])): ?>
-                                <span class="schedule-badge" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; font-weight: 600; padding: 6px 12px; border-radius: 6px;">
-                                    <i class="fas fa-calendar-times"></i> BLOCKED RANGE
-                                </span>
-                            <?php else: ?>
-                                <span class="schedule-badge" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; font-weight: 600; padding: 6px 12px; border-radius: 6px;">
-                                    <i class="fas fa-ban"></i> BLOCKED DATE
-                                </span>
-                            <?php endif; ?>
+                            <span class="schedule-badge" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; font-weight: 600; padding: 6px 12px; border-radius: 6px;">
+                                <i class="fas fa-ban"></i> BLOCKED DATE
+                            </span>
                             <span style="color: #6c757d; font-size: 0.9rem; display: block; margin-top: 4px;">
                                 <?php echo $schedule['blocked_reason'] ? htmlspecialchars($schedule['blocked_reason']) : 'Unavailable'; ?>
                             </span>
                         </div>
                         <div class="availability-details">
-                            <strong>
-                                <?php echo (!empty($schedule['start_date']) && !empty($schedule['end_date'])) ? 'Date Range:' : 'Date:'; ?>
-                            </strong>
+                            <strong>Date:</strong>
                             <span>
                                 <?php 
                                 if (!empty($schedule['specific_date'])) {
                                     echo date('l, M d, Y', strtotime($schedule['specific_date']));
-                                } elseif (!empty($schedule['start_date']) && !empty($schedule['end_date'])) {
-                                    echo date('M d, Y', strtotime($schedule['start_date'])) . ' - ' . date('M d, Y', strtotime($schedule['end_date']));
                                 }
                                 ?>
                             </span>

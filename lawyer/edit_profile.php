@@ -55,7 +55,17 @@ try {
     
     // Split fullname into first and last name if needed
     if (!empty($lawyer['lp_fullname'])) {
-        $name_parts = explode(' ', $lawyer['lp_fullname'], 2);
+        $fullname = $lawyer['lp_fullname'];
+        
+        // Remove prefix from fullname if it exists
+        if (!empty($lawyer['lawyer_prefix'])) {
+            $prefix = $lawyer['lawyer_prefix'];
+            // Remove prefix and any trailing spaces/dots
+            $fullname = preg_replace('/^' . preg_quote($prefix, '/') . '\s*/i', '', $fullname);
+        }
+        
+        // Now split the remaining name into first and last
+        $name_parts = explode(' ', trim($fullname), 2);
         $lawyer['first_name'] = $name_parts[0] ?? '';
         $lawyer['last_name'] = $name_parts[1] ?? '';
     }

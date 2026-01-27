@@ -379,10 +379,10 @@ try {
     
     // Get paginated blocked dates for this lawyer
     $blocked_stmt = $pdo->prepare("
-        SELECT id, specific_date, start_date, end_date, weekdays as blocked_reason, created_at
+        SELECT la_id as id, specific_date, blocked_reason, created_at
         FROM lawyer_availability
-        WHERE user_id = ? 
-        AND max_appointments = 0
+        WHERE lawyer_id = ? 
+        AND schedule_type = 'blocked'
         AND specific_date >= CURDATE()
         ORDER BY specific_date ASC
         LIMIT ? OFFSET ?
@@ -851,18 +851,11 @@ try {
                             </div>
                             <div class="blocked-date-content" style="display: flex; justify-content: space-between; align-items: center; transition: margin-left 0.3s ease; margin-left: 0;">
                                 <div class="date-info">
-                                    <?php if (!empty($blocked['start_date']) && !empty($blocked['end_date'])): ?>
-                                        <span style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; font-weight: 600; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; display: inline-block; margin-bottom: 8px;">
-                                            <i class="fas fa-calendar-times"></i> BLOCKED RANGE
-                                        </span>
-                                        <br>
-                                        <strong><?php echo date('M d, Y', strtotime($blocked['start_date'])); ?> - <?php echo date('M d, Y', strtotime($blocked['end_date'])); ?></strong>
-                                    <?php else: ?>
-                                        <span style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; font-weight: 600; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; display: inline-block; margin-bottom: 8px;">
-                                            <i class="fas fa-ban"></i> BLOCKED DATE
-                                        </span>
-                                        <br>
-                                        <strong><?php echo date('l, F j, Y', strtotime($blocked['specific_date'])); ?></strong>
+                                    <span style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; font-weight: 600; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; display: inline-block; margin-bottom: 8px;">
+                                        <i class="fas fa-ban"></i> BLOCKED DATE
+                                    </span>
+                                    <br>
+                                    <strong><?php echo date('l, F j, Y', strtotime($blocked['specific_date'])); ?></strong>
                                     <?php endif; ?>
                                     <small style="display: block; margin-top: 4px;">
                                         <?php echo $blocked['blocked_reason'] ? htmlspecialchars($blocked['blocked_reason']) : 'Unavailable'; ?>

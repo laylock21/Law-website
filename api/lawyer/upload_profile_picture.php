@@ -67,19 +67,32 @@ try {
     $destination_path = PROFILE_PICTURES_DIR . $filename;
     
     // Get current profile picture for cleanup
-    $current_picture_stmt = $pdo->prepare("SELECT profile_picture FROM users WHERE id = ? AND role = 'lawyer'");
+    $current_picture_stmt = $pdo->prepare("SELECT profile FROM lawyer_profile WHERE lawyer_id = ?");
     $current_picture_stmt->execute([$lawyer_id]);
     $current_picture = $current_picture_stmt->fetchColumn();
     
     // Process and save the image
     processProfilePicture($uploaded_file['tmp_name'], $destination_path);
     
-    // Update database with new filename
-    $update_stmt = $pdo->prepare("
-        UPDATE users 
-        SET profile_picture = ? 
-        WHERE id = ? AND role = 'lawyer'
-    ");
+    // Update database with new filename in lawyer_profile table
+    // First check if lawyer_profile record exists
+    $check_profile_stmt = $pdo->prepare("SELECT lawyer_id FROM lawyer_profile WHERE lawyer_id = ?");
+    $check_profile_stmt->execute([$lawyer_id]);
+    
+    if ($check_profile_stmt->fetch()) {
+        // Update existing record
+        $update_stmt = $pdo->prepare("
+            UPDATE lawyer_profile 
+            SET profile = ? 
+            WHERE lawyer_id = ?
+        ");
+    } else {
+        // Insert new record
+        $update_stmt = $pdo->prepare("
+            INSERT INTO lawyer_profile (lawyer_id, profile, lp_fullname) 
+            VALUES (?, ?, '')
+        ");
+    }
     
     $update_result = $update_stmt->execute([$filename, $lawyer_id]);
     

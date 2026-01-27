@@ -72,7 +72,7 @@ try {
         UPDATE users 
         SET password = ?,
             temporary_password = NULL
-        WHERE id = ? AND role = 'lawyer'
+        WHERE user_id = ? AND role = 'lawyer'
     ");
     
     $update_result = $update_password_stmt->execute([

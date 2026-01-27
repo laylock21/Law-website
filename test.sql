@@ -340,3 +340,23 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 ``````````````````````````````````````````````````````````````````  
+
+
+
+ALTER TABLE `consultations`
+ADD COLUMN `c_practice_area` VARCHAR(100) NULL AFTER `c_phone`,
+ADD COLUMN `c_case_description` TEXT NULL AFTER `case_description`,
+ADD COLUMN `c_selected_lawyer` VARCHAR(100) NULL AFTER `c_case_description`,
+ADD COLUMN `c_selected_date` DATE NULL AFTER `c_selected_lawyer`;
+
+-- Rename existing columns to use c_ prefix
+ALTER TABLE `consultations`
+CHANGE COLUMN `consultation_date` `c_consultation_date` DATE NOT NULL,
+CHANGE COLUMN `consultation_time` `c_consultation_time` TIME NOT NULL,
+CHANGE COLUMN `case_description` `c_case_description_old` TEXT NOT NULL,
+CHANGE COLUMN `cancellation_reason` `c_cancellation_reason` VARCHAR(255) NULL;
+
+-- Copy data if needed
+UPDATE `consultations` SET 
+    `c_case_description` = `c_case_description_old`
+WHERE `c_case_description` IS NULL;
