@@ -27,10 +27,10 @@ try {
     $pdo = getDBConnection();
     
     // Get lawyer's profile picture and temporary password status
-    $profile_stmt = $pdo->prepare("SELECT profile_picture, temporary_password FROM users WHERE id = ? AND role = 'lawyer'");
+    $profile_stmt = $pdo->prepare("SELECT lp.profile, u.temporary_password FROM users u LEFT JOIN lawyer_profile lp ON u.user_id = lp.lawyer_id WHERE u.user_id = ? AND u.role = 'lawyer'");
     $profile_stmt->execute([$lawyer_id]);
     $lawyer_profile = $profile_stmt->fetch();
-    $profile_picture = $lawyer_profile['profile_picture'] ?? null;
+    $profile_picture = $lawyer_profile['profile'] ?? null;
     $has_temporary_password = ($lawyer_profile['temporary_password'] === 'temporary');
     
     // Get total count of consultations for pagination
@@ -59,8 +59,8 @@ try {
     $specializations_stmt = $pdo->prepare("
         SELECT pa.area_name 
         FROM lawyer_specializations ls 
-        JOIN practice_areas pa ON ls.practice_area_id = pa.id 
-        WHERE ls.user_id = ?
+        JOIN practice_areas pa ON ls.pa_id = pa.pa_id 
+        WHERE ls.lawyer_id = ?
     ");
     $specializations_stmt->execute([$lawyer_id]);
     $specializations = $specializations_stmt->fetchAll();
@@ -68,7 +68,7 @@ try {
     // Get weekly availability - fetch only active schedules
     $availability_stmt = $pdo->prepare("
         SELECT * FROM lawyer_availability 
-        WHERE user_id = ? AND is_active = 1
+        WHERE lawyer_id = ? AND la_is_active = 1
         ORDER BY schedule_type, specific_date, created_at DESC
     ");
     $availability_stmt->execute([$lawyer_id]);

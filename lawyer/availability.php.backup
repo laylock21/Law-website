@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Insert one row per selected weekday
             $insert_stmt = $pdo->prepare("
-                INSERT INTO lawyer_availability (lawyer_id, schedule_type, weekday, start_time, end_time, max_appointments, time_slot_duration, is_active) 
+                INSERT INTO lawyer_availability (user_id, schedule_type, weekdays, start_time, end_time, max_appointments, time_slot_duration, is_active) 
                 VALUES (?, 'weekly', ?, ?, ?, ?, ?, 1)
             ");
             
@@ -126,8 +126,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Check for duplicate one-time schedule on same date
             $check_stmt = $pdo->prepare("
-                SELECT la_id FROM lawyer_availability 
-                WHERE lawyer_id = ? AND specific_date = ? AND schedule_type = 'one_time' AND max_appointments > 0
+                SELECT id FROM lawyer_availability 
+                WHERE user_id = ? AND specific_date = ? AND schedule_type = 'one_time' AND max_appointments > 0
             ");
             $check_stmt->execute([$lawyer_id, $specific_date]);
             if ($check_stmt->fetch()) {
@@ -139,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $day_name = date('l', strtotime($specific_date)); // Get day name (Monday, Tuesday, etc.)
             
             $insert_stmt = $pdo->prepare("
-                INSERT INTO lawyer_availability (lawyer_id, schedule_type, specific_date, weekday, start_time, end_time, max_appointments, time_slot_duration, is_active) 
+                INSERT INTO lawyer_availability (user_id, schedule_type, specific_date, weekdays, start_time, end_time, max_appointments, time_slot_duration, is_active) 
                 VALUES (?, 'one_time', ?, ?, ?, ?, ?, ?, 1)
             ");
             $insert_stmt->execute([$lawyer_id, $specific_date, $day_name, $start_time, $end_time, $max_appointments, $time_slot_duration]);
@@ -150,15 +150,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $availability_id = (int)$_POST['availability_id'];
             
             // Verify ownership
-            $verify_stmt = $pdo->prepare("SELECT la_id FROM lawyer_availability WHERE id = ? AND lawyer_id = ?");
+            $verify_stmt = $pdo->prepare("SELECT id FROM lawyer_availability WHERE id = ? AND user_id = ?");
             $verify_stmt->execute([$availability_id, $lawyer_id]);
             
             if (!$verify_stmt->fetch()) {
                 throw new Exception('Invalid availability record.');
             }
             
-            // Soft delete (SET la_is_active = 0)
-            $delete_stmt = $pdo->prepare("UPDATE lawyer_availability SET la_is_active = 0 WHERE id = ? AND lawyer_id = ?");
+            // Soft delete (set is_active = 0)
+            $delete_stmt = $pdo->prepare("UPDATE lawyer_availability SET is_active = 0 WHERE id = ? AND user_id = ?");
             $delete_stmt->execute([$availability_id, $lawyer_id]);
             
             if ($delete_stmt->rowCount() === 0) {
@@ -171,7 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $availability_id = (int)$_POST['availability_id'];
             
             // Verify ownership
-            $verify_stmt = $pdo->prepare("SELECT la_id FROM lawyer_availability WHERE id = ? AND lawyer_id = ?");
+            $verify_stmt = $pdo->prepare("SELECT id FROM lawyer_availability WHERE id = ? AND user_id = ?");
             $verify_stmt->execute([$availability_id, $lawyer_id]);
             
             if (!$verify_stmt->fetch()) {
@@ -179,7 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             // Activate schedule
-            $activate_stmt = $pdo->prepare("UPDATE lawyer_availability SET la_is_active = 1 WHERE id = ? AND lawyer_id = ?");
+            $activate_stmt = $pdo->prepare("UPDATE lawyer_availability SET is_active = 1 WHERE id = ? AND user_id = ?");
             $activate_stmt->execute([$availability_id, $lawyer_id]);
             
             if ($activate_stmt->rowCount() === 0) {
@@ -192,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $availability_id = (int)$_POST['availability_id'];
             
             // Verify ownership
-            $verify_stmt = $pdo->prepare("SELECT la_id FROM lawyer_availability WHERE id = ? AND lawyer_id = ?");
+            $verify_stmt = $pdo->prepare("SELECT id FROM lawyer_availability WHERE id = ? AND user_id = ?");
             $verify_stmt->execute([$availability_id, $lawyer_id]);
             
             if (!$verify_stmt->fetch()) {
@@ -200,7 +200,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             // Permanently delete from database
-            $delete_stmt = $pdo->prepare("DELETE FROM lawyer_availability WHERE id = ? AND lawyer_id = ?");
+            $delete_stmt = $pdo->prepare("DELETE FROM lawyer_availability WHERE id = ? AND user_id = ?");
             $delete_stmt->execute([$availability_id, $lawyer_id]);
             
             if ($delete_stmt->rowCount() === 0) {
@@ -229,7 +229,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Verify all IDs belong to this lawyer
             $verify_stmt = $pdo->prepare("
                 SELECT COUNT(*) as count FROM lawyer_availability 
-                WHERE id IN ($placeholders) AND lawyer_id = ?
+                WHERE id IN ($placeholders) AND user_id = ?
             ");
             $verify_stmt->execute(array_merge($ids, [$lawyer_id]));
             $verified_count = (int)$verify_stmt->fetch()['count'];
@@ -241,7 +241,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Delete (unblock) selected dates
             $delete_stmt = $pdo->prepare("
                 DELETE FROM lawyer_availability 
-                WHERE id IN ($placeholders) AND lawyer_id = ?
+                WHERE id IN ($placeholders) AND user_id = ?
             ");
             $delete_stmt->execute(array_merge($ids, [$lawyer_id]));
             
@@ -269,8 +269,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Check if already blocked
             $check_stmt = $pdo->prepare("
-                SELECT la_id FROM lawyer_availability 
-                WHERE lawyer_id = ? 
+                SELECT id FROM lawyer_availability 
+                WHERE user_id = ? 
                 AND schedule_type = 'blocked' 
                 AND specific_date = ?
             ");
@@ -287,7 +287,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Insert blocked date
             $insert_stmt = $pdo->prepare("
-                INSERT INTO lawyer_availability (lawyer_id, schedule_type, specific_date, blocked_reason) 
+                INSERT INTO lawyer_availability (user_id, schedule_type, specific_date, blocked_reason) 
                 VALUES (?, 'blocked', ?, ?)
             ");
             $insert_stmt->execute([$lawyer_id, $block_date, $reason]);
@@ -391,8 +391,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             while (strtotime($current_date) <= strtotime($end_date)) {
                 // Check if this specific date is already blocked
                 $check_stmt = $pdo->prepare("
-                    SELECT la_id FROM lawyer_availability 
-                    WHERE lawyer_id = ? 
+                    SELECT id FROM lawyer_availability 
+                    WHERE user_id = ? 
                     AND schedule_type = 'blocked'
                     AND specific_date = ?
                 ");
@@ -505,7 +505,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $update_stmt = $pdo->prepare("
                 UPDATE users 
                 SET default_booking_weeks = ?, max_booking_weeks = ?, booking_window_enabled = ?
-                WHERE user_id = ? AND role = 'lawyer'
+                WHERE id = ? AND role = 'lawyer'
             ");
             $update_stmt->execute([$default_weeks, $max_weeks, $enabled, $lawyer_id]);
             
@@ -595,7 +595,7 @@ try {
     $preferences_stmt = $pdo->prepare("
         SELECT default_booking_weeks, max_booking_weeks, booking_window_enabled 
         FROM users 
-        WHERE user_id = ? AND role = 'lawyer'
+        WHERE id = ? AND role = 'lawyer'
     ");
     $preferences_stmt->execute([$lawyer_id]);
     $lawyer_preferences = $preferences_stmt->fetch();
@@ -607,8 +607,8 @@ try {
     
     $availability_stmt = $pdo->prepare("
         SELECT * FROM lawyer_availability 
-        WHERE lawyer_id = ?
-        AND la_is_active = 1
+        WHERE user_id = ?
+        AND is_active = 1
         AND (
             schedule_type = 'weekly' 
             OR (schedule_type = 'one_time' AND specific_date >= CURDATE())

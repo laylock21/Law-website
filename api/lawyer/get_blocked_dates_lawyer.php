@@ -14,7 +14,7 @@ if (!isset($_SESSION['user_logged_in']) || $_SESSION['user_logged_in'] !== true 
 
 require_once '../../config/database.php';
 
-$lawyer_id = $_SESSION['user_id'];
+$lawyer_id = $_SESSION['lawyer_id'];
 $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 
 try {
@@ -26,16 +26,12 @@ try {
     
     // Get all blocked dates (for total count)
     $all_blocked_stmt = $pdo->prepare("
-        SELECT id, specific_date, start_date, end_date, blocked_reason, created_at
+        SELECT la_id as id, specific_date, blocked_reason, created_at
         FROM lawyer_availability
-        WHERE user_id = ? 
+        WHERE lawyer_id = ? 
         AND schedule_type = 'blocked'
-        AND (
-            (specific_date IS NOT NULL AND specific_date >= CURDATE())
-            OR (start_date IS NOT NULL AND end_date IS NOT NULL AND end_date >= CURDATE())
-        )
-        ORDER BY 
-            COALESCE(specific_date, start_date) ASC
+        AND specific_date >= CURDATE()
+        ORDER BY specific_date ASC
     ");
     $all_blocked_stmt->execute([$lawyer_id]);
     $blocked_dates = $all_blocked_stmt->fetchAll(PDO::FETCH_ASSOC);
