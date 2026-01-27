@@ -454,7 +454,7 @@ $active_page = "consultations";
                         <div class="bulk-actions-section consult-mobile-bulk-section" id="bulk-actions-section">
                             <form method="POST" id="bulk-form" class="bulk-form">
                                 <select name="bulk_action" id="bulk_action" class="admin-dropdown admin-dropdown-primary">
-                                    <option value="" selected>Sort</option>
+                                    <option value="" selected>Select actions</options>
                                     <option value="pending">Set to Pending</option>
                                     <option value="confirm">Set to Confirmed</option>
                                     <option value="complete">Set to Completed</option>

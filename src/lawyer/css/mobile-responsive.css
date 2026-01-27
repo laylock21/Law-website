@@ -748,6 +748,7 @@ body.lawyer-page {
     .lawyer-availability-section {
         padding: 15px;
         margin-bottom: 15px;
+        margin-top: 80px;
         min-height: auto !important;
         background: white;
         border-radius: 8px;
@@ -927,7 +928,7 @@ body.lawyer-page {
         pointer-events: none;
     }
     
-    /* Consultations table - Transform to mobile cards */
+    /* Consultations table - Transform to mobile cards with modern design */
     .admin-consultations-table {
         display: block !important;
         overflow: visible !important;
@@ -956,235 +957,188 @@ body.lawyer-page {
         width: 100% !important;
     }
     
-    /* Transform each row into a card */
+    /* Transform each row into a modern card */
     .admin-consultations-table tbody tr {
         display: block !important;
         width: 100% !important;
         margin-bottom: 15px !important;
         border: 1px solid #e9ecef !important;
-        border-radius: 8px !important;
-        padding: 15px !important;
+        border-radius: 12px !important;
+        padding: 0 !important;
         background: white !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+        position: relative !important;
+        overflow: hidden !important;
     }
     
-    /* Make each cell a row with label */
+    /* Card header with checkbox and action icons */
+    .admin-consultations-table tbody tr::before {
+        content: '';
+        display: block;
+        width: 100%;
+        padding: 12px 15px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    /* Hide selection checkbox cell */
+    .admin-consultations-table tbody tr td:nth-child(1) {
+        display: none !important;
+    }
+    
+    /* ID cell - show as header */
+    .admin-consultations-table tbody tr td:nth-child(2) {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        padding: 12px 15px !important;
+        background: #f8f9fa !important;
+        border-bottom: 1px solid #e9ecef !important;
+        font-weight: 700 !important;
+        font-size: 15px !important;
+        color: #2c3e50 !important;
+        position: relative !important;
+        margin: 0 !important;
+        grid-template-columns: none !important;
+    }
+    
+    .admin-consultations-table tbody tr td:nth-child(2)::before {
+        content: none !important;
+    }
+    
+    /* Make each cell a row with label - card body */
     .admin-consultations-table tbody tr td {
         display: block !important;
         width: 100% !important;
-        padding: 10px 0 !important;
+        padding: 14px 15px !important;
         border: none !important;
-        border-bottom: 1px solid #f8f9fa !important;
+        border-bottom: 1px solid #f0f0f0 !important;
         text-align: left !important;
         position: relative !important;
-        padding-left: 0 !important;
         font-size: 14px !important;
     }
     
     .admin-consultations-table tbody tr td:last-child {
         border-bottom: none !important;
+        padding-bottom: 15px !important;
+    }
+    
+    /* Labels styling - show as block above content */
+    .admin-consultations-table tbody tr td::before {
+        content: attr(data-label);
+        display: block;
+        font-weight: 600;
+        font-size: 13px;
+        color: #6c757d;
+        text-transform: capitalize;
+        margin-bottom: 6px;
     }
     
     /* Add labels before each cell */
-    .admin-consultations-table tbody tr td:nth-child(1)::before {
-        content: "Select";
-        display: block;
-        font-weight: 600;
-        font-size: 11px;
-        color: #6c757d;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 6px;
-    }
-    
-    .admin-consultations-table tbody tr td:nth-child(2)::before {
-        content: "ID";
-        display: block;
-        font-weight: 600;
-        font-size: 11px;
-        color: #6c757d;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 6px;
-    }
-    
     .admin-consultations-table tbody tr td:nth-child(3)::before {
         content: "Client";
-        display: block;
-        font-weight: 600;
-        font-size: 11px;
-        color: #6c757d;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 6px;
     }
     
     .admin-consultations-table tbody tr td:nth-child(4)::before {
         content: "Practice Area";
-        display: block;
-        font-weight: 600;
-        font-size: 11px;
-        color: #6c757d;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 6px;
     }
     
     .admin-consultations-table tbody tr td:nth-child(5)::before {
         content: "Date & Time";
-        display: block;
-        font-weight: 600;
-        font-size: 11px;
-        color: #6c757d;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 6px;
     }
     
     .admin-consultations-table tbody tr td:nth-child(6)::before {
         content: "Status";
-        display: block;
-        font-weight: 600;
-        font-size: 11px;
-        color: #6c757d;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 6px;
     }
     
     .admin-consultations-table tbody tr td:nth-child(7)::before {
         content: "Created";
-        display: block;
-        font-weight: 600;
-        font-size: 11px;
-        color: #6c757d;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 6px;
+    }
+    
+    /* Actions column - center the View Details button */
+    .admin-consultations-table tbody tr td:nth-child(8) {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        padding: 15px !important;
+        border-bottom: none !important;
     }
     
     .admin-consultations-table tbody tr td:nth-child(8)::before {
-        content: "Actions";
+        content: none !important;
+        display: none !important;
+    }
+    
+    .admin-consultations-table tbody tr td:nth-child(8) a,
+    .admin-consultations-table tbody tr td:nth-child(8) button {
+        width: 100% !important;
+        max-width: 100% !important;
+        text-align: center !important;
+        padding: 14px 24px !important;
+        background: linear-gradient(135deg, var(--gold) 0%, #d4b36a 100%) !important;
+        color: white !important;
+        text-decoration: none !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        font-size: 15px !important;
+        display: block !important;
+        transition: all 0.2s ease !important;
+        border: none !important;
+        cursor: pointer !important;
+    }
+    
+    .admin-consultations-table tbody tr td:nth-child(8) a:hover,
+    .admin-consultations-table tbody tr td:nth-child(8) button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 12px rgba(201, 169, 97, 0.4) !important;
+    }
+    
+    /* Cell content styling */
+    .admin-consultations-table tbody tr td > * {
         display: block;
-        font-weight: 600;
-        font-size: 11px;
-        color: #6c757d;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 6px;
-    }
-    
-    /* Style the cell content */
-    .admin-consultations-table tbody tr td {
-        color: #3a3a3a;
+        text-align: left;
+        word-wrap: break-word;
         line-height: 1.5;
+        color: #2c3e50;
     }
     
-    /* Checkbox styling */
-    .admin-consultations-table tbody tr td:first-child {
-        padding-bottom: 15px !important;
-        border-bottom: 2px solid #e9ecef !important;
-    }
-    
-    /* Action buttons full width */
-    .admin-consultations-table tbody tr td:last-child > div {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 8px !important;
-        width: 100% !important;
-    }
-    
-    .admin-consultations-table tbody tr td:last-child button,
-    .admin-consultations-table tbody tr td:last-child .lawyer-btn {
-        width: 100% !important;
-        margin: 0 !important;
+    /* Status badges */
+    .lawyer-status-badge {
+        font-size: 11px !important;
+        padding: 6px 14px !important;
+        border-radius: 12px !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        display: inline-block !important;
+        text-align: center !important;
+        margin-top: 0 !important;
     }
     
     /* Small text in cells */
     .admin-consultations-table tbody tr td small {
-        display: block;
-        font-size: 12px;
-        color: #6c757d;
-        margin-top: 4px;
-    }
-    
-    /* Bulk actions */
-    #bulk-actions-container {
-        padding: 12px !important;
-        margin: 0 !important;
-        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%) !important;
-        border-radius: 8px !important;
         display: block !important;
-        border: 2px solid #e9ecef;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        width: 100% !important;
+        font-size: 12px !important;
+        color: #6c757d !important;
+        margin-top: 6px !important;
+        text-align: left !important;
+        line-height: 1.4 !important;
     }
     
-    #bulk-actions-container form {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 10px !important;
-        width: 100%;
+    /* Icons in cells */
+    .admin-consultations-table tbody tr td i {
+        margin-right: 6px;
+        color: #6c757d;
     }
     
-    #bulk_action {
-        width: 100% !important;
-        min-width: auto !important;
-        font-size: 14px !important;
-        padding: 10px 36px 10px 12px !important;
-        border: 2px solid #e9ecef !important;
-        border-radius: 6px !important;
-        background: white !important;
-        color: #3a3a3a !important;
-        font-weight: 500 !important;
-        cursor: pointer !important;
-        appearance: none !important;
-        -webkit-appearance: none !important;
-        -moz-appearance: none !important;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E") !important;
-        background-repeat: no-repeat !important;
-        background-position: right 10px center !important;
-        background-size: 14px 10px !important;
-        min-height: 44px !important;
-        transition: all 0.2s ease;
+    /* Hide bulk actions completely on mobile */
+    #bulk-actions-container {
+        display: none !important;
     }
     
-    #bulk_action:hover {
-        border-color: var(--gold) !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    
-    #bulk_action:focus {
-        outline: none !important;
-        border-color: var(--gold) !important;
-        box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.1);
-    }
-    
-    .lawyer-btn.btn-apply-selected {
-        width: 100% !important;
-        font-size: 14px !important;
-        padding: 12px 16px !important;
-        min-height: 48px !important;
-        border-radius: 6px !important;
-        font-weight: 600 !important;
-        background: linear-gradient(135deg, var(--gold) 0%, #d4b36a 100%) !important;
-        color: white !important;
-        border: none !important;
-        cursor: pointer !important;
-        transition: all 0.2s ease;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 8px;
-    }
-    
-    .lawyer-btn.btn-apply-selected:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(201, 169, 97, 0.3);
-    }
-    
-    .lawyer-btn.btn-apply-selected:active {
-        transform: translateY(0);
+    /* Hide select all checkbox in header */
+    .admin-consultations-table thead th:first-child {
+        display: none !important;
     }
     
     /* Checkboxes */
@@ -1192,6 +1146,98 @@ body.lawyer-page {
         width: 20px;
         height: 20px;
         cursor: pointer;
+    }
+    
+    /* Consultation Modal - Center content */
+    .consultation-modal .modal-body {
+        padding: 20px 15px !important;
+        text-align: left !important;
+        overflow-x: hidden !important;
+        max-width: 100% !important;
+    }
+    
+    .modal-consultation-details {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 20px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+    }
+    
+    .modal-consultation-details > div {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        padding: 15px !important;
+        background: #f8f9fa !important;
+        border-radius: 8px !important;
+        border-left: 3px solid var(--gold) !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
+    
+    .modal-consultation-details h4 {
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        color: #6c757d !important;
+        margin: 0 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+    }
+    
+    .modal-consultation-details p,
+    .modal-consultation-details strong {
+        font-size: 15px !important;
+        color: #2c3e50 !important;
+        margin: 0 !important;
+        line-height: 1.5 !important;
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        max-width: 100% !important;
+        white-space: normal !important;
+    }
+    
+    /* Status badge in modal */
+    .modal-consultation-details .lawyer-status-badge {
+        display: inline-block !important;
+        margin-top: 5px !important;
+    }
+    
+    /* Case description */
+    .modal-consultation-details textarea,
+    .modal-consultation-details .case-description,
+    .modal-consultation-details div:has(h4:contains("Case Description")) p,
+    .modal-consultation-details div:has(h4:contains("Description")) p {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 12px !important;
+        background: white !important;
+        border: 1px solid #e9ecef !important;
+        border-radius: 6px !important;
+        font-size: 14px !important;
+        line-height: 1.6 !important;
+        margin-top: 8px !important;
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        white-space: pre-wrap !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Specific styling for case description container */
+    .modal-consultation-details > div:last-child {
+        overflow: hidden !important;
+    }
+    
+    .modal-consultation-details > div:last-child p {
+        max-width: 100% !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
     }
     
     #select-all {
