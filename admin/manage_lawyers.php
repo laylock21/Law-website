@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     
                     // Check if username/email already exists
-                    $check_stmt = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
+                    $check_stmt = $pdo->prepare("SELECT user_id FROM users WHERE username = ? OR email = ?");
                     $check_stmt->execute([$username, $email]);
                     if ($check_stmt->fetch()) {
                         throw new Exception('Username or email already exists');
@@ -86,17 +86,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Start transaction
                     $pdo->beginTransaction();
                     
-                    // Insert user with default date preferences
+                    // Insert user
                     $user_stmt = $pdo->prepare("
-                        INSERT INTO users (username, email, password, first_name, last_name, phone, description, role, is_active, default_booking_weeks, max_booking_weeks, booking_window_enabled, temporary_password) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, 'lawyer', 1, 52, 104, 1, ?)
+                        INSERT INTO users (username, email, password, phone, role, is_active, temporary_password) 
+                        VALUES (?, ?, ?, ?, 'lawyer', 1, ?)
                     ");
-                    $user_stmt->execute([$username, $email, $hashed_password, $first_name, $last_name, $phone, $description, $force_change]);
+                    $user_stmt->execute([$username, $email, $hashed_password, $phone, $force_change]);
                     $lawyer_id = $pdo->lastInsertId();
+                    
+                    // Insert lawyer profile
+                    $profile_stmt = $pdo->prepare("
+                        INSERT INTO lawyer_profile (lawyer_id, lp_fullname, lp_description) 
+                        VALUES (?, ?, ?)
+                    ");
+                    $full_name = $first_name . ' ' . $last_name;
+                    $profile_stmt->execute([$lawyer_id, $full_name, $description]);
                     
                     // Add specializations
                     if (!empty($specializations)) {
-                        $spec_stmt = $pdo->prepare("INSERT INTO lawyer_specializations (user_id, practice_area_id) VALUES (?, ?)");
+                        $spec_stmt = $pdo->prepare("INSERT INTO lawyer_specializations (lawyer_id, pa_id) VALUES (?, ?)");
                         foreach ($specializations as $area_id) {
                             $spec_stmt->execute([$lawyer_id, $area_id]);
                         }
@@ -174,7 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $current_status = $_POST['current_status'];
                     $new_status = $current_status ? 0 : 1;
                     
-                    $toggle_stmt = $pdo->prepare("UPDATE users SET is_active = ? WHERE id = ? AND role = 'lawyer'");
+                    $toggle_stmt = $pdo->prepare("UPDATE users SET is_active = ? WHERE user_id = ? AND role = 'lawyer'");
                     $toggle_stmt->execute([$new_status, $lawyer_id]);
                     
                     // Log status change
@@ -197,7 +205,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $password_option = $_POST['password_option'] ?? 'auto';
                     
                     // Get lawyer info for success message
-                    $lawyer_info_stmt = $pdo->prepare("SELECT first_name, last_name, username, email FROM users WHERE id = ? AND role = 'lawyer'");
+                    $lawyer_info_stmt = $pdo->prepare("SELECT lp_fullname, username FROM lawyer_profile lp JOIN users u ON lp.lawyer_id = u.user_id WHERE u.user_id = ? AND u.role = 'lawyer'");
                     $lawyer_info_stmt->execute([$lawyer_id]);
                     $lawyer_info = $lawyer_info_stmt->fetch();
                     
@@ -240,7 +248,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     
                     // Update password and temporary_password status
-                    $reset_stmt = $pdo->prepare("UPDATE users SET password = ?, temporary_password = ? WHERE id = ? AND role = 'lawyer'");
+                    $reset_stmt = $pdo->prepare("UPDATE users SET password = ?, temporary_password = ? WHERE user_id = ? AND role = 'lawyer'");
                     $reset_stmt->execute([$hashed_password, $force_change, $lawyer_id]);
                     
                     // Log password reset
@@ -252,9 +260,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ]);
                     
                     // Create detailed success message
-                    $lawyer_name = $lawyer_info['first_name'] . ' ' . $lawyer_info['last_name'];
+                    $lawyer_name = $lawyer_info['lp_fullname'];
                     $username = $lawyer_info['username'];
-                    $email = $lawyer_info['email'];
+                    
+                    // Get email from users table
+                    $email_stmt = $pdo->prepare("SELECT email FROM users WHERE user_id = ?");
+                    $email_stmt->execute([$lawyer_id]);
+                    $email_data = $email_stmt->fetch();
+                    $email = $email_data['email'] ?? '';
                     
                     if ($password_option === 'auto') {
                         // Detailed credentials box for auto-generated passwords
@@ -313,7 +326,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $lawyer_id = $_POST['lawyer_id'];
                     
                     // Get lawyer info for confirmation message
-                    $lawyer_info_stmt = $pdo->prepare("SELECT first_name, last_name FROM users WHERE id = ? AND role = 'lawyer'");
+                    $lawyer_info_stmt = $pdo->prepare("SELECT lp_fullname FROM lawyer_profile WHERE lawyer_id = ?");
                     $lawyer_info_stmt->execute([$lawyer_id]);
                     $lawyer_info = $lawyer_info_stmt->fetch();
                     
@@ -330,7 +343,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $pdo->beginTransaction();
                     
                     // Delete lawyer (consultations will be automatically deleted due to foreign key cascade)
-                    $delete_stmt = $pdo->prepare("DELETE FROM users WHERE id = ? AND role = 'lawyer'");
+                    $delete_stmt = $pdo->prepare("DELETE FROM users WHERE user_id = ? AND role = 'lawyer'");
                     $delete_result = $delete_stmt->execute([$lawyer_id]);
                     
                     if (!$delete_result) {
@@ -343,11 +356,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     Logger::security('lawyer_deleted', [
                         'admin_id' => $_SESSION['user_id'],
                         'lawyer_id' => $lawyer_id,
-                        'lawyer_name' => $lawyer_name,
+                        'lawyer_name' => $lawyer_info['lp_fullname'],
                         'consultations_deleted' => $consultation_count
                     ]);
                     
-                    $lawyer_name = $lawyer_info['first_name'] . ' ' . $lawyer_info['last_name'];
+                    $lawyer_name = $lawyer_info['lp_fullname'];
                     $message = "Lawyer <strong>$lawyer_name</strong> has been permanently deleted.";
                     if ($consultation_count > 0) {
                         $message .= " <strong>$consultation_count</strong> associated consultation(s) were also deleted.";
@@ -380,29 +393,29 @@ try {
     // Get lawyers with their specializations and consultation counts
     $lawyers_stmt = $pdo->query("
         SELECT 
-            u.id,
+            u.user_id,
             u.username,
             u.email,
-            u.first_name,
-            u.last_name,
             u.phone,
-            u.description,
             u.is_active,
             u.created_at,
-            u.profile_picture,
+            lp.lp_fullname,
+            lp.lp_description,
+            lp.profile,
             GROUP_CONCAT(DISTINCT pa.area_name SEPARATOR ', ') as specializations,
-            (SELECT COUNT(*) FROM consultations c WHERE c.lawyer_id = u.id) as consultation_count
+            (SELECT COUNT(*) FROM consultations c WHERE c.lawyer_id = u.user_id) as consultation_count
         FROM users u
-        LEFT JOIN lawyer_specializations ls ON u.id = ls.user_id
-        LEFT JOIN practice_areas pa ON ls.practice_area_id = pa.id
+        LEFT JOIN lawyer_profile lp ON u.user_id = lp.lawyer_id
+        LEFT JOIN lawyer_specializations ls ON u.user_id = ls.lawyer_id
+        LEFT JOIN practice_areas pa ON ls.pa_id = pa.pa_id
         WHERE u.role = 'lawyer'
-        GROUP BY u.id, u.username, u.email, u.first_name, u.last_name, u.phone, u.description, u.is_active, u.created_at, u.profile_picture
+        GROUP BY u.user_id, u.username, u.email, u.phone, u.is_active, u.created_at, lp.lp_fullname, lp.lp_description, lp.profile
         ORDER BY u.created_at DESC
     ");
     $lawyers = $lawyers_stmt->fetchAll();
     
     // Get practice areas for form
-    $areas_stmt = $pdo->query("SELECT * FROM practice_areas ORDER BY area_name");
+    $areas_stmt = $pdo->query("SELECT pa_id, area_name FROM practice_areas ORDER BY area_name");
     $practice_areas = $areas_stmt->fetchAll();
     
 } catch (Exception $e) {
@@ -455,7 +468,7 @@ $active_page = "lawyer";
                     <div>Active Lawyers</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number"><?php echo count(array_filter($lawyers, fn($l) => !empty($l['profile_picture']))); ?></div>
+                    <div class="stat-number"><?php echo count(array_filter($lawyers, fn($l) => !empty($l['profile']))); ?></div>
                     <div>With Profile Pictures</div>
                 </div>
                 <div class="stat-card">
@@ -494,14 +507,17 @@ $active_page = "lawyer";
                             <?php foreach ($lawyers as $lawyer): ?>
                                 <tr>
                                     <td>
-                                        <img src="<?php echo htmlspecialchars(getProfilePictureUrl($lawyer['profile_picture'])); ?>" 
-                                             alt="Profile" class="profile-pic" 
-                                             onerror="this.src='<?php echo htmlspecialchars(getProfilePictureUrl('')); ?>'; this.style.display='block';">
+                                        <?php if ($lawyer['profile']): ?>
+                                            <img src="data:image/jpeg;base64,<?php echo base64_encode($lawyer['profile']); ?>" 
+                                                 alt="Profile" class="profile-pic">
+                                        <?php else: ?>
+                                            <img src="../src/img/default-avatar.png" alt="Default" class="profile-pic">
+                                        <?php endif; ?>
                                     </td>
                                     <td>
-                                        <strong><?php echo htmlspecialchars($lawyer['first_name'] . ' ' . $lawyer['last_name']); ?></strong>
-                                        <?php if ($lawyer['description']): ?>
-                                            <br><small style="color: #666;"><?php echo htmlspecialchars(substr($lawyer['description'], 0, 50)) . (strlen($lawyer['description']) > 50 ? '...' : ''); ?></small>
+                                        <strong><?php echo htmlspecialchars($lawyer['lp_fullname'] ?? 'N/A'); ?></strong>
+                                        <?php if ($lawyer['lp_description']): ?>
+                                            <br><small style="color: #666;"><?php echo htmlspecialchars(substr($lawyer['lp_description'], 0, 50)) . (strlen($lawyer['lp_description']) > 50 ? '...' : ''); ?></small>
                                         <?php endif; ?>
                                     </td>
                                     <td><?php echo htmlspecialchars($lawyer['username']); ?></td>
@@ -526,32 +542,32 @@ $active_page = "lawyer";
                                     </td>
                                     <td><?php echo date('M j, Y', strtotime($lawyer['created_at'])); ?></td>
                                     <td>
-                                        <a href="manage_lawyer_schedule.php?lawyer_id=<?php echo $lawyer['id']; ?>" 
+                                        <a href="manage_lawyer_schedule.php?lawyer_id=<?php echo $lawyer['user_id']; ?>" 
                                            class="btn btn-primary" 
                                            title="Manage Schedule">
                                             📅
                                         </a>
                                         
-                                        <form method="POST" style="display: inline;" id="toggleForm<?php echo $lawyer['id']; ?>">
+                                        <form method="POST" style="display: inline;" id="toggleForm<?php echo $lawyer['user_id']; ?>">
                                             <input type="hidden" name="action" value="toggle_status">
-                                            <input type="hidden" name="lawyer_id" value="<?php echo $lawyer['id']; ?>">
+                                            <input type="hidden" name="lawyer_id" value="<?php echo $lawyer['user_id']; ?>">
                                             <input type="hidden" name="current_status" value="<?php echo $lawyer['is_active']; ?>">
                                             <button type="button" class="btn <?php echo $lawyer['is_active'] ? 'btn-warning' : 'btn-success'; ?>" 
-                                                    onclick="confirmToggleStatus('<?php echo htmlspecialchars($lawyer['first_name'] . ' ' . $lawyer['last_name']); ?>', <?php echo $lawyer['is_active']; ?>, <?php echo $lawyer['id']; ?>)">
+                                                    onclick="confirmToggleStatus('<?php echo htmlspecialchars($lawyer['lp_fullname'] ?? 'Unknown'); ?>', <?php echo $lawyer['is_active']; ?>, <?php echo $lawyer['user_id']; ?>)">
                                                 <?php echo $lawyer['is_active'] ? 'Deactivate' : 'Activate'; ?>
                                             </button>
                                         </form>
                                         
                                         <button type="button" class="btn btn-secondary" 
-                                                onclick="openPasswordResetModal(<?php echo $lawyer['id']; ?>, '<?php echo htmlspecialchars($lawyer['first_name'] . ' ' . $lawyer['last_name']); ?>')">
+                                                onclick="openPasswordResetModal(<?php echo $lawyer['user_id']; ?>, '<?php echo htmlspecialchars($lawyer['lp_fullname'] ?? 'Unknown'); ?>')">
                                                 🔐
                                         </button>
                                         
-                                        <form method="POST" style="display: inline;" id="deleteForm<?php echo $lawyer['id']; ?>">
+                                        <form method="POST" style="display: inline;" id="deleteForm<?php echo $lawyer['user_id']; ?>">
                                             <input type="hidden" name="action" value="delete_lawyer">
-                                            <input type="hidden" name="lawyer_id" value="<?php echo $lawyer['id']; ?>">
+                                            <input type="hidden" name="lawyer_id" value="<?php echo $lawyer['user_id']; ?>">
                                             <button type="button" class="btn btn-danger" 
-                                                    onclick="confirmDelete('<?php echo htmlspecialchars($lawyer['first_name'] . ' ' . $lawyer['last_name']); ?>', <?php echo $lawyer['consultation_count']; ?>, <?php echo $lawyer['id']; ?>)">
+                                                    onclick="confirmDelete('<?php echo htmlspecialchars($lawyer['lp_fullname'] ?? 'Unknown'); ?>', <?php echo $lawyer['consultation_count']; ?>, <?php echo $lawyer['user_id']; ?>)">
                                                 🗑️
                                             </button>
                                         </form>

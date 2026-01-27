@@ -52,12 +52,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
                 $consultation_id = (int)$consultation_id;
                 
                 // Get current status
-                $check_stmt = $pdo->prepare("SELECT status FROM consultations WHERE id = ?");
+                $check_stmt = $pdo->prepare("SELECT c_status FROM consultations WHERE c_id = ?");
                 $check_stmt->execute([$consultation_id]);
                 $current = $check_stmt->fetch();
                 
                 if ($current) {
-                    $old_status = $current['status'];
+                    $old_status = $current['c_status'];
                     
                     // Map action to status
                     $status_map = [
@@ -73,11 +73,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
                         // Update status and cancellation reason
                         if ($action === 'cancelled') {
                             // Set cancellation reason when cancelled
-                            $update_stmt = $pdo->prepare("UPDATE consultations SET status = ?, cancellation_reason = ? WHERE id = ?");
+                            $update_stmt = $pdo->prepare("UPDATE consultations SET c_status = ?, cancellation_reason = ? WHERE c_id = ?");
                             $update_stmt->execute([$new_status, 'Cancelled by admin', $consultation_id]);
                         } else {
                             // Clear cancellation reason when changing to pending, confirmed, or completed
-                            $update_stmt = $pdo->prepare("UPDATE consultations SET status = ?, cancellation_reason = NULL WHERE id = ?");
+                            $update_stmt = $pdo->prepare("UPDATE consultations SET c_status = ?, cancellation_reason = NULL WHERE c_id = ?");
                             $update_stmt->execute([$new_status, $consultation_id]);
                         }
                         
@@ -169,8 +169,8 @@ $sort_order = isset($_GET['order']) && $_GET['order'] === 'asc' ? 'ASC' : 'DESC'
 
 // Allowed sort columns for security
 $allowed_sort_columns = [
-    'id', 'full_name', 'email', 'phone', 'practice_area', 
-    'selected_lawyer', 'consultation_date', 'status', 'created_at'
+    'c_id', 'c_full_name', 'c_email', 'c_phone', 
+    'consultation_date', 'c_status', 'created_at'
 ];
 
 if (!in_array($sort_by, $allowed_sort_columns)) {
@@ -186,22 +186,20 @@ try {
     
     if (!empty($search_query)) {
         $conditions[] = "(
-            full_name LIKE ? OR 
-            email LIKE ? OR 
-            phone LIKE ? OR 
-            practice_area LIKE ? OR 
-            selected_lawyer LIKE ? OR 
-            status LIKE ? OR
-            id LIKE ?
+            c_full_name LIKE ? OR 
+            c_email LIKE ? OR 
+            c_phone LIKE ? OR 
+            c_status LIKE ? OR
+            c_id LIKE ?
         )";
         
         $search_term = "%{$search_query}%";
-        $search_params = array_merge($search_params, array_fill(0, 7, $search_term));
+        $search_params = array_merge($search_params, array_fill(0, 5, $search_term));
     }
     
     // Add status filter
     if ($status_filter !== 'all') {
-        $conditions[] = "status = ?";
+        $conditions[] = "c_status = ?";
         $search_params[] = $status_filter;
     }
     
@@ -362,7 +360,7 @@ $active_page = "consultations";
                     <div class="admin-stat-number">
                         <?php 
                         try {
-                            $pending_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE status = 'pending'");
+                            $pending_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE c_status = 'pending'");
                             echo $pending_stmt->fetchColumn();
                         } catch (Exception $e) {
                             echo '0';
@@ -375,7 +373,7 @@ $active_page = "consultations";
                     <div class="admin-stat-number">
                         <?php 
                         try {
-                            $confirmed_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE status = 'confirmed'");
+                            $confirmed_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE c_status = 'confirmed'");
                             echo $confirmed_stmt->fetchColumn();
                         } catch (Exception $e) {
                             echo '0';
@@ -388,7 +386,7 @@ $active_page = "consultations";
                     <div class="admin-stat-number">
                         <?php 
                         try {
-                            $completed_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE status = 'completed'");
+                            $completed_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE c_status = 'completed'");
                             echo $completed_stmt->fetchColumn();
                         } catch (Exception $e) {
                             echo '0';
@@ -401,7 +399,7 @@ $active_page = "consultations";
                     <div class="admin-stat-number">
                         <?php 
                         try {
-                            $pending_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE status = 'cancelled'");
+                            $pending_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE c_status = 'cancelled'");
                             echo $pending_stmt->fetchColumn();
                         } catch (Exception $e) {
                             echo '0';
@@ -474,14 +472,13 @@ $active_page = "consultations";
                         <thead>
                             <tr>
                                 <th><input type="checkbox" id="select-all" onchange="toggleSelectAll()"></th>
-                                <th><?php echo getSortableHeader('id', 'ID', $sort_by, $sort_order); ?></th>
-                                <th><?php echo getSortableHeader('full_name', 'Name', $sort_by, $sort_order); ?></th>
-                                <th><?php echo getSortableHeader('email', 'Email', $sort_by, $sort_order); ?></th>
-                                <th><?php echo getSortableHeader('phone', 'Phone', $sort_by, $sort_order); ?></th>
-                                <th><?php echo getSortableHeader('practice_area', 'Practice Area', $sort_by, $sort_order); ?></th>
-                                <th><?php echo getSortableHeader('selected_lawyer', 'Lawyer', $sort_by, $sort_order); ?></th>
+                                <th><?php echo getSortableHeader('c_id', 'ID', $sort_by, $sort_order); ?></th>
+                                <th><?php echo getSortableHeader('c_full_name', 'Name', $sort_by, $sort_order); ?></th>
+                                <th><?php echo getSortableHeader('c_email', 'Email', $sort_by, $sort_order); ?></th>
+                                <th><?php echo getSortableHeader('c_phone', 'Phone', $sort_by, $sort_order); ?></th>
+                                <th>Lawyer</th>
                                 <th><?php echo getSortableHeader('consultation_date', 'Date', $sort_by, $sort_order); ?></th>
-                                <th><?php echo getSortableHeader('status', 'Status', $sort_by, $sort_order); ?></th>
+                                <th><?php echo getSortableHeader('c_status', 'Status', $sort_by, $sort_order); ?></th>
                                 <th><?php echo getSortableHeader('created_at', 'Created', $sort_by, $sort_order); ?></th>
                                 <th>Actions</th>
                             </tr>
@@ -489,23 +486,28 @@ $active_page = "consultations";
                         <tbody>
                             <?php foreach ($consultations as $consultation): ?>
                                 <tr>
-                                    <td><input type="checkbox" name="selected_consultations[]" value="<?php echo $consultation['id']; ?>" class="consultation-checkbox"></td>
-                                    <td><?php echo htmlspecialchars($consultation['id']); ?></td>
-                                    <td><?php echo htmlspecialchars($consultation['full_name']); ?></td>
-                                    <td><?php echo htmlspecialchars($consultation['email']); ?></td>
-                                    <td><?php echo htmlspecialchars($consultation['phone']); ?></td>
-                                    <td><?php echo htmlspecialchars($consultation['practice_area']); ?></td>
-                                    <td><?php echo htmlspecialchars($consultation['selected_lawyer']); ?></td>
+                                    <td><input type="checkbox" name="selected_consultations[]" value="<?php echo $consultation['c_id']; ?>" class="consultation-checkbox"></td>
+                                    <td><?php echo htmlspecialchars($consultation['c_id']); ?></td>
+                                    <td><?php echo htmlspecialchars($consultation['c_full_name']); ?></td>
+                                    <td><?php echo htmlspecialchars($consultation['c_email']); ?></td>
+                                    <td><?php echo htmlspecialchars($consultation['c_phone']); ?></td>
+                                    <td>
+                                        <?php 
+                                        // Get lawyer name from lawyer_profile
+                                        if ($consultation['lawyer_id']) {
+                                            $lawyer_stmt = $pdo->prepare("SELECT lp_fullname FROM lawyer_profile WHERE lawyer_id = ?");
+                                            $lawyer_stmt->execute([$consultation['lawyer_id']]);
+                                            $lawyer = $lawyer_stmt->fetch();
+                                            echo $lawyer ? htmlspecialchars($lawyer['lp_fullname']) : 'Unknown';
+                                        } else {
+                                            echo 'Not assigned';
+                                        }
+                                        ?>
+                                    </td>
                                     <td>
                                         <?php 
                                         if ($consultation['consultation_date']) {
                                             echo date('M d, Y', strtotime($consultation['consultation_date']));
-                                            // Show time if available
-                                            if (!empty($consultation['consultation_time'])) {
-                                                echo '<br><small style="color: #666;"><i class="fas fa-clock"></i> ' . date('g:i A', strtotime($consultation['consultation_time'])) . '</small>';
-                                            }
-                                        } elseif ($consultation['selected_date']) {
-                                            echo date('M d, Y', strtotime($consultation['selected_date']));
                                             // Show time if available
                                             if (!empty($consultation['consultation_time'])) {
                                                 echo '<br><small style="color: #666;"><i class="fas fa-clock"></i> ' . date('g:i A', strtotime($consultation['consultation_time'])) . '</small>';
@@ -516,14 +518,14 @@ $active_page = "consultations";
                                         ?>
                                     </td>
                                     <td>
-                                        <span class="admin-status-badge admin-status-<?php echo $consultation['status']; ?>">
-                                            <?php echo ucfirst($consultation['status']); ?>
+                                        <span class="admin-status-badge admin-status-<?php echo $consultation['c_status']; ?>">
+                                            <?php echo ucfirst($consultation['c_status']); ?>
                                         </span>
                                     </td>
                                     <td><?php echo date('M d, Y H:i', strtotime($consultation['created_at'])); ?></td>
                                     <td>
                                         <div class="admin-action-buttons">
-                                            <a href="view_consultation.php?id=<?php echo $consultation['id']; ?>" class="admin-btn admin-btn-primary btn-view">
+                                            <a href="view_consultation.php?id=<?php echo $consultation['c_id']; ?>" class="admin-btn admin-btn-primary btn-view">
                                                 <i class="fas fa-eye"></i> View
                                             </a>
                                         </div>

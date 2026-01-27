@@ -31,9 +31,10 @@ try {
     
     // Get lawyer details
     $lawyer_stmt = $pdo->prepare("
-        SELECT id, username, first_name, last_name, email, phone, profile_picture
-        FROM users
-        WHERE id = ? AND role = 'lawyer'
+        SELECT u.user_id, u.username, u.email, u.phone, lp.lp_fullname, lp.profile
+        FROM users u
+        LEFT JOIN lawyer_profile lp ON u.user_id = lp.lawyer_id
+        WHERE u.user_id = ? AND u.role = 'lawyer'
     ");
     $lawyer_stmt->execute([$lawyer_id]);
     $lawyer = $lawyer_stmt->fetch(PDO::FETCH_ASSOC);
@@ -98,15 +99,15 @@ try {
                         
                             // Prepare check statement
                             $check_stmt = $pdo->prepare("
-                                SELECT id FROM lawyer_availability 
-                                WHERE user_id = ? AND specific_date = ? AND max_appointments = 0
+                                SELECT la_id FROM lawyer_availability 
+                                WHERE lawyer_id = ? AND specific_date = ? AND max_appointments = 0
                             ");
                             
                             // Prepare insert statement
                             $insert_stmt = $pdo->prepare("
                                 INSERT INTO lawyer_availability 
-                                (user_id, schedule_type, specific_date, start_time, end_time, max_appointments, is_active, weekdays)
-                                VALUES (?, 'blocked', ?, '00:00:00', '23:59:59', 0, 1, ?)
+                                (lawyer_id, schedule_type, specific_date, start_time, end_time, max_appointments, time_slot_duration, la_is_active, blocked_reason)
+                                VALUES (?, 'blocked', ?, '00:00:00', '23:59:59', 0, 60, 1, ?)
                             ");
                             
                             while (strtotime($current_date) <= strtotime($end_date)) {
@@ -324,7 +325,7 @@ try {
                     $placeholders = implode(',', array_fill(0, count($ids_array), '?'));
                     $delete_stmt = $pdo->prepare("
                         DELETE FROM lawyer_availability 
-                        WHERE id IN ($placeholders) AND user_id = ? AND max_appointments = 0
+                        WHERE la_id IN ($placeholders) AND lawyer_id = ? AND max_appointments = 0
                     ");
                     
                     $params = array_merge($ids_array, [$lawyer_id]);
