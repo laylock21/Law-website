@@ -360,7 +360,7 @@ $active_page = "consultations";
 										<span class="lawyer-status-badge lawyer-status-<?php echo $row['c_status']; ?>"><?php echo ucfirst($row['c_status']); ?></span>
 									</td>
 									<td style="padding: 12px; border-bottom: 1px solid #e9ecef; "><?php echo date('M d, Y H:i', strtotime($row['created_at'])); ?></td>
-									<td style="padding: 0px; border-bottom: 1px solid #e9ecef; text-align: center;">
+									<td style="padding: 0px; border-bottom: 1px solid #e9ecef; text-align: center;" data-id="#<?php echo (int)$row['id']; ?>">
 										<div style="display:flex; gap:8px; align-items:center; flex-wrap: wrap; justify-content: center;">
 											<button onclick="openConsultationModal(<?php echo (int)$row['c_id']; ?>); return false;" class="lawyer-btn btn-view-details" style="text-decoration:none; padding:8px 12px; border: none; cursor: pointer;">View Details</button>
 										</div>
