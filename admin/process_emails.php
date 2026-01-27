@@ -56,10 +56,10 @@ try {
     
     $stats_stmt = $pdo->query("
         SELECT 
-            status,
+            nq_status,
             COUNT(*) as count
         FROM notification_queue
-        GROUP BY status
+        GROUP BY nq_status
     ");
     $stats = $stats_stmt->fetchAll(PDO::FETCH_KEY_PAIR);
     
@@ -67,11 +67,10 @@ try {
     $pending_stmt = $pdo->query("
         SELECT 
             nq.*,
-            u.first_name,
-            u.last_name
+            u.email as user_email
         FROM notification_queue nq
-        LEFT JOIN users u ON nq.user_id = u.id
-        WHERE nq.status = 'pending'
+        LEFT JOIN users u ON nq.user_id = u.user_id
+        WHERE nq.nq_status = 'pending'
         ORDER BY nq.created_at DESC
         LIMIT 10
     ");

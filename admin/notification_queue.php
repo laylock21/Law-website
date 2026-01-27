@@ -20,10 +20,9 @@ $pdo = getDBConnection();
 $stmt = $pdo->prepare("
     SELECT 
         nq.*,
-        u.first_name,
-        u.last_name
+        u.email as user_email
     FROM notification_queue nq
-    LEFT JOIN users u ON nq.user_id = u.id
+    LEFT JOIN users u ON nq.user_id = u.user_id
     ORDER BY nq.created_at DESC
     LIMIT 100
 ");
@@ -33,10 +32,10 @@ $notifications = $stmt->fetchAll();
 // Get statistics
 $stats_stmt = $pdo->query("
     SELECT 
-        status,
+        nq_status,
         COUNT(*) as count
     FROM notification_queue
-    GROUP BY status
+    GROUP BY nq_status
 ");
 $stats = $stats_stmt->fetchAll(PDO::FETCH_KEY_PAIR);
 ?>
@@ -102,16 +101,15 @@ $active_page = "queue";
                         <tbody>
                             <?php foreach ($notifications as $notif): ?>
                                 <tr>
-                                    <td><?php echo $notif['id']; ?></td>
+                                    <td><?php echo $notif['nq_id']; ?></td>
                                     <td>
-                                        <strong><?php echo htmlspecialchars($notif['first_name'] . ' ' . $notif['last_name']); ?></strong><br>
-                                        <small><?php echo htmlspecialchars($notif['email']); ?></small>
+                                        <strong><?php echo htmlspecialchars($notif['email']); ?></strong>
                                     </td>
                                     <td><?php echo htmlspecialchars($notif['subject']); ?></td>
                                     <td><?php echo ucwords(str_replace('_', ' ', $notif['notification_type'])); ?></td>
                                     <td>
-                                        <span class="status-badge status-<?php echo $notif['status']; ?>">
-                                            <?php echo ucfirst($notif['status']); ?>
+                                        <span class="status-badge status-<?php echo $notif['nq_status']; ?>">
+                                            <?php echo ucfirst($notif['nq_status']); ?>
                                         </span>
                                     </td>
                                     <td><?php echo date('M d, Y g:i A', strtotime($notif['created_at'])); ?></td>

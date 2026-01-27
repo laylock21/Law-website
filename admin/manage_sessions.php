@@ -74,7 +74,7 @@ try {
             u.last_name,
             u.role
         FROM user_sessions s
-        LEFT JOIN users u ON s.user_id = u.id
+        LEFT JOIN users u ON s.user_id = u.user_id
         WHERE s.status = "active"
         ORDER BY s.last_activity DESC
     ');
@@ -283,8 +283,8 @@ $csrf_token = $auth->generateCSRFToken();
                         <?php foreach ($active_sessions as $session): ?>
                             <tr>
                                 <td>
-                                    <strong><?php echo htmlspecialchars($session['first_name'] . ' ' . $session['last_name']); ?></strong><br>
-                                    <small><?php echo htmlspecialchars($session['username']); ?></small>
+                                    <strong><?php echo htmlspecialchars($session['username']); ?></strong><br>
+                                    <small>User ID: <?php echo htmlspecialchars($session['user_id']); ?></small>
                                 </td>
                                 <td><?php echo htmlspecialchars(ucfirst($session['role'])); ?></td>
                                 <td><?php echo htmlspecialchars($session['ip_address']); ?></td>
