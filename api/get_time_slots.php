@@ -63,6 +63,26 @@ try {
     if (!$pdo) {
         throw new Exception('Database connection failed');
     }
+
+    $consultations_columns_stmt = $pdo->query("DESCRIBE consultations");
+    $consultations_columns_rows = $consultations_columns_stmt ? $consultations_columns_stmt->fetchAll() : [];
+    $consultations_columns = array_map(function($r) { return $r['Field']; }, $consultations_columns_rows);
+
+    $consultation_date_column = in_array('consultation_date', $consultations_columns, true)
+        ? 'consultation_date'
+        : (in_array('c_consultation_date', $consultations_columns, true) ? 'c_consultation_date' : null);
+
+    $consultation_time_column = in_array('consultation_time', $consultations_columns, true)
+        ? 'consultation_time'
+        : (in_array('c_consultation_time', $consultations_columns, true) ? 'c_consultation_time' : null);
+
+    $consultation_status_column = in_array('c_status', $consultations_columns, true)
+        ? 'c_status'
+        : (in_array('status', $consultations_columns, true) ? 'status' : null);
+
+    if ($consultation_date_column === null || $consultation_time_column === null || $consultation_status_column === null) {
+        throw new Exception('Consultations table schema mismatch (missing date/time/status columns)');
+    }
     
     // Resolve lawyer by ID if provided; fallback to name matching
     if ($lawyer_id_param !== '') {
@@ -85,11 +105,15 @@ try {
             SELECT u.user_id as id, lp.lp_fullname, lp.lawyer_prefix
             FROM users u
             INNER JOIN lawyer_profile lp ON u.user_id = lp.lawyer_id
-            WHERE lp.lp_fullname = ?
+            WHERE (
+                lp.lp_fullname = ?
+                OR CONCAT(COALESCE(lp.lawyer_prefix, ''), ' ', lp.lp_fullname) = ?
+                OR CONCAT(COALESCE(lp.lawyer_prefix, ''), lp.lp_fullname) = ?
+            )
             AND u.role = 'lawyer' 
             AND u.is_active = 1
         ");
-        $lawyer_stmt->execute([$lawyer_name]);
+        $lawyer_stmt->execute([$lawyer_name, $lawyer_name, $lawyer_name]);
         $lawyer = $lawyer_stmt->fetch();
 
         if (!$lawyer) {
@@ -118,7 +142,7 @@ try {
         AND (
             (schedule_type = 'one_time' AND specific_date = ?)
             OR (schedule_type = 'blocked' AND specific_date = ?)
-            OR (schedule_type = 'weekly')
+            OR (schedule_type = 'weekly' AND (weekday = ? OR weekday IS NULL))
         )
         ORDER BY 
             CASE schedule_type
@@ -129,7 +153,7 @@ try {
         LIMIT 1
     ");
     
-    $availability_stmt->execute([$lawyer_id, $date, $date]);
+    $availability_stmt->execute([$lawyer_id, $date, $date, $day_name]);
     $availability = $availability_stmt->fetch();
     
     if (!$availability) {
@@ -175,8 +199,8 @@ try {
         SELECT COUNT(*) as count
         FROM consultations
         WHERE lawyer_id = ?
-        AND consultation_date = ?
-        AND c_status IN ('pending', 'confirmed')
+        AND {$consultation_date_column} = ?
+        AND {$consultation_status_column} IN ('pending', 'confirmed')
     ");
     $total_booked_stmt->execute([$lawyer_id, $date]);
     $total_booked = $total_booked_stmt->fetch()['count'];
@@ -203,9 +227,9 @@ try {
             SELECT COUNT(*) as count
             FROM consultations
             WHERE lawyer_id = ?
-            AND consultation_date = ?
-            AND consultation_time = ?
-            AND c_status IN ('pending', 'confirmed')
+            AND {$consultation_date_column} = ?
+            AND {$consultation_time_column} = ?
+            AND {$consultation_status_column} IN ('pending', 'confirmed')
         ");
         $slot_booked_stmt->execute([$lawyer_id, $date, $slot_time]);
         $slot_booked = $slot_booked_stmt->fetch()['count'];

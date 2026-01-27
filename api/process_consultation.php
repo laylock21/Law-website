@@ -113,21 +113,81 @@ try {
     if (!$pdo) {
         throw new Exception('Database connection failed');
     }
+
+    $consultations_columns_stmt = $pdo->query("DESCRIBE consultations");
+    $consultations_columns_rows = $consultations_columns_stmt ? $consultations_columns_stmt->fetchAll() : [];
+    $consultations_columns = array_map(function($r) { return $r['Field']; }, $consultations_columns_rows);
+
+    $consultation_date_column = in_array('consultation_date', $consultations_columns, true)
+        ? 'consultation_date'
+        : (in_array('c_consultation_date', $consultations_columns, true) ? 'c_consultation_date' : null);
+
+    $consultation_time_column = in_array('consultation_time', $consultations_columns, true)
+        ? 'consultation_time'
+        : (in_array('c_consultation_time', $consultations_columns, true) ? 'c_consultation_time' : null);
+
+    $consultation_status_column = in_array('c_status', $consultations_columns, true)
+        ? 'c_status'
+        : (in_array('status', $consultations_columns, true) ? 'status' : null);
+
+    $full_name_column = in_array('c_full_name', $consultations_columns, true)
+        ? 'c_full_name'
+        : (in_array('full_name', $consultations_columns, true) ? 'full_name' : null);
+
+    $email_column = in_array('c_email', $consultations_columns, true)
+        ? 'c_email'
+        : (in_array('email', $consultations_columns, true) ? 'email' : null);
+
+    $phone_column = in_array('c_phone', $consultations_columns, true)
+        ? 'c_phone'
+        : (in_array('phone', $consultations_columns, true) ? 'phone' : null);
+
+    $message_description_column = in_array('case_description', $consultations_columns, true)
+        ? 'case_description'
+        : (in_array('c_case_description', $consultations_columns, true)
+            ? 'c_case_description'
+            : (in_array('c_case_description_old', $consultations_columns, true) ? 'c_case_description_old' : null));
+
+    $service_description_column = null;
+    if (in_array('c_case_description', $consultations_columns, true) && in_array('case_description', $consultations_columns, true)) {
+        $service_description_column = 'c_case_description';
+    }
+
+    $practice_area_column = in_array('c_practice_area', $consultations_columns, true)
+        ? 'c_practice_area'
+        : (in_array('practice_area', $consultations_columns, true) ? 'practice_area' : null);
+
+    $selected_lawyer_column = in_array('c_selected_lawyer', $consultations_columns, true)
+        ? 'c_selected_lawyer'
+        : (in_array('selected_lawyer', $consultations_columns, true) ? 'selected_lawyer' : null);
+
+    $selected_date_column = in_array('c_selected_date', $consultations_columns, true)
+        ? 'c_selected_date'
+        : (in_array('selected_date', $consultations_columns, true) ? 'selected_date' : null);
+
+    if ($consultation_date_column === null || $consultation_time_column === null || $consultation_status_column === null ||
+        $full_name_column === null || $email_column === null || $phone_column === null || $message_description_column === null) {
+        throw new Exception('Consultations table schema mismatch (missing date/time/status columns)');
+    }
     
     // Feature: Get lawyer ID from lawyer name
     $lawyer_id = null;
     if ($selected_lawyer) {
-        // Remove "Atty. " prefix if present (frontend sends with prefix, database stores without)
-        $lawyer_name_clean = preg_replace('/^Atty\.\s*/i', '', $selected_lawyer);
+        // Remove one or more "Atty. " prefixes if present (frontend may send duplicated prefixes)
+        $lawyer_name_clean = preg_replace('/^(Atty\.\s*)+/i', '', $selected_lawyer);
         
         $lawyer_stmt = $pdo->prepare("
             SELECT u.user_id as id FROM users u
             INNER JOIN lawyer_profile lp ON u.user_id = lp.lawyer_id
-            WHERE lp.lp_fullname = ? 
+            WHERE (
+                lp.lp_fullname = ?
+                OR CONCAT(COALESCE(lp.lawyer_prefix, ''), ' ', lp.lp_fullname) = ?
+                OR CONCAT(COALESCE(lp.lawyer_prefix, ''), lp.lp_fullname) = ?
+            )
             AND u.role = 'lawyer' 
             AND u.is_active = 1
         ");
-        $lawyer_stmt->execute([$lawyer_name_clean]);
+        $lawyer_stmt->execute([$lawyer_name_clean, $lawyer_name_clean, $lawyer_name_clean]);
         $lawyer = $lawyer_stmt->fetch();
         $lawyer_id = $lawyer ? $lawyer['id'] : null;
     }
@@ -151,8 +211,8 @@ try {
                 SELECT COUNT(*) as appointment_count 
                 FROM consultations 
                 WHERE lawyer_id = ? 
-                AND consultation_date = ? 
-                AND c_status IN ('pending', 'confirmed')
+                AND {$consultation_date_column} = ? 
+                AND {$consultation_status_column} IN ('pending', 'confirmed')
             ");
             $count_stmt->execute([$lawyer_id, $selected_date]);
             $current_count = $count_stmt->fetch()['appointment_count'];
@@ -170,8 +230,31 @@ try {
     }
     
     // Feature: Updated SQL statement with new field structure including consultation date and time
-    $sql = "INSERT INTO consultations (c_full_name, c_email, c_phone, case_description, lawyer_id, consultation_date, consultation_time) 
-            VALUES (:full_name, :email, :phone, :case_description, :lawyer_id, :consultation_date, :consultation_time)";
+    $insert_columns = "{$full_name_column}, {$email_column}, {$phone_column}, {$message_description_column}, lawyer_id";
+    $insert_values = ":full_name, :email, :phone, :case_description, :lawyer_id";
+
+    if ($practice_area_column !== null) {
+        $insert_columns .= ", {$practice_area_column}";
+        $insert_values .= ", :practice_area";
+    } elseif ($service_description_column !== null) {
+        $insert_columns .= ", {$service_description_column}";
+        $insert_values .= ", :service_description";
+    }
+
+    if ($selected_lawyer_column !== null) {
+        $insert_columns .= ", {$selected_lawyer_column}";
+        $insert_values .= ", :selected_lawyer";
+    }
+
+    if ($selected_date_column !== null) {
+        $insert_columns .= ", {$selected_date_column}";
+        $insert_values .= ", :selected_date";
+    }
+
+    $insert_columns .= ", {$consultation_date_column}, {$consultation_time_column}";
+    $insert_values .= ", :consultation_date, :consultation_time";
+
+    $sql = "INSERT INTO consultations ({$insert_columns}) VALUES ({$insert_values})";
     
     $stmt = $pdo->prepare($sql);
     
@@ -181,10 +264,37 @@ try {
     $stmt->bindParam(':phone', $phone, PDO::PARAM_STR);
     $stmt->bindParam(':case_description', $case_description, PDO::PARAM_STR);
     $stmt->bindParam(':lawyer_id', $lawyer_id, PDO::PARAM_INT);
+
+    if ($practice_area_column !== null) {
+        $stmt->bindParam(':practice_area', $practice_area, PDO::PARAM_STR);
+    } elseif ($service_description_column !== null) {
+        $stmt->bindParam(':service_description', $practice_area, PDO::PARAM_STR);
+    }
+
+    if ($selected_lawyer_column !== null) {
+        $stmt->bindParam(':selected_lawyer', $selected_lawyer, PDO::PARAM_STR);
+    }
+
+    if ($selected_date_column !== null) {
+        $stmt->bindParam(':selected_date', $selected_date, PDO::PARAM_STR);
+    }
+
     $stmt->bindParam(':consultation_date', $selected_date, PDO::PARAM_STR);
     
-    // Get selected time from form data
-    $selected_time = $input['selected_time'] ?? null;
+    // Get selected time from form data. Frontend may send a range like "10:00 AM - 1:00 PM".
+    $selected_time_raw = $input['selected_time'] ?? null;
+    $selected_time = null;
+    if (!empty($selected_time_raw)) {
+        $time_part = $selected_time_raw;
+        if (strpos($time_part, '-') !== false) {
+            $parts = explode('-', $time_part, 2);
+            $time_part = trim($parts[0]);
+        }
+        $ts = strtotime($time_part);
+        if ($ts !== false) {
+            $selected_time = date('H:i:s', $ts);
+        }
+    }
     $stmt->bindParam(':consultation_time', $selected_time, PDO::PARAM_STR);
     
     // Execute the statement

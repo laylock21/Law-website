@@ -37,18 +37,41 @@ try {
     if (!$pdo) {
         throw new Exception('Database connection failed');
     }
+
+    $consultations_columns_stmt = $pdo->query("DESCRIBE consultations");
+    $consultations_columns_rows = $consultations_columns_stmt ? $consultations_columns_stmt->fetchAll() : [];
+    $consultations_columns = array_map(function($r) { return $r['Field']; }, $consultations_columns_rows);
+
+    $consultation_date_column = in_array('consultation_date', $consultations_columns, true)
+        ? 'consultation_date'
+        : (in_array('c_consultation_date', $consultations_columns, true) ? 'c_consultation_date' : null);
+
+    $consultation_status_column = in_array('c_status', $consultations_columns, true)
+        ? 'c_status'
+        : (in_array('status', $consultations_columns, true) ? 'status' : null);
+
+    if ($consultation_date_column === null || $consultation_status_column === null) {
+        throw new Exception('Consultations table schema mismatch (missing date/status columns)');
+    }
     
     // Get lawyer ID and date preferences from name
     // Try to match with full name including prefix, or without prefix
     $lawyer_stmt = $pdo->prepare("
-        SELECT u.user_id as id, lp.lp_fullname
+        SELECT 
+            u.user_id as id,
+            lp.lp_fullname,
+            lp.lawyer_prefix
         FROM users u
         INNER JOIN lawyer_profile lp ON u.user_id = lp.lawyer_id
-        WHERE lp.lp_fullname = ?
+        WHERE (
+            lp.lp_fullname = ?
+            OR CONCAT(COALESCE(lp.lawyer_prefix, ''), ' ', lp.lp_fullname) = ?
+            OR CONCAT(COALESCE(lp.lawyer_prefix, ''), lp.lp_fullname) = ?
+        )
         AND u.role = 'lawyer' 
         AND u.is_active = 1
     ");
-    $lawyer_stmt->execute([$lawyer_name]);
+    $lawyer_stmt->execute([$lawyer_name, $lawyer_name, $lawyer_name]);
     $lawyer = $lawyer_stmt->fetch();
     
     if (!$lawyer) {
@@ -59,7 +82,7 @@ try {
     
     // Get ALL lawyer's schedules (weekly, one-time, and blocked)
     $availability_stmt = $pdo->prepare("
-        SELECT schedule_type, specific_date, start_time, end_time, max_appointments, time_slot_duration, blocked_reason 
+        SELECT schedule_type, weekday, specific_date, start_time, end_time, max_appointments, time_slot_duration, blocked_reason 
         FROM lawyer_availability 
         WHERE lawyer_id = ? 
         AND la_is_active = 1
@@ -155,6 +178,12 @@ try {
             while ($current_date <= $end_date) {
                 $weekday_name = $current_date->format('l'); // Get day name: Monday, Tuesday, etc.
                 $date_str = $current_date->format('Y-m-d');
+
+                // Weekly schedules must match the configured weekday (per schema)
+                if (!empty($weekly['weekday']) && $weekly['weekday'] !== $weekday_name) {
+                    $current_date->modify('+1 day');
+                    continue;
+                }
                 
                 // Check if this date is blocked
                 if ($isDateBlocked($date_str)) {
@@ -169,15 +198,8 @@ try {
                     continue;
                 }
                 
-                // Weekly schedules apply to all days (no weekday filtering in new schema)
                 // Check current appointment count for this date
-                $count_stmt = $pdo->prepare("
-                    SELECT COUNT(*) as appointment_count 
-                    FROM consultations 
-                    WHERE lawyer_id = ? 
-                    AND consultation_date = ? 
-                    AND c_status IN ('pending', 'confirmed')
-                ");
+                $count_stmt = $pdo->prepare("SELECT COUNT(*) as appointment_count FROM consultations WHERE lawyer_id = ? AND {$consultation_date_column} = ? AND {$consultation_status_column} IN ('pending', 'confirmed')");
                 $count_stmt->execute([$lawyer['id'], $date_str]);
                 $current_count = $count_stmt->fetch()['appointment_count'];
                 
@@ -217,13 +239,7 @@ try {
                 $max_appointments = $one_time['max_appointments'];
                 
                 // Check current appointment count
-                $count_stmt = $pdo->prepare("
-                    SELECT COUNT(*) as appointment_count 
-                    FROM consultations 
-                    WHERE lawyer_id = ? 
-                    AND consultation_date = ? 
-                    AND c_status IN ('pending', 'confirmed')
-                ");
+                $count_stmt = $pdo->prepare("SELECT COUNT(*) as appointment_count FROM consultations WHERE lawyer_id = ? AND {$consultation_date_column} = ? AND {$consultation_status_column} IN ('pending', 'confirmed')");
                 $count_stmt->execute([$lawyer['id'], $date_str]);
                 $current_count = $count_stmt->fetch()['appointment_count'];
                 
@@ -280,7 +296,14 @@ try {
             
             $current_date = clone $start_date;
             while ($current_date <= $end_date) {
+                $weekday_name = $current_date->format('l');
                 $date_str = $current_date->format('Y-m-d');
+
+                // Weekly schedules must match the configured weekday (per schema)
+                if (!empty($weekly['weekday']) && $weekly['weekday'] !== $weekday_name) {
+                    $current_date->modify('+1 day');
+                    continue;
+                }
                 
                 // Skip if already in map or blocked
                 if (isset($date_status_map[$date_str]) || $isDateBlocked($date_str)) {
@@ -298,8 +321,8 @@ try {
                     SELECT COUNT(*) as appointment_count 
                     FROM consultations 
                     WHERE lawyer_id = ? 
-                    AND consultation_date = ? 
-                    AND c_status IN ('pending', 'confirmed')
+                    AND {$consultation_date_column} = ? 
+                    AND {$consultation_status_column} IN ('pending', 'confirmed')
                 ");
                 $count_stmt->execute([$lawyer['id'], $date_str]);
                 $current_count = $count_stmt->fetch()['appointment_count'];
@@ -333,8 +356,8 @@ try {
                 SELECT COUNT(*) as appointment_count 
                 FROM consultations 
                 WHERE lawyer_id = ? 
-                AND consultation_date = ? 
-                AND c_status IN ('pending', 'confirmed')
+                AND {$consultation_date_column} = ? 
+                AND {$consultation_status_column} IN ('pending', 'confirmed')
             ");
             $count_stmt->execute([$lawyer['id'], $date_str]);
             $current_count = $count_stmt->fetch()['appointment_count'];

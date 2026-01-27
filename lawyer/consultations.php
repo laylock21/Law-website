@@ -27,6 +27,24 @@ $offset = ($page - 1) * $limit;
 try {
 	$pdo = getDBConnection();
 
+	$consultations_columns_stmt = $pdo->query("DESCRIBE consultations");
+	$consultations_columns_rows = $consultations_columns_stmt ? $consultations_columns_stmt->fetchAll() : [];
+	$consultations_columns = array_map(function($r) { return $r['Field']; }, $consultations_columns_rows);
+
+	$id_column = in_array('c_id', $consultations_columns, true) ? 'c_id' : (in_array('id', $consultations_columns, true) ? 'id' : null);
+	$full_name_column = in_array('c_full_name', $consultations_columns, true) ? 'c_full_name' : (in_array('full_name', $consultations_columns, true) ? 'full_name' : null);
+	$email_column = in_array('c_email', $consultations_columns, true) ? 'c_email' : (in_array('email', $consultations_columns, true) ? 'email' : null);
+	$phone_column = in_array('c_phone', $consultations_columns, true) ? 'c_phone' : (in_array('phone', $consultations_columns, true) ? 'phone' : null);
+	$practice_area_column = in_array('c_practice_area', $consultations_columns, true) ? 'c_practice_area' : (in_array('practice_area', $consultations_columns, true) ? 'practice_area' : null);
+	$case_description_column = in_array('case_description', $consultations_columns, true) ? 'case_description' : (in_array('c_case_description', $consultations_columns, true) ? 'c_case_description' : (in_array('c_case_description_old', $consultations_columns, true) ? 'c_case_description_old' : null));
+	$date_column = in_array('consultation_date', $consultations_columns, true) ? 'consultation_date' : (in_array('c_consultation_date', $consultations_columns, true) ? 'c_consultation_date' : null);
+	$time_column = in_array('consultation_time', $consultations_columns, true) ? 'consultation_time' : (in_array('c_consultation_time', $consultations_columns, true) ? 'c_consultation_time' : null);
+	$status_column = in_array('c_status', $consultations_columns, true) ? 'c_status' : (in_array('status', $consultations_columns, true) ? 'status' : null);
+
+	if ($id_column === null || $full_name_column === null || $email_column === null || $date_column === null || $status_column === null) {
+		throw new Exception('Consultations table schema mismatch');
+	}
+
 	// Count - Include consultations assigned to this lawyer OR designated as 'Any' (lawyer_id IS NULL)
 	$count_stmt = $pdo->prepare('SELECT COUNT(*) FROM consultations WHERE lawyer_id = ? OR lawyer_id IS NULL');
 	$count_stmt->execute([$lawyer_id]);
@@ -34,16 +52,30 @@ try {
 	$total_pages = (int)ceil($total_consultations / $limit);
 
 	// Fetch consultations - Include consultations assigned to this lawyer OR designated as 'Any' (lawyer_id IS NULL)
-	$list_stmt = $pdo->prepare('
-		SELECT c.c_id as id, c.c_full_name as full_name, c.c_email as email, c.c_phone as phone,
-		       c.c_practice_area as practice_area, c.c_consultation_date as consultation_date,
-		       c.c_consultation_time as consultation_time, c.c_status as status,
-		       c.c_case_description as case_description, c.created_at, c.lawyer_id
+	$select_time = $time_column !== null ? "c.{$time_column} as consultation_time," : "NULL as consultation_time,";
+	$select_phone = $phone_column !== null ? "c.{$phone_column} as c_phone," : "NULL as c_phone,";
+	$select_practice_area = $practice_area_column !== null ? "c.{$practice_area_column} as c_practice_area," : "NULL as c_practice_area,";
+	$select_case_desc = $case_description_column !== null ? "c.{$case_description_column} as case_description," : "NULL as case_description,";
+
+	$list_sql = "
+		SELECT
+			c.{$id_column} as c_id,
+			c.{$full_name_column} as c_full_name,
+			c.{$email_column} as c_email,
+			{$select_phone}
+			{$select_practice_area}
+			c.{$date_column} as consultation_date,
+			{$select_time}
+			c.{$status_column} as c_status,
+			{$select_case_desc}
+			c.created_at,
+			c.lawyer_id
 		FROM consultations c
 		WHERE c.lawyer_id = ? OR c.lawyer_id IS NULL
 		ORDER BY c.created_at DESC
 		LIMIT ? OFFSET ?
-	');
+	";
+	$list_stmt = $pdo->prepare($list_sql);
 	$list_stmt->execute([$lawyer_id, $limit, $offset]);
 	$consultations = $list_stmt->fetchAll();
 } catch (Exception $e) {
@@ -332,6 +364,7 @@ $active_page = "consultations";
 								<th style="text-align:left; padding: 12px;"><input type="checkbox" id="select-all" onchange="toggleSelectAll()"></th>
 								<th style="text-align:left; padding: 12px;">ID</th>
 								<th style="text-align:left; padding: 12px;">Client</th>
+								<th style="text-align:left; padding: 12px;">Practice Area</th>
 								<th style="text-align:left; padding: 12px;">Date</th>
 								<th style="text-align:left; padding: 12px;">Status</th>
 								<th style="text-align:left; padding: 12px;">Created</th>
@@ -344,6 +377,7 @@ $active_page = "consultations";
 									<td style="padding: 12px; border-bottom: 1px solid #e9ecef;"><input type="checkbox" name="selected_consultations[]" value="<?php echo $row['c_id']; ?>" class="consultation-checkbox"></td>
 									<td style="padding: 12px; border-bottom: 1px solid #e9ecef;">#<?php echo (int)$row['c_id']; ?></td>
 									<td style="padding: 12px; border-bottom: 1px solid #e9ecef;"><?php echo htmlspecialchars($row['c_full_name']); ?><br><small><?php echo htmlspecialchars($row['c_email']); ?></small></td>
+									<td style="padding: 12px; border-bottom: 1px solid #e9ecef;"><?php echo !empty($row['c_practice_area']) ? htmlspecialchars($row['c_practice_area']) : '—'; ?></td>
 									<td style="padding: 12px; border-bottom: 1px solid #e9ecef; ">
 										<?php 
 										if ($row['consultation_date']) {
@@ -360,7 +394,7 @@ $active_page = "consultations";
 										<span class="lawyer-status-badge lawyer-status-<?php echo $row['c_status']; ?>"><?php echo ucfirst($row['c_status']); ?></span>
 									</td>
 									<td style="padding: 12px; border-bottom: 1px solid #e9ecef; "><?php echo date('M d, Y H:i', strtotime($row['created_at'])); ?></td>
-									<td style="padding: 0px; border-bottom: 1px solid #e9ecef; text-align: center;" data-id="#<?php echo (int)$row['id']; ?>">
+									<td style="padding: 0px; border-bottom: 1px solid #e9ecef; text-align: center;" data-id="#<?php echo (int)$row['c_id']; ?>">
 										<div style="display:flex; gap:8px; align-items:center; flex-wrap: wrap; justify-content: center;">
 											<button onclick="openConsultationModal(<?php echo (int)$row['c_id']; ?>); return false;" class="lawyer-btn btn-view-details" style="text-decoration:none; padding:8px 12px; border: none; cursor: pointer;">View Details</button>
 										</div>
