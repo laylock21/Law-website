@@ -31,10 +31,10 @@ try {
     
     // Get all active practice areas that have at least one active lawyer assigned
     $areas_stmt = $pdo->prepare("
-        SELECT DISTINCT pa.id, pa.area_name, pa.description
+        SELECT DISTINCT pa.pa_id as id, pa.area_name, pa.pa_description as description
         FROM practice_areas pa
-        INNER JOIN lawyer_specializations ls ON pa.id = ls.practice_area_id
-        INNER JOIN users u ON ls.user_id = u.id
+        INNER JOIN lawyer_specializations ls ON pa.pa_id = ls.pa_id
+        INNER JOIN users u ON ls.lawyer_id = u.user_id
         WHERE pa.is_active = 1
         AND u.role = 'lawyer'
         AND u.is_active = 1

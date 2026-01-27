@@ -7,7 +7,7 @@
 // Database configuration
 define('DB_HOST', 'localhost'); // Changed from 'localhost' to fix MariaDB connection
 define('DB_PORT', '3306'); // MySQL port - change if different
-define('DB_NAME', 'testLaw-2');
+define('DB_NAME', 'testlaw');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 

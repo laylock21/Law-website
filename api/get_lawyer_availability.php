@@ -41,16 +41,14 @@ try {
     // Get lawyer ID and date preferences from name
     // Try to match with full name including prefix, or without prefix
     $lawyer_stmt = $pdo->prepare("
-        SELECT id, default_booking_weeks, max_booking_weeks, booking_window_enabled
-        FROM users 
-        WHERE (
-            CONCAT(COALESCE(CONCAT(lawyer_prefix, ' '), ''), first_name, ' ', last_name) = ?
-            OR CONCAT(first_name, ' ', last_name) = ?
-        )
-        AND role = 'lawyer' 
-        AND is_active = 1
+        SELECT u.user_id as id, lp.lp_fullname
+        FROM users u
+        INNER JOIN lawyer_profile lp ON u.user_id = lp.lawyer_id
+        WHERE lp.lp_fullname = ?
+        AND u.role = 'lawyer' 
+        AND u.is_active = 1
     ");
-    $lawyer_stmt->execute([$lawyer_name, $lawyer_name]);
+    $lawyer_stmt->execute([$lawyer_name]);
     $lawyer = $lawyer_stmt->fetch();
     
     if (!$lawyer) {
@@ -61,10 +59,10 @@ try {
     
     // Get ALL lawyer's schedules (weekly, one-time, and blocked)
     $availability_stmt = $pdo->prepare("
-        SELECT schedule_type, specific_date, start_date, end_date, weekdays, start_time, end_time, max_appointments, blocked_reason 
+        SELECT schedule_type, specific_date, start_time, end_time, max_appointments, time_slot_duration, blocked_reason 
         FROM lawyer_availability 
-        WHERE user_id = ? 
-        AND is_active = 1
+        WHERE lawyer_id = ? 
+        AND la_is_active = 1
         ORDER BY schedule_type, specific_date
     ");
     $availability_stmt->execute([$lawyer['id']]);
@@ -74,14 +72,14 @@ try {
         $available_dates = [];
         
         // Allow customizable date range via query parameters
-        // Use lawyer's individual preferences as defaults
-        $lawyer_default_weeks = (int)($lawyer['default_booking_weeks'] ?? 52);
-        $lawyer_max_weeks = (int)($lawyer['max_booking_weeks'] ?? 104);
-        $booking_enabled = (bool)($lawyer['booking_window_enabled'] ?? true);
+        // Use default values since lawyer preferences are not in new schema
+        $lawyer_default_weeks = 52;
+        $lawyer_max_weeks = 104;
+        $booking_enabled = true;
         
         $start_date_param = $_GET['start_date'] ?? '';
         $end_date_param = $_GET['end_date'] ?? '';
-        $weeks_ahead = (int)($_GET['weeks'] ?? $lawyer_default_weeks); // Use lawyer's default
+        $weeks_ahead = (int)($_GET['weeks'] ?? $lawyer_default_weeks);
         
         // Enforce lawyer's maximum booking window
         if ($weeks_ahead > $lawyer_max_weeks) {
@@ -124,7 +122,6 @@ try {
         $weekly_schedules = [];
         $one_time_dates = [];
         $blocked_dates = []; // Single blocked dates
-        $blocked_ranges = []; // Date ranges that are blocked
         
         foreach ($schedules as $schedule) {
             if ($schedule['schedule_type'] === 'weekly') {
@@ -132,34 +129,18 @@ try {
             } else if ($schedule['schedule_type'] === 'one_time') {
                 $one_time_dates[$schedule['specific_date']] = $schedule;
             } else if ($schedule['schedule_type'] === 'blocked') {
-                // Check if it's a single date block or range block
+                // Single date block
                 if (!empty($schedule['specific_date'])) {
-                    // Single date block
                     $blocked_dates[$schedule['specific_date']] = $schedule['blocked_reason'];
-                } else if (!empty($schedule['start_date']) && !empty($schedule['end_date'])) {
-                    // Date range block
-                    $blocked_ranges[] = [
-                        'start' => new DateTime($schedule['start_date']),
-                        'end' => new DateTime($schedule['end_date']),
-                        'reason' => $schedule['blocked_reason']
-                    ];
                 }
             }
         }
         
         // Helper function to check if a date is blocked
-        $isDateBlocked = function($date_str) use ($blocked_dates, $blocked_ranges) {
+        $isDateBlocked = function($date_str) use ($blocked_dates) {
             // Check single blocked dates
             if (isset($blocked_dates[$date_str])) {
                 return true;
-            }
-            
-            // Check blocked ranges
-            $check_date = new DateTime($date_str);
-            foreach ($blocked_ranges as $range) {
-                if ($check_date >= $range['start'] && $check_date <= $range['end']) {
-                    return true;
-                }
             }
             
             return false;
@@ -167,7 +148,7 @@ try {
         
         // Generate dates from weekly schedules
         foreach ($weekly_schedules as $weekly) {
-            $weekdays = explode(',', $weekly['weekdays']);
+            // For weekly schedules, check each day of the week
             $max_appointments = $weekly['max_appointments'];
             
             $current_date = clone $start_date;
@@ -188,30 +169,28 @@ try {
                     continue;
                 }
                 
-                // Check if this weekday is in the lawyer's weekly schedule
-                if (in_array($weekday_name, $weekdays)) {
-                    // Check current appointment count for this date
-                    $count_stmt = $pdo->prepare("
-                        SELECT COUNT(*) as appointment_count 
-                        FROM consultations 
-                        WHERE lawyer_id = ? 
-                        AND consultation_date = ? 
-                        AND status IN ('pending', 'confirmed')
-                    ");
-                    $count_stmt->execute([$lawyer['id'], $date_str]);
-                    $current_count = $count_stmt->fetch()['appointment_count'];
-                    
-                    // Only include date if not fully booked
-                    if ($current_count < $max_appointments) {
-                        $available_dates[$date_str] = [
-                            'date' => $date_str,
-                            'type' => 'weekly',
-                            'start_time' => $weekly['start_time'],
-                            'end_time' => $weekly['end_time'],
-                            'max_appointments' => $max_appointments,
-                            'booked' => $current_count
-                        ];
-                    }
+                // Weekly schedules apply to all days (no weekday filtering in new schema)
+                // Check current appointment count for this date
+                $count_stmt = $pdo->prepare("
+                    SELECT COUNT(*) as appointment_count 
+                    FROM consultations 
+                    WHERE lawyer_id = ? 
+                    AND consultation_date = ? 
+                    AND c_status IN ('pending', 'confirmed')
+                ");
+                $count_stmt->execute([$lawyer['id'], $date_str]);
+                $current_count = $count_stmt->fetch()['appointment_count'];
+                
+                // Only include date if not fully booked
+                if ($current_count < $max_appointments) {
+                    $available_dates[$date_str] = [
+                        'date' => $date_str,
+                        'type' => 'weekly',
+                        'start_time' => $weekly['start_time'],
+                        'end_time' => $weekly['end_time'],
+                        'max_appointments' => $max_appointments,
+                        'booked' => $current_count
+                    ];
                 }
                 $current_date->modify('+1 day');
             }
@@ -243,7 +222,7 @@ try {
                     FROM consultations 
                     WHERE lawyer_id = ? 
                     AND consultation_date = ? 
-                    AND status IN ('pending', 'confirmed')
+                    AND c_status IN ('pending', 'confirmed')
                 ");
                 $count_stmt->execute([$lawyer['id'], $date_str]);
                 $current_count = $count_stmt->fetch()['appointment_count'];
@@ -284,7 +263,7 @@ try {
             ];
         }
         
-        // Add blocked dates (single dates and ranges)
+        // Add blocked dates (single dates only)
         foreach ($blocked_dates as $date_str => $reason) {
             if (!isset($date_status_map[$date_str])) {
                 $date_status_map[$date_str] = [
@@ -294,30 +273,13 @@ try {
             }
         }
         
-        // Add blocked date ranges
-        foreach ($blocked_ranges as $range) {
-            $current = clone $range['start'];
-            while ($current <= $range['end']) {
-                $date_str = $current->format('Y-m-d');
-                if (!isset($date_status_map[$date_str])) {
-                    $date_status_map[$date_str] = [
-                        'status' => 'blocked',
-                        'reason' => $range['reason']
-                    ];
-                }
-                $current->modify('+1 day');
-            }
-        }
-        
         // Add fully booked dates (dates that are in schedule but have no slots)
         // Check weekly schedules for fully booked dates
         foreach ($weekly_schedules as $weekly) {
-            $weekdays = explode(',', $weekly['weekdays']);
             $max_appointments = $weekly['max_appointments'];
             
             $current_date = clone $start_date;
             while ($current_date <= $end_date) {
-                $weekday_name = $current_date->format('l');
                 $date_str = $current_date->format('Y-m-d');
                 
                 // Skip if already in map or blocked
@@ -332,27 +294,24 @@ try {
                     continue;
                 }
                 
-                // Check if this weekday is in schedule and fully booked
-                if (in_array($weekday_name, $weekdays)) {
-                    $count_stmt = $pdo->prepare("
-                        SELECT COUNT(*) as appointment_count 
-                        FROM consultations 
-                        WHERE lawyer_id = ? 
-                        AND consultation_date = ? 
-                        AND status IN ('pending', 'confirmed')
-                    ");
-                    $count_stmt->execute([$lawyer['id'], $date_str]);
-                    $current_count = $count_stmt->fetch()['appointment_count'];
-                    
-                    // If fully booked, add to map
-                    if ($current_count >= $max_appointments) {
-                        $date_status_map[$date_str] = [
-                            'status' => 'fully_booked',
-                            'type' => 'weekly',
-                            'max_appointments' => $max_appointments,
-                            'booked' => $current_count
-                        ];
-                    }
+                $count_stmt = $pdo->prepare("
+                    SELECT COUNT(*) as appointment_count 
+                    FROM consultations 
+                    WHERE lawyer_id = ? 
+                    AND consultation_date = ? 
+                    AND c_status IN ('pending', 'confirmed')
+                ");
+                $count_stmt->execute([$lawyer['id'], $date_str]);
+                $current_count = $count_stmt->fetch()['appointment_count'];
+                
+                // If fully booked, add to map
+                if ($current_count >= $max_appointments) {
+                    $date_status_map[$date_str] = [
+                        'status' => 'fully_booked',
+                        'type' => 'weekly',
+                        'max_appointments' => $max_appointments,
+                        'booked' => $current_count
+                    ];
                 }
                 $current_date->modify('+1 day');
             }
@@ -375,7 +334,7 @@ try {
                 FROM consultations 
                 WHERE lawyer_id = ? 
                 AND consultation_date = ? 
-                AND status IN ('pending', 'confirmed')
+                AND c_status IN ('pending', 'confirmed')
             ");
             $count_stmt->execute([$lawyer['id'], $date_str]);
             $current_count = $count_stmt->fetch()['appointment_count'];
@@ -403,16 +362,10 @@ try {
                 'total_days' => $start_date->diff($end_date)->days,
                 'requested_weeks' => $weeks_ahead
             ],
-            'lawyer_preferences' => [
-                'default_booking_weeks' => $lawyer_default_weeks,
-                'max_booking_weeks' => $lawyer_max_weeks,
-                'booking_window_enabled' => $booking_enabled
-            ],
             'schedule_summary' => [
                 'weekly_schedules' => count($weekly_schedules),
                 'one_time_schedules' => count($one_time_dates),
                 'blocked_dates' => count($blocked_dates),
-                'blocked_ranges' => count($blocked_ranges),
                 'total_available_dates' => count($available_dates),
                 'fully_booked_dates' => count(array_filter($date_status_map, function($d) { return $d['status'] === 'fully_booked'; })),
                 'blocked_dates_total' => count(array_filter($date_status_map, function($d) { return $d['status'] === 'blocked'; }))

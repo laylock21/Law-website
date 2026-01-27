@@ -41,9 +41,10 @@ try {
     
     // Get current lawyer information
     $lawyer_stmt = $pdo->prepare("
-        SELECT id, username, email, first_name, last_name, phone, description, profile_picture, lawyer_prefix 
-        FROM users 
-        WHERE id = ? AND role = 'lawyer'
+        SELECT u.user_id as id, u.username, u.email, u.phone, lp.lawyer_prefix, lp.lp_fullname, lp.lp_description as description, lp.profile
+        FROM users u
+        LEFT JOIN lawyer_profile lp ON u.user_id = lp.lawyer_id
+        WHERE u.user_id = ? AND u.role = 'lawyer'
     ");
     $lawyer_stmt->execute([$lawyer_id]);
     $lawyer = $lawyer_stmt->fetch();
@@ -52,9 +53,17 @@ try {
         throw new Exception("Lawyer profile not found");
     }
     
+    // Split fullname into first and last name if needed
+    if (!empty($lawyer['lp_fullname'])) {
+        $name_parts = explode(' ', $lawyer['lp_fullname'], 2);
+        $lawyer['first_name'] = $name_parts[0] ?? '';
+        $lawyer['last_name'] = $name_parts[1] ?? '';
+    }
+    $lawyer['profile_picture'] = $lawyer['profile'] ?? null;
+    
     // Get all practice areas for specialization selection
     $practice_areas_stmt = $pdo->query("
-        SELECT id, area_name 
+        SELECT pa_id as id, area_name 
         FROM practice_areas 
         WHERE is_active = 1 
         ORDER BY area_name
@@ -63,12 +72,12 @@ try {
     
     // Get lawyer's current specializations
     $current_specializations_stmt = $pdo->prepare("
-        SELECT practice_area_id 
+        SELECT pa_id 
         FROM lawyer_specializations 
-        WHERE user_id = ?
+        WHERE lawyer_id = ?
     ");
     $current_specializations_stmt->execute([$lawyer_id]);
-    $current_specializations = array_column($current_specializations_stmt->fetchAll(), 'practice_area_id');
+    $current_specializations = array_column($current_specializations_stmt->fetchAll(), 'pa_id');
     
 } catch (Exception $e) {
     $error = "Error loading profile: " . $e->getMessage();

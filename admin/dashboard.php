@@ -23,24 +23,42 @@ try {
     $total_consultations = $total_stmt->fetchColumn();
     
     // Status counts
-    $pending_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE status = 'pending'");
+    $pending_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE c_status = 'pending'");
     $pending_count = $pending_stmt->fetchColumn();
     
-    $confirmed_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE status = 'confirmed'");
+    $confirmed_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE c_status = 'confirmed'");
     $confirmed_count = $confirmed_stmt->fetchColumn();
     
-    $completed_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE status = 'completed'");
+    $completed_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE c_status = 'completed'");
     $completed_count = $completed_stmt->fetchColumn();
     
-    $cancelled_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE status = 'cancelled'");
+    $cancelled_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE c_status = 'cancelled'");
     $cancelled_count = $cancelled_stmt->fetchColumn();
     
     // Recent consultations
-    $recent_stmt = $pdo->query("SELECT * FROM consultations ORDER BY created_at DESC LIMIT 5");
+    $recent_stmt = $pdo->query("SELECT c_id, c_full_name, c_status, consultation_date, created_at, lawyer_id FROM consultations ORDER BY created_at DESC LIMIT 5");
     $recent_consultations = $recent_stmt->fetchAll();
     
-    // Practice area distribution
-    $area_stmt = $pdo->query("SELECT practice_area, COUNT(*) as count FROM consultations GROUP BY practice_area ORDER BY count DESC");
+    // Get lawyer names for recent consultations
+    $lawyer_names = [];
+    if (!empty($recent_consultations)) {
+        $lawyer_ids = array_unique(array_column($recent_consultations, 'lawyer_id'));
+        if (!empty($lawyer_ids)) {
+            $placeholders = implode(',', array_fill(0, count($lawyer_ids), '?'));
+            $lawyer_stmt = $pdo->prepare("SELECT user_id, CONCAT(lp_fullname) as full_name FROM lawyer_profile WHERE lawyer_id IN ($placeholders)");
+            $lawyer_stmt->execute($lawyer_ids);
+            $lawyer_names = $lawyer_stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+        }
+    }
+    
+    // Practice area distribution - get from lawyer_specializations
+    $area_stmt = $pdo->query("
+        SELECT pa.area_name, COUNT(DISTINCT ls.lawyer_id) as count 
+        FROM practice_areas pa
+        LEFT JOIN lawyer_specializations ls ON pa.pa_id = ls.pa_id
+        GROUP BY pa.pa_id, pa.area_name 
+        ORDER BY count DESC
+    ");
     $practice_areas = $area_stmt->fetchAll();
     
     // Lawyer statistics
@@ -228,7 +246,7 @@ $active_page = "dashboard";
                     <?php else: ?>
                         <?php foreach ($practice_areas as $area): ?>
                             <div class="admin-area-item">
-                                <span class="admin-area-name"><?php echo htmlspecialchars($area['practice_area']); ?></span>
+                                <span class="admin-area-name"><?php echo htmlspecialchars($area['area_name']); ?></span>
                                 <span class="admin-area-count"><?php echo $area['count']; ?></span>
                             </div>
                         <?php endforeach; ?>
@@ -248,11 +266,11 @@ $active_page = "dashboard";
                         <?php foreach ($recent_consultations as $consultation): ?>
                             <div class="admin-consultation-item">
                                 <div class="admin-consultation-info">
-                                    <h4><?php echo htmlspecialchars($consultation['full_name']); ?></h4>
-                                    <p><?php echo htmlspecialchars($consultation['practice_area']); ?> • <?php echo date('M d, Y', strtotime($consultation['created_at'])); ?></p>
+                                    <h4><?php echo htmlspecialchars($consultation['c_full_name']); ?></h4>
+                                    <p><?php echo isset($lawyer_names[$consultation['lawyer_id']]) ? htmlspecialchars($lawyer_names[$consultation['lawyer_id']]) : 'No lawyer assigned'; ?> • <?php echo date('M d, Y', strtotime($consultation['created_at'])); ?></p>
                                 </div>
-                                <span class="admin-status-badge admin-status-<?php echo $consultation['status']; ?>">
-                                    <?php echo ucfirst($consultation['status']); ?>
+                                <span class="admin-status-badge admin-status-<?php echo $consultation['c_status']; ?>">
+                                    <?php echo ucfirst($consultation['c_status']); ?>
                                 </span>
                             </div>
                         <?php endforeach; ?>

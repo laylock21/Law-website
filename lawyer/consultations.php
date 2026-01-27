@@ -35,10 +35,13 @@ try {
 
 	// Fetch consultations - Include consultations assigned to this lawyer OR designated as 'Any' (lawyer_id IS NULL)
 	$list_stmt = $pdo->prepare('
-		SELECT *
-		FROM consultations
-		WHERE lawyer_id = ? OR lawyer_id IS NULL
-		ORDER BY created_at DESC
+		SELECT c.c_id as id, c.c_full_name as full_name, c.c_email as email, c.c_phone as phone,
+		       c.c_practice_area as practice_area, c.c_consultation_date as consultation_date,
+		       c.c_consultation_time as consultation_time, c.c_status as status,
+		       c.c_case_description as case_description, c.created_at, c.lawyer_id
+		FROM consultations c
+		WHERE c.lawyer_id = ? OR c.lawyer_id IS NULL
+		ORDER BY c.created_at DESC
 		LIMIT ? OFFSET ?
 	');
 	$list_stmt->execute([$lawyer_id, $limit, $offset]);
@@ -329,7 +332,6 @@ $active_page = "consultations";
 								<th style="text-align:left; padding: 12px;"><input type="checkbox" id="select-all" onchange="toggleSelectAll()"></th>
 								<th style="text-align:left; padding: 12px;">ID</th>
 								<th style="text-align:left; padding: 12px;">Client</th>
-								<th style="text-align:left; padding: 12px;">Practice Area</th>
 								<th style="text-align:left; padding: 12px;">Date</th>
 								<th style="text-align:left; padding: 12px;">Status</th>
 								<th style="text-align:left; padding: 12px;">Created</th>
@@ -339,19 +341,13 @@ $active_page = "consultations";
 						<tbody>
 							<?php foreach ($consultations as $row): ?>
 								<tr>
-									<td style="padding: 12px; border-bottom: 1px solid #e9ecef;"><input type="checkbox" name="selected_consultations[]" value="<?php echo $row['id']; ?>" class="consultation-checkbox"></td>
-									<td style="padding: 12px; border-bottom: 1px solid #e9ecef;">#<?php echo (int)$row['id']; ?></td>
-									<td style="padding: 12px; border-bottom: 1px solid #e9ecef;"><?php echo htmlspecialchars($row['full_name']); ?><br><small><?php echo htmlspecialchars($row['email']); ?></small></td>
-									<td style="padding: 12px; border-bottom: 1px solid #e9ecef; "><?php echo htmlspecialchars($row['practice_area']); ?></td>
+									<td style="padding: 12px; border-bottom: 1px solid #e9ecef;"><input type="checkbox" name="selected_consultations[]" value="<?php echo $row['c_id']; ?>" class="consultation-checkbox"></td>
+									<td style="padding: 12px; border-bottom: 1px solid #e9ecef;">#<?php echo (int)$row['c_id']; ?></td>
+									<td style="padding: 12px; border-bottom: 1px solid #e9ecef;"><?php echo htmlspecialchars($row['c_full_name']); ?><br><small><?php echo htmlspecialchars($row['c_email']); ?></small></td>
 									<td style="padding: 12px; border-bottom: 1px solid #e9ecef; ">
 										<?php 
 										if ($row['consultation_date']) {
 											echo date('M d, Y', strtotime($row['consultation_date']));
-											if (!empty($row['consultation_time'])) {
-												echo '<br><small style="color: #666;"><i class="fas fa-clock"></i> ' . date('g:i A', strtotime($row['consultation_time'])) . '</small>';
-											}
-										} elseif ($row['selected_date']) {
-											echo date('M d, Y', strtotime($row['selected_date']));
 											if (!empty($row['consultation_time'])) {
 												echo '<br><small style="color: #666;"><i class="fas fa-clock"></i> ' . date('g:i A', strtotime($row['consultation_time'])) . '</small>';
 											}
@@ -361,12 +357,12 @@ $active_page = "consultations";
 										?>
 									</td>
 									<td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
-										<span class="lawyer-status-badge lawyer-status-<?php echo $row['status']; ?>"><?php echo ucfirst($row['status']); ?></span>
+										<span class="lawyer-status-badge lawyer-status-<?php echo $row['c_status']; ?>"><?php echo ucfirst($row['c_status']); ?></span>
 									</td>
 									<td style="padding: 12px; border-bottom: 1px solid #e9ecef; "><?php echo date('M d, Y H:i', strtotime($row['created_at'])); ?></td>
 									<td style="padding: 0px; border-bottom: 1px solid #e9ecef; text-align: center;" data-id="#<?php echo (int)$row['id']; ?>">
 										<div style="display:flex; gap:8px; align-items:center; flex-wrap: wrap; justify-content: center;">
-											<button onclick="openConsultationModal(<?php echo (int)$row['id']; ?>); return false;" class="lawyer-btn btn-view-details" style="text-decoration:none; padding:8px 12px; border: none; cursor: pointer;">View Details</button>
+											<button onclick="openConsultationModal(<?php echo (int)$row['c_id']; ?>); return false;" class="lawyer-btn btn-view-details" style="text-decoration:none; padding:8px 12px; border: none; cursor: pointer;">View Details</button>
 										</div>
 									</td>
 								</tr>

@@ -5,6 +5,11 @@
  * Automatically routes to appropriate dashboard based on role
  */
 
+// Enable error display for debugging (disable in production)
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 session_start();
 
 // Security headers
@@ -72,14 +77,19 @@ if (!$pdo) {
             if ($auth->authenticate($username, $password)) {
                 // Redirect based on role
                 $user = $auth->getCurrentUser();
-                if ($user['role'] === 'admin') {
-                    header('Location: admin/dashboard.php');
-                } elseif ($user['role'] === 'lawyer') {
-                    header('Location: lawyer/dashboard.php');
+                if ($user && isset($user['role'])) {
+                    if ($user['role'] === 'admin') {
+                        header('Location: admin/dashboard.php');
+                        exit;
+                    } elseif ($user['role'] === 'lawyer') {
+                        header('Location: lawyer/dashboard.php');
+                        exit;
+                    } else {
+                        $error_message = 'Invalid user role';
+                    }
                 } else {
-                    $error_message = 'Invalid user role';
+                    $error_message = 'Authentication failed - session error';
                 }
-                exit;
             } else {
                 // Check if now locked out after this attempt
                 if ($auth->isLockedOut()) {

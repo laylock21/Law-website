@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception('Practice area name is required');
             }
             
-            $stmt = $pdo->prepare("INSERT INTO practice_areas (area_name, description, is_active) VALUES (?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO practice_areas (area_name, pa_description, is_active) VALUES (?, ?, ?)");
             $stmt->execute([$area_name, $description, $is_active]);
             
             $success_message = "Practice area added successfully!";
@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception('Practice area name is required');
             }
             
-            $stmt = $pdo->prepare("UPDATE practice_areas SET area_name = ?, description = ?, is_active = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE practice_areas SET area_name = ?, pa_description = ?, is_active = ? WHERE pa_id = ?");
             $stmt->execute([$area_name, $description, $is_active, $id]);
             
             $success_message = "Practice area updated successfully!";
@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = (int)$_POST['id'];
             
             // Check if any lawyers are using this practice area
-            $check_stmt = $pdo->prepare("SELECT COUNT(*) FROM lawyer_specializations WHERE practice_area_id = ?");
+            $check_stmt = $pdo->prepare("SELECT COUNT(*) FROM lawyer_specializations WHERE pa_id = ?");
             $check_stmt->execute([$id]);
             $count = $check_stmt->fetchColumn();
             
@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception("Cannot delete practice area. It is assigned to $count lawyer(s).");
             }
             
-            $stmt = $pdo->prepare("DELETE FROM practice_areas WHERE id = ?");
+            $stmt = $pdo->prepare("DELETE FROM practice_areas WHERE pa_id = ?");
             $stmt->execute([$id]);
             
             $success_message = "Practice area deleted successfully!";
@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Toggle active status
         if (isset($_POST['action']) && $_POST['action'] === 'toggle') {
             $id = (int)$_POST['id'];
-            $stmt = $pdo->prepare("UPDATE practice_areas SET is_active = NOT is_active WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE practice_areas SET is_active = NOT is_active WHERE pa_id = ?");
             $stmt->execute([$id]);
             
             $success_message = "Practice area status updated!";
@@ -94,10 +94,10 @@ try {
     $stmt = $pdo->query("
         SELECT 
             pa.*,
-            COUNT(ls.id) as lawyer_count
+            COUNT(ls.lawyer_id) as lawyer_count
         FROM practice_areas pa
-        LEFT JOIN lawyer_specializations ls ON pa.id = ls.practice_area_id
-        GROUP BY pa.id
+        LEFT JOIN lawyer_specializations ls ON pa.pa_id = ls.pa_id
+        GROUP BY pa.pa_id
         ORDER BY pa.area_name ASC
     ");
     $practice_areas = $stmt->fetchAll();
@@ -563,7 +563,7 @@ $active_page = "practice_areas";
                         </div>
                         
                         <p class="area-description">
-                            <?php echo htmlspecialchars($area['description'] ?: 'No description provided'); ?>
+                            <?php echo htmlspecialchars($area['pa_description'] ?: 'No description provided'); ?>
                         </p>
                         
                         <div class="area-stats">
@@ -578,10 +578,10 @@ $active_page = "practice_areas";
                             <button class="btn-edit" onclick='openEditModal(<?php echo json_encode($area); ?>)'>
                                 <i class="fas fa-edit"></i> Edit
                             </button>
-                            <button class="btn-toggle" onclick="confirmToggle(<?php echo $area['id']; ?>)">
+                            <button class="btn-toggle" onclick="confirmToggle(<?php echo $area['pa_id']; ?>)">
                                 <i class="fas fa-toggle-on"></i> Toggle
                             </button>
-                            <button class="btn-delete" onclick="confirmDelete(<?php echo $area['id']; ?>, '<?php echo htmlspecialchars(addslashes($area['area_name'])); ?>', <?php echo $area['lawyer_count']; ?>)">
+                            <button class="btn-delete" onclick="confirmDelete(<?php echo $area['pa_id']; ?>, '<?php echo htmlspecialchars(addslashes($area['area_name'])); ?>', <?php echo $area['lawyer_count']; ?>)">
                                 <i class="fas fa-trash"></i> Delete
                             </button>
                         </div>
@@ -651,9 +651,9 @@ $active_page = "practice_areas";
         function openEditModal(area) {
             document.getElementById('modalTitle').textContent = 'Edit Practice Area';
             document.getElementById('formAction').value = 'edit';
-            document.getElementById('areaId').value = area.id;
+            document.getElementById('areaId').value = area.pa_id;
             document.getElementById('area_name').value = area.area_name;
-            document.getElementById('description').value = area.description || '';
+            document.getElementById('description').value = area.pa_description || '';
             document.getElementById('is_active').checked = area.is_active == 1;
             document.getElementById('practiceAreaModal').classList.add('show');
         }

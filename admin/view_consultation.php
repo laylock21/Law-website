@@ -32,18 +32,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $pdo = getDBConnection();
             
             // Get current status before updating
-            $check_stmt = $pdo->prepare("SELECT status FROM consultations WHERE id = ?");
+            $check_stmt = $pdo->prepare("SELECT c_status FROM consultations WHERE c_id = ?");
             $check_stmt->execute([$consultation_id]);
             $current = $check_stmt->fetch();
-            $old_status = $current ? $current['status'] : null;
+            $old_status = $current ? $current['c_status'] : null;
             
             // Update status and cancellation reason if applicable
             if ($new_status === 'cancelled') {
-                $stmt = $pdo->prepare("UPDATE consultations SET status = ?, cancellation_reason = ? WHERE id = ?");
+                $stmt = $pdo->prepare("UPDATE consultations SET c_status = ?, cancellation_reason = ? WHERE c_id = ?");
                 $stmt->execute([$new_status, $cancellation_reason, $consultation_id]);
             } else {
                 // Clear cancellation reason if status is not cancelled
-                $stmt = $pdo->prepare("UPDATE consultations SET status = ?, cancellation_reason = NULL WHERE id = ?");
+                $stmt = $pdo->prepare("UPDATE consultations SET c_status = ?, cancellation_reason = NULL WHERE c_id = ?");
                 $stmt->execute([$new_status, $consultation_id]);
             }
             
@@ -111,7 +111,7 @@ if (isset($_SESSION['consultation_error'])) {
 // Get consultation details
 try {
     $pdo = getDBConnection();
-    $stmt = $pdo->prepare("SELECT * FROM consultations WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT * FROM consultations WHERE c_id = ?");
     $stmt->execute([$consultation_id]);
     $consultation = $stmt->fetch();
     
@@ -180,12 +180,23 @@ $active_page = "consultations";
                 <div class="admin-welcome-section">
                     <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
                         <div>
-                            <h2 style="margin-bottom: 0.25rem;">Consultation #<?php echo $consultation['id']; ?></h2>
+                            <h2 style="margin-bottom: 0.25rem;">Consultation #<?php echo $consultation['c_id']; ?></h2>
                             <p style="margin: 0; color: #6c757d;">
-                                <?php echo date('M d, Y H:i', strtotime($consultation['created_at'])); ?> • <?php echo htmlspecialchars($consultation['practice_area']); ?>
+                                <?php echo date('M d, Y H:i', strtotime($consultation['created_at'])); ?>
+                                <?php 
+                                // Get lawyer name
+                                if ($consultation['lawyer_id']) {
+                                    $lawyer_stmt = $pdo->prepare("SELECT lp_fullname FROM lawyer_profile WHERE lawyer_id = ?");
+                                    $lawyer_stmt->execute([$consultation['lawyer_id']]);
+                                    $lawyer = $lawyer_stmt->fetch();
+                                    if ($lawyer) {
+                                        echo ' • ' . htmlspecialchars($lawyer['lp_fullname']);
+                                    }
+                                }
+                                ?>
                             </p>
                         </div>
-                        <span class="admin-status-badge admin-status-<?php echo $consultation['status']; ?>"><?php echo ucfirst($consultation['status']); ?></span>
+                        <span class="admin-status-badge admin-status-<?php echo $consultation['c_status']; ?>"><?php echo ucfirst($consultation['c_status']); ?></span>
                     </div>
                 </div>
 
@@ -198,27 +209,34 @@ $active_page = "consultations";
                         <tbody>
                             <tr>
                                 <th>Client Name</th>
-                                <td><?php echo htmlspecialchars($consultation['full_name']); ?></td>
+                                <td><?php echo htmlspecialchars($consultation['c_full_name']); ?></td>
                             </tr>
                             <tr>
                                 <th>Email Address</th>
                                 <td>
-                                    <a href="mailto:<?php echo htmlspecialchars($consultation['email']); ?>"><?php echo htmlspecialchars($consultation['email']); ?></a>
+                                    <a href="mailto:<?php echo htmlspecialchars($consultation['c_email']); ?>"><?php echo htmlspecialchars($consultation['c_email']); ?></a>
                                 </td>
                             </tr>
                             <tr>
                                 <th>Phone Number</th>
                                 <td>
-                                    <a href="tel:<?php echo htmlspecialchars($consultation['phone']); ?>"><?php echo htmlspecialchars($consultation['phone']); ?></a>
+                                    <a href="tel:<?php echo htmlspecialchars($consultation['c_phone']); ?>"><?php echo htmlspecialchars($consultation['c_phone']); ?></a>
                                 </td>
                             </tr>
                             <tr>
-                                <th>Practice Area</th>
-                                <td><?php echo htmlspecialchars($consultation['practice_area']); ?></td>
-                            </tr>
-                            <tr>
-                                <th>Preferred Lawyer</th>
-                                <td><?php echo htmlspecialchars($consultation['selected_lawyer']); ?></td>
+                                <th>Assigned Lawyer</th>
+                                <td>
+                                    <?php 
+                                    if ($consultation['lawyer_id']) {
+                                        $lawyer_stmt = $pdo->prepare("SELECT lp_fullname FROM lawyer_profile WHERE lawyer_id = ?");
+                                        $lawyer_stmt->execute([$consultation['lawyer_id']]);
+                                        $lawyer = $lawyer_stmt->fetch();
+                                        echo $lawyer ? htmlspecialchars($lawyer['lp_fullname']) : 'Unknown';
+                                    } else {
+                                        echo 'Not assigned';
+                                    }
+                                    ?>
+                                </td>
                             </tr>
                             <tr>
                                 <th>Consultation Date</th>
@@ -226,8 +244,6 @@ $active_page = "consultations";
                                     <?php 
                                     if ($consultation['consultation_date']) {
                                         echo date('l, F d, Y', strtotime($consultation['consultation_date']));
-                                    } elseif ($consultation['selected_date']) {
-                                        echo date('l, F d, Y', strtotime($consultation['selected_date']));
                                     } else {
                                         echo 'No specific date requested';
                                     }
@@ -268,8 +284,8 @@ $active_page = "consultations";
                 <div class="admin-quick-actions" style="margin-top: 1.5rem; text-align: left;">
                     <h3>Actions</h3>
                     <div class="admin-action-buttons" style="justify-content: flex-start;">
-                        <a href="mailto:<?php echo htmlspecialchars($consultation['email']); ?>" class="admin-btn admin-btn-primary">📧 Email Client</a>
-                        <a href="tel:<?php echo htmlspecialchars($consultation['phone']); ?>" class="admin-btn admin-btn-success">📞 Call Client</a>
+                        <a href="mailto:<?php echo htmlspecialchars($consultation['c_email']); ?>" class="admin-btn admin-btn-primary">📧 Email Client</a>
+                        <a href="tel:<?php echo htmlspecialchars($consultation['c_phone']); ?>" class="admin-btn admin-btn-success">📞 Call Client</a>
                         <a href="consultations.php" class="admin-btn admin-btn-outline">← Back to List</a>
                     </div>
                 </div>
@@ -283,10 +299,10 @@ $active_page = "consultations";
                         <div class="admin-form-group">
                             <label for="new_status">Status</label>
                             <select name="new_status" id="new_status" onchange="toggleCancellationReason()">
-                                <option value="pending" <?php echo $consultation['status'] === 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                <option value="confirmed" <?php echo $consultation['status'] === 'confirmed' ? 'selected' : ''; ?>>Confirmed</option>
-                                <option value="cancelled" <?php echo $consultation['status'] === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
-                                <option value="completed" <?php echo $consultation['status'] === 'completed' ? 'selected' : ''; ?>>Completed</option>
+                                <option value="pending" <?php echo $consultation['c_status'] === 'pending' ? 'selected' : ''; ?>>Pending</option>
+                                <option value="confirmed" <?php echo $consultation['c_status'] === 'confirmed' ? 'selected' : ''; ?>>Confirmed</option>
+                                <option value="cancelled" <?php echo $consultation['c_status'] === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                                <option value="completed" <?php echo $consultation['c_status'] === 'completed' ? 'selected' : ''; ?>>Completed</option>
                             </select>
                         </div>
                         

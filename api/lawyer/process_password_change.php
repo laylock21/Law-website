@@ -55,7 +55,7 @@ try {
     // Verify current password using password_verify
     $current_password_stmt = $pdo->prepare("
         SELECT password FROM users 
-        WHERE id = ? AND role = 'lawyer'
+        WHERE user_id = ? AND role = 'lawyer'
     ");
     $current_password_stmt->execute([$lawyer_id]);
     $user_data = $current_password_stmt->fetch();

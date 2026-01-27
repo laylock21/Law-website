@@ -67,7 +67,7 @@ try {
     }
     
     // Get current user data
-    $stmt = $pdo->prepare("SELECT password, temporary_password FROM users WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT password, temporary_password FROM users WHERE user_id = ?");
     $stmt->execute([$user_id]);
     $user = $stmt->fetch();
     
@@ -86,7 +86,7 @@ try {
     $hashed_password = password_hash($new_password, PASSWORD_BCRYPT);
     
     // Update password and clear temporary_password flag
-    $update_stmt = $pdo->prepare("UPDATE users SET password = ?, temporary_password = NULL WHERE id = ?");
+    $update_stmt = $pdo->prepare("UPDATE users SET password = ?, temporary_password = NULL WHERE user_id = ?");
     $update_stmt->execute([$hashed_password, $user_id]);
     
     echo json_encode(['success' => true, 'message' => 'Password changed successfully']);

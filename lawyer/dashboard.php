@@ -27,10 +27,10 @@ try {
     $pdo = getDBConnection();
     
     // Get lawyer's profile picture and temporary password status
-    $profile_stmt = $pdo->prepare("SELECT profile_picture, temporary_password FROM users WHERE id = ? AND role = 'lawyer'");
+    $profile_stmt = $pdo->prepare("SELECT lp.profile, u.temporary_password FROM users u LEFT JOIN lawyer_profile lp ON u.user_id = lp.lawyer_id WHERE u.user_id = ? AND u.role = 'lawyer'");
     $profile_stmt->execute([$lawyer_id]);
     $lawyer_profile = $profile_stmt->fetch();
-    $profile_picture = $lawyer_profile['profile_picture'] ?? null;
+    $profile_picture = $lawyer_profile['profile'] ?? null;
     $has_temporary_password = ($lawyer_profile['temporary_password'] === 'temporary');
     
     // Get total count of consultations for pagination
@@ -45,9 +45,9 @@ try {
     
     // Get lawyer's consultations with pagination - Include consultations assigned to this lawyer OR designated as 'Any' (lawyer_id IS NULL)
     $consultations_stmt = $pdo->prepare("
-        SELECT c.*, pa.area_name as practice_area_name 
+        SELECT c.*
         FROM consultations c 
-        LEFT JOIN practice_areas pa ON c.practice_area = pa.area_name
+        LEFT JOIN practice_areas pa ON c.c_practice_area = pa.area_name
         WHERE c.lawyer_id = ? OR c.lawyer_id IS NULL
         ORDER BY c.created_at DESC
         LIMIT ? OFFSET ?
@@ -59,8 +59,8 @@ try {
     $specializations_stmt = $pdo->prepare("
         SELECT pa.area_name 
         FROM lawyer_specializations ls 
-        JOIN practice_areas pa ON ls.practice_area_id = pa.id 
-        WHERE ls.user_id = ?
+        JOIN practice_areas pa ON ls.pa_id = pa.pa_id 
+        WHERE ls.lawyer_id = ?
     ");
     $specializations_stmt->execute([$lawyer_id]);
     $specializations = $specializations_stmt->fetchAll();
@@ -68,7 +68,7 @@ try {
     // Get weekly availability - fetch only active schedules
     $availability_stmt = $pdo->prepare("
         SELECT * FROM lawyer_availability 
-        WHERE user_id = ? AND is_active = 1
+        WHERE lawyer_id = ? AND la_is_active = 1
         ORDER BY schedule_type, specific_date, created_at DESC
     ");
     $availability_stmt->execute([$lawyer_id]);
@@ -178,7 +178,7 @@ $active_page = "dashboard";
                             // Find today's schedule
                             $today_schedule = null;
                             foreach ($all_availabilities as $availability) {
-                                if ($availability['schedule_type'] === 'weekly' && $availability['weekdays'] === $today) {
+                                if ($availability['schedule_type'] === 'weekly' && $availability['weekday'] === $today) {
                                     $today_schedule = $availability;
                                     break;
                                 }
@@ -209,7 +209,7 @@ $active_page = "dashboard";
                                     
                                     foreach ($all_availabilities as $availability) {
                                         if ($availability['schedule_type'] === 'weekly' && 
-                                            $availability['weekdays'] === $check_day) {
+                                            $availability['weekday'] === $check_day) {
                                             $next_schedule = $availability;
                                             $next_date = date('Y-m-d', strtotime("+$i days"));
                                             break 2;
@@ -298,7 +298,6 @@ $active_page = "dashboard";
                         <div class="consultations-table">
                             <div class="consultations-header">
                                 <div class="col-client">Client</div>
-                                <div class="col-practice">Practice Area</div>
                                 <div class="col-contact">Contact Info</div>
                                 <div class="col-date">Date & Time</div>
                                 <div class="col-status">Status</div>
@@ -307,7 +306,7 @@ $active_page = "dashboard";
                             <?php foreach ($consultations as $consultation): ?>
                                 <div class="consultation-row">
                                     <div class="col-client">
-                                        <div class="client-name"><?php echo htmlspecialchars($consultation['full_name']); ?></div>
+                                        <div class="client-name"><?php echo htmlspecialchars($consultation['c_full_name']); ?></div>
                                         <?php 
                                         $description = $consultation['case_description'];
                                         $shortDesc = substr($description, 0, 25);
@@ -320,21 +319,13 @@ $active_page = "dashboard";
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-practice">
-                                        <div class="practice-area"><?php echo htmlspecialchars($consultation['practice_area_name'] ?? $consultation['practice_area']); ?></div>
-                                    </div>
                                     <div class="col-contact">
-                                        <div class="contact-email"><?php echo htmlspecialchars($consultation['email']); ?></div>
-                                        <div class="contact-phone"><?php echo htmlspecialchars($consultation['phone']); ?></div>
+                                        <div class="contact-email"><?php echo htmlspecialchars($consultation['c_email']); ?></div>
+                                        <div class="contact-phone"><?php echo htmlspecialchars($consultation['c_phone']); ?></div>
                                     </div>
                                     <div class="col-date">
                                         <?php if ($consultation['consultation_date']): ?>
                                             <div class="consultation-date"><?php echo date('M j, Y', strtotime($consultation['consultation_date'])); ?></div>
-                                            <?php if (!empty($consultation['consultation_time'])): ?>
-                                                <div class="consultation-time"><?php echo date('g:i A', strtotime($consultation['consultation_time'])); ?></div>
-                                            <?php endif; ?>
-                                        <?php elseif ($consultation['selected_date']): ?>
-                                            <div class="consultation-date"><?php echo date('M j, Y', strtotime($consultation['selected_date'])); ?></div>
                                             <?php if (!empty($consultation['consultation_time'])): ?>
                                                 <div class="consultation-time"><?php echo date('g:i A', strtotime($consultation['consultation_time'])); ?></div>
                                             <?php endif; ?>
@@ -343,12 +334,12 @@ $active_page = "dashboard";
                                         <?php endif; ?>
                                     </div>
                                     <div class="col-status">
-                                        <span class="status-badge status-<?php echo $consultation['status']; ?>">
-                                            <?php echo ucfirst($consultation['status']); ?>
+                                        <span class="status-badge status-<?php echo $consultation['c_status']; ?>">
+                                            <?php echo ucfirst($consultation['c_status']); ?>
                                         </span>
                                     </div>
                                     <div class="col-action">
-                                        <a href="view_consultation.php?id=<?php echo (int)$consultation['id']; ?>" class="btn-open">Open</a>
+                                        <a href="view_consultation.php?id=<?php echo (int)$consultation['c_id']; ?>" class="btn-open">Open</a>
                                     </div>
                                 </div>
                             <?php endforeach; ?>

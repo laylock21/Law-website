@@ -40,14 +40,15 @@ try {
     
     // Get lawyers by specialization
     $lawyers_stmt = $pdo->prepare("
-        SELECT u.id, u.first_name, u.last_name, u.lawyer_prefix, u.email, u.phone
+        SELECT u.user_id as id, lp.lp_fullname, lp.lawyer_prefix, u.email, u.phone
         FROM users u
-        JOIN lawyer_specializations ls ON u.id = ls.user_id
-        JOIN practice_areas pa ON ls.practice_area_id = pa.id
+        INNER JOIN lawyer_profile lp ON u.user_id = lp.lawyer_id
+        JOIN lawyer_specializations ls ON u.user_id = ls.lawyer_id
+        JOIN practice_areas pa ON ls.pa_id = pa.pa_id
         WHERE pa.area_name = ? 
         AND u.role = 'lawyer' 
         AND u.is_active = 1
-        ORDER BY u.first_name, u.last_name
+        ORDER BY lp.lp_fullname
     ");
     $lawyers_stmt->execute([$practice_area]);
     $lawyers = $lawyers_stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -57,14 +58,13 @@ try {
     foreach ($lawyers as $lawyer) {
         // Build full name with prefix if available
         $prefix = !empty($lawyer['lawyer_prefix']) ? $lawyer['lawyer_prefix'] . ' ' : '';
-        $fullName = $prefix . $lawyer['first_name'] . ' ' . $lawyer['last_name'];
+        $fullName = $prefix . $lawyer['lp_fullname'];
         
         $formatted_lawyers[] = [
             'id' => $lawyer['id'],
             'name' => $fullName,
             'prefix' => $lawyer['lawyer_prefix'],
-            'first_name' => $lawyer['first_name'],
-            'last_name' => $lawyer['last_name'],
+            'full_name' => $lawyer['lp_fullname'],
             'email' => $lawyer['email'],
             'phone' => $lawyer['phone']
         ];
