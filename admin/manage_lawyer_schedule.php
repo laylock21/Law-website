@@ -704,11 +704,17 @@ try {
             <div class="lawyer-info-card">
                 <div>
                     <?php 
-                    $profile_picture_url = getProfilePictureUrl($lawyer['profile_picture']);
-                    $lawyer_initials = strtoupper(substr($lawyer['first_name'], 0, 1) . substr($lawyer['last_name'], 0, 1));
+                    // Convert LONGBLOB to base64 for display
+                    $profile_picture_url = '';
+                    if (!empty($lawyer['profile'])) {
+                        $profile_picture_url = 'data:image/jpeg;base64,' . base64_encode($lawyer['profile']);
+                    } else {
+                        $profile_picture_url = '../src/img/default-avatar.png';
+                    }
+                    $lawyer_initials = strtoupper(substr($lawyer['lp_fullname'] ?? 'L', 0, 1) . substr($lawyer['lp_fullname'] ?? 'L', 1, 1));
                     ?>
                     <img src="<?php echo htmlspecialchars($profile_picture_url); ?>" 
-                         alt="<?php echo htmlspecialchars($lawyer['first_name'] . ' ' . $lawyer['last_name']); ?>"
+                         alt="<?php echo htmlspecialchars($lawyer['lp_fullname'] ?? 'Lawyer'); ?>"
                          style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary-color); box-shadow: 0 4px 8px rgba(0,0,0,0.2);"
                          onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); display: none; align-items: center; justify-content: center; color: white; font-size: 32px; font-weight: bold; border: 3px solid var(--primary-color); box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
@@ -716,7 +722,7 @@ try {
                     </div>
                 </div>
                 <div style="flex: 1;">
-                    <h2><?php echo htmlspecialchars($lawyer['first_name'] . ' ' . $lawyer['last_name']); ?></h2>
+                    <h2><?php echo htmlspecialchars($lawyer['lp_fullname'] ?? 'Lawyer'); ?></h2>
                     <p><i class="fas fa-envelope"></i> <?php echo htmlspecialchars($lawyer['email']); ?></p>
                     <p><i class="fas fa-phone"></i> <?php echo htmlspecialchars($lawyer['phone']); ?></p>
                     <p><i class="fas fa-user"></i> Username: <?php echo htmlspecialchars($lawyer['username']); ?></p>

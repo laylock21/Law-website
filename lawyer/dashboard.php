@@ -47,7 +47,7 @@ try {
     $consultations_stmt = $pdo->prepare("
         SELECT c.*, pa.area_name as practice_area_name 
         FROM consultations c 
-        LEFT JOIN practice_areas pa ON c.practice_area = pa.area_name
+        LEFT JOIN practice_areas pa ON c.c_practice_area = pa.area_name
         WHERE c.lawyer_id = ? OR c.lawyer_id IS NULL
         ORDER BY c.created_at DESC
         LIMIT ? OFFSET ?

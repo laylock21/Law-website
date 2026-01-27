@@ -27,7 +27,13 @@ try {
     $pdo = getDBConnection();
     
     // Fetch consultation details (restricted to this lawyer or unassigned)
-    $stmt = $pdo->prepare('SELECT * FROM consultations WHERE id = ? AND (lawyer_id = ? OR lawyer_id IS NULL) LIMIT 1');
+    $stmt = $pdo->prepare('SELECT c.c_id as id, c.c_full_name as full_name, c.c_email as email, c.c_phone as phone,
+                                  c.c_practice_area as practice_area, c.c_consultation_date as consultation_date,
+                                  c.c_consultation_time as consultation_time, c.c_status as status,
+                                  c.c_case_description as case_description, c.c_cancellation_reason as cancellation_reason,
+                                  c.created_at, c.lawyer_id
+                           FROM consultations c 
+                           WHERE c.c_id = ? AND (c.lawyer_id = ? OR c.lawyer_id IS NULL) LIMIT 1');
     $stmt->execute([$consultation_id, $lawyer_id]);
     $consultation = $stmt->fetch();
     

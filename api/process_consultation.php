@@ -121,10 +121,11 @@ try {
         $lawyer_name_clean = preg_replace('/^Atty\.\s*/i', '', $selected_lawyer);
         
         $lawyer_stmt = $pdo->prepare("
-            SELECT id FROM users 
-            WHERE CONCAT(first_name, ' ', last_name) = ? 
-            AND role = 'lawyer' 
-            AND is_active = 1
+            SELECT u.user_id as id FROM users u
+            INNER JOIN lawyer_profile lp ON u.user_id = lp.lawyer_id
+            WHERE lp.lp_fullname = ? 
+            AND u.role = 'lawyer' 
+            AND u.is_active = 1
         ");
         $lawyer_stmt->execute([$lawyer_name_clean]);
         $lawyer = $lawyer_stmt->fetch();
@@ -137,7 +138,7 @@ try {
         $limit_stmt = $pdo->prepare("
             SELECT max_appointments 
             FROM lawyer_availability 
-            WHERE user_id = ?
+            WHERE lawyer_id = ?
         ");
         $limit_stmt->execute([$lawyer_id]);
         $availability = $limit_stmt->fetch();
@@ -151,7 +152,7 @@ try {
                 FROM consultations 
                 WHERE lawyer_id = ? 
                 AND consultation_date = ? 
-                AND status IN ('pending', 'confirmed')
+                AND c_status IN ('pending', 'confirmed')
             ");
             $count_stmt->execute([$lawyer_id, $selected_date]);
             $current_count = $count_stmt->fetch()['appointment_count'];
@@ -169,8 +170,8 @@ try {
     }
     
     // Feature: Updated SQL statement with new field structure including consultation date and time
-    $sql = "INSERT INTO consultations (full_name, email, phone, practice_area, case_description, selected_lawyer, lawyer_id, selected_date, consultation_date, consultation_time) 
-            VALUES (:full_name, :email, :phone, :practice_area, :case_description, :selected_lawyer, :lawyer_id, :selected_date, :consultation_date, :consultation_time)";
+    $sql = "INSERT INTO consultations (c_full_name, c_email, c_phone, case_description, lawyer_id, consultation_date, consultation_time) 
+            VALUES (:full_name, :email, :phone, :case_description, :lawyer_id, :consultation_date, :consultation_time)";
     
     $stmt = $pdo->prepare($sql);
     
@@ -178,12 +179,9 @@ try {
     $stmt->bindParam(':full_name', $full_name, PDO::PARAM_STR);
     $stmt->bindParam(':email', $email, PDO::PARAM_STR);
     $stmt->bindParam(':phone', $phone, PDO::PARAM_STR);
-    $stmt->bindParam(':practice_area', $practice_area, PDO::PARAM_STR);
     $stmt->bindParam(':case_description', $case_description, PDO::PARAM_STR);
-    $stmt->bindParam(':selected_lawyer', $selected_lawyer, PDO::PARAM_STR);
     $stmt->bindParam(':lawyer_id', $lawyer_id, PDO::PARAM_INT);
-    $stmt->bindParam(':selected_date', $selected_date, PDO::PARAM_STR);
-    $stmt->bindParam(':consultation_date', $selected_date, PDO::PARAM_STR); // Store the selected date as consultation date
+    $stmt->bindParam(':consultation_date', $selected_date, PDO::PARAM_STR);
     
     // Get selected time from form data
     $selected_time = $input['selected_time'] ?? null;

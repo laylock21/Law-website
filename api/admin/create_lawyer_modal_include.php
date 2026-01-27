@@ -132,8 +132,8 @@
                             <?php if (isset($practice_areas)): ?>
                                 <?php foreach ($practice_areas as $area): ?>
                                     <div class="checkbox-item" style="background: white; border: 2px solid #e0e0e0; border-radius: 8px; padding: 14px; cursor: pointer; transition: all 0.3s ease;">
-                                        <label for="spec_modal_<?php echo $area['id']; ?>" style="cursor: pointer; margin: 0; display: flex; align-items: center; gap: 12px; width: 100%;">
-                                            <input type="checkbox" id="spec_modal_<?php echo $area['id']; ?>" name="specializations[]" value="<?php echo $area['id']; ?>" style="width: 20px; height: 20px; accent-color: #c5a253; flex-shrink: 0; cursor: pointer;">
+                                        <label for="spec_modal_<?php echo $area['pa_id']; ?>" style="cursor: pointer; margin: 0; display: flex; align-items: center; gap: 12px; width: 100%;">
+                                            <input type="checkbox" id="spec_modal_<?php echo $area['pa_id']; ?>" name="specializations[]" value="<?php echo $area['pa_id']; ?>" style="width: 20px; height: 20px; accent-color: #c5a253; flex-shrink: 0; cursor: pointer;">
                                             <span style="font-size: 15px; font-weight: 600; color: #000000 !important; flex: 1; line-height: 1.4;"><?php echo htmlspecialchars($area['area_name']); ?></span>
                                         </label>
                                     </div>

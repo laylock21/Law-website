@@ -69,17 +69,16 @@ class EmailNotification {
             // Get appointment details with lawyer info in single query (OPTIMIZED)
             $stmt = $this->pdo->prepare("
                 SELECT 
-                    c.id,
-                    c.consultation_date,
-                    c.consultation_time,
-                    c.email,
-                    c.full_name,
+                    c.c_id as id,
+                    c.c_consultation_date as consultation_date,
+                    c.c_consultation_time as consultation_time,
+                    c.c_email as email,
+                    c.c_full_name as full_name,
                     c.lawyer_id,
-                    l.first_name as lawyer_first_name,
-                    l.last_name as lawyer_last_name
+                    lp.lp_fullname as lawyer_fullname
                 FROM consultations c
-                JOIN users l ON c.lawyer_id = l.id
-                WHERE c.id = ?
+                JOIN lawyer_profile lp ON c.lawyer_id = lp.lawyer_id
+                WHERE c.c_id = ?
             ");
             
             $stmt->execute([$appointment_id]);
@@ -93,7 +92,7 @@ class EmailNotification {
             $subject = "Appointment Cancellation Notice";
             $message = $this->getAppointmentCancellationTemplate(
                 $appointment['full_name'],
-                $appointment['lawyer_first_name'] . ' ' . $appointment['lawyer_last_name'],
+                $appointment['lawyer_fullname'] ?: 'Available Lawyer',
                 $appointment['consultation_date'],
                 $appointment['consultation_time'] ?: '14:00:00', // Use actual time or fallback
                 $reason
@@ -127,9 +126,9 @@ class EmailNotification {
             // First, let's see ALL appointments for this lawyer on this date (regardless of status)
             if ($this->debug_enabled) {
                 $debug_stmt = $this->pdo->prepare("
-                    SELECT id, consultation_date, status, full_name
+                    SELECT c_id as id, c_consultation_date as consultation_date, c_status as status, c_full_name as full_name
                     FROM consultations 
-                    WHERE lawyer_id = ? AND consultation_date = ?
+                    WHERE lawyer_id = ? AND c_consultation_date = ?
                 ");
                 $debug_stmt->execute([$lawyer_id, $blocked_date]);
                 $all_appointments = $debug_stmt->fetchAll();
@@ -143,14 +142,14 @@ class EmailNotification {
             // Now run the original query
             $stmt = $this->pdo->prepare("
                 SELECT 
-                    c.id,
-                    c.consultation_date,
-                    c.email,
-                    c.full_name
+                    c.c_id as id,
+                    c.c_consultation_date as consultation_date,
+                    c.c_email as email,
+                    c.c_full_name as full_name
                 FROM consultations c
                 WHERE c.lawyer_id = ?
-                AND c.consultation_date = ?
-                AND c.status IN ('pending', 'confirmed')
+                AND c.c_consultation_date = ?
+                AND c.c_status IN ('pending', 'confirmed')
             ");
             
             $stmt->execute([$lawyer_id, $blocked_date]);
@@ -179,18 +178,17 @@ class EmailNotification {
             // Get appointment details with lawyer info in single query (LEFT JOIN for NULL lawyer_id)
             $stmt = $this->pdo->prepare("
                 SELECT 
-                    c.id,
-                    c.consultation_date,
-                    c.consultation_time,
-                    c.email,
-                    c.full_name,
+                    c.c_id as id,
+                    c.c_consultation_date as consultation_date,
+                    c.c_consultation_time as consultation_time,
+                    c.c_email as email,
+                    c.c_full_name as full_name,
                     c.lawyer_id,
-                    c.practice_area,
-                    COALESCE(l.first_name, 'Available') as lawyer_first_name,
-                    COALESCE(l.last_name, 'Lawyer') as lawyer_last_name
+                    c.c_practice_area as practice_area,
+                    COALESCE(lp.lp_fullname, 'Available Lawyer') as lawyer_fullname
                 FROM consultations c
-                LEFT JOIN users l ON c.lawyer_id = l.id
-                WHERE c.id = ?
+                LEFT JOIN lawyer_profile lp ON c.lawyer_id = lp.lawyer_id
+                WHERE c.c_id = ?
             ");
             
             $stmt->execute([$appointment_id]);
@@ -229,7 +227,7 @@ class EmailNotification {
             $subject = "Appointment Confirmed - " . $appointment['practice_area'];
             $message = $this->getAppointmentConfirmationTemplate(
                 $appointment['full_name'],
-                $appointment['lawyer_first_name'] . ' ' . $appointment['lawyer_last_name'],
+                $appointment['lawyer_fullname'] ?: 'Available Lawyer',
                 $appointment['consultation_date'],
                 $appointment['consultation_time'] ?: '14:00:00',
                 $appointment['practice_area']
@@ -259,18 +257,17 @@ class EmailNotification {
             // Get appointment details with lawyer info in single query
             $stmt = $this->pdo->prepare("
                 SELECT 
-                    c.id,
-                    c.consultation_date,
-                    c.consultation_time,
-                    c.email,
-                    c.full_name,
+                    c.c_id as id,
+                    c.c_consultation_date as consultation_date,
+                    c.c_consultation_time as consultation_time,
+                    c.c_email as email,
+                    c.c_full_name as full_name,
                     c.lawyer_id,
-                    c.practice_area,
-                    COALESCE(l.first_name, 'Available') as lawyer_first_name,
-                    COALESCE(l.last_name, 'Lawyer') as lawyer_last_name
+                    c.c_practice_area as practice_area,
+                    COALESCE(lp.lp_fullname, 'Available Lawyer') as lawyer_fullname
                 FROM consultations c
-                LEFT JOIN users l ON c.lawyer_id = l.id
-                WHERE c.id = ?
+                LEFT JOIN lawyer_profile lp ON c.lawyer_id = lp.lawyer_id
+                WHERE c.c_id = ?
             ");
             
             $stmt->execute([$appointment_id]);
@@ -296,7 +293,7 @@ class EmailNotification {
             $subject = "Consultation Completed - Thank You!";
             $message = $this->getAppointmentCompletionTemplate(
                 $appointment['full_name'],
-                $appointment['lawyer_first_name'] . ' ' . $appointment['lawyer_last_name'],
+                $appointment['lawyer_fullname'] ?: 'Available Lawyer',
                 $appointment['consultation_date'],
                 $appointment['consultation_time'] ?: '14:00:00',
                 $appointment['practice_area']
@@ -744,14 +741,14 @@ class EmailNotification {
             try {
                 $stmt = $this->pdo->prepare("
                     SELECT 
-                        c.full_name,
-                        c.practice_area,
-                        c.consultation_date,
-                        c.consultation_time,
-                        CONCAT(u.first_name, ' ', u.last_name) as lawyer_name
+                        c.c_full_name as full_name,
+                        c.c_practice_area as practice_area,
+                        c.c_consultation_date as consultation_date,
+                        c.c_consultation_time as consultation_time,
+                        lp.lp_fullname as lawyer_name
                     FROM consultations c
-                    LEFT JOIN users u ON c.lawyer_id = u.id
-                    WHERE c.id = ?
+                    LEFT JOIN lawyer_profile lp ON c.lawyer_id = lp.lawyer_id
+                    WHERE c.c_id = ?
                 ");
                 $stmt->execute([$consultation_id]);
                 $consultation = $stmt->fetch();
@@ -838,23 +835,23 @@ class EmailNotification {
             // Get consultation details with lawyer info
             $stmt = $this->pdo->prepare("
                 SELECT 
-                    c.id,
-                    c.full_name,
-                    c.email as client_email,
-                    c.phone,
-                    c.practice_area,
-                    c.case_description,
-                    c.selected_lawyer,
+                    c.c_id as id,
+                    c.c_full_name as full_name,
+                    c.c_email as client_email,
+                    c.c_phone as phone,
+                    c.c_practice_area as practice_area,
+                    c.c_case_description as case_description,
+                    c.c_selected_lawyer as selected_lawyer,
                     c.lawyer_id,
-                    c.consultation_date,
-                    c.consultation_time,
+                    c.c_consultation_date as consultation_date,
+                    c.c_consultation_time as consultation_time,
                     c.created_at,
-                    l.email as lawyer_email,
-                    l.first_name as lawyer_first_name,
-                    l.last_name as lawyer_last_name
+                    u.email as lawyer_email,
+                    lp.lp_fullname as lawyer_fullname
                 FROM consultations c
-                LEFT JOIN users l ON c.lawyer_id = l.id
-                WHERE c.id = ?
+                LEFT JOIN users u ON c.lawyer_id = u.user_id
+                LEFT JOIN lawyer_profile lp ON c.lawyer_id = lp.lawyer_id
+                WHERE c.c_id = ?
             ");
             
             $stmt->execute([$consultation_id]);
@@ -915,13 +912,14 @@ class EmailNotification {
         try {
             // Get all active lawyers who specialize in this practice area
             $stmt = $this->pdo->prepare("
-                SELECT DISTINCT u.id, u.email, u.first_name, u.last_name
+                SELECT DISTINCT u.user_id as id, u.email, lp.lp_fullname as fullname
                 FROM users u
-                LEFT JOIN lawyer_specializations ls ON u.id = ls.user_id
-                LEFT JOIN practice_areas pa ON ls.practice_area_id = pa.id
+                LEFT JOIN lawyer_profile lp ON u.user_id = lp.lawyer_id
+                LEFT JOIN lawyer_specializations ls ON u.user_id = ls.lawyer_id
+                LEFT JOIN practice_areas pa ON ls.pa_id = pa.pa_id
                 WHERE u.role = 'lawyer' 
                 AND u.is_active = 1
-                AND (pa.area_name = ? OR ls.practice_area_id IS NULL)
+                AND (pa.area_name = ? OR ls.pa_id IS NULL)
             ");
             
             $stmt->execute([$consultation['practice_area']]);
@@ -930,9 +928,10 @@ class EmailNotification {
             if (empty($lawyers)) {
                 // If no specialized lawyers found, get all active lawyers
                 $stmt = $this->pdo->prepare("
-                    SELECT id, email, first_name, last_name
-                    FROM users
-                    WHERE role = 'lawyer' AND is_active = 1
+                    SELECT u.user_id as id, u.email, lp.lp_fullname as fullname
+                    FROM users u
+                    LEFT JOIN lawyer_profile lp ON u.user_id = lp.lawyer_id
+                    WHERE u.role = 'lawyer' AND u.is_active = 1
                 ");
                 $stmt->execute();
                 $lawyers = $stmt->fetchAll();
@@ -986,8 +985,8 @@ class EmailNotification {
      */
     private function getNewConsultationTemplate($consultation, $lawyer = null) {
         $lawyer_name = $lawyer ? 
-            $lawyer['first_name'] . ' ' . $lawyer['last_name'] : 
-            ($consultation['lawyer_first_name'] . ' ' . $consultation['lawyer_last_name']);
+            $lawyer['fullname'] : 
+            ($consultation['lawyer_fullname'] ?: 'Available Lawyer');
             
         $consultation_date = $consultation['consultation_date'] ? 
             date('F j, Y', strtotime($consultation['consultation_date'])) : 'Not specified';

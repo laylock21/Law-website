@@ -67,7 +67,12 @@ try {
     // Resolve lawyer by ID if provided; fallback to name matching
     if ($lawyer_id_param !== '') {
         // Use ID directly
-        $lawyer_stmt = $pdo->prepare("SELECT id, first_name, last_name, lawyer_prefix FROM users WHERE role = 'lawyer' AND id = ? AND is_active = 1");
+        $lawyer_stmt = $pdo->prepare("
+            SELECT u.user_id as id, lp.lp_fullname, lp.lawyer_prefix 
+            FROM users u
+            INNER JOIN lawyer_profile lp ON u.user_id = lp.lawyer_id
+            WHERE u.role = 'lawyer' AND u.user_id = ? AND u.is_active = 1
+        ");
         $lawyer_stmt->execute([$lawyer_id_param]);
         $lawyer = $lawyer_stmt->fetch();
         if (!$lawyer) {
@@ -75,18 +80,16 @@ try {
         }
         $lawyer_id = (int)$lawyer['id'];
     } else {
-        // Get lawyer ID from name - try to match with or without prefix
+        // Get lawyer ID from name
         $lawyer_stmt = $pdo->prepare("
-            SELECT id, first_name, last_name, lawyer_prefix
-            FROM users 
-            WHERE (
-                CONCAT(COALESCE(CONCAT(lawyer_prefix, ' '), ''), first_name, ' ', last_name) = ?
-                OR CONCAT(first_name, ' ', last_name) = ?
-            )
-            AND role = 'lawyer' 
-            AND is_active = 1
+            SELECT u.user_id as id, lp.lp_fullname, lp.lawyer_prefix
+            FROM users u
+            INNER JOIN lawyer_profile lp ON u.user_id = lp.lawyer_id
+            WHERE lp.lp_fullname = ?
+            AND u.role = 'lawyer' 
+            AND u.is_active = 1
         ");
-        $lawyer_stmt->execute([$lawyer_name, $lawyer_name]);
+        $lawyer_stmt->execute([$lawyer_name]);
         $lawyer = $lawyer_stmt->fetch();
 
         if (!$lawyer) {
@@ -110,13 +113,12 @@ try {
             schedule_type,
             blocked_reason
         FROM lawyer_availability
-        WHERE user_id = ?
-        AND is_active = 1
+        WHERE lawyer_id = ?
+        AND la_is_active = 1
         AND (
-            (schedule_type = 'weekly' AND FIND_IN_SET(?, weekdays) > 0)
-            OR (schedule_type = 'one_time' AND specific_date = ?)
+            (schedule_type = 'one_time' AND specific_date = ?)
             OR (schedule_type = 'blocked' AND specific_date = ?)
-            OR (schedule_type = 'blocked' AND ? BETWEEN start_date AND end_date)
+            OR (schedule_type = 'weekly')
         )
         ORDER BY 
             CASE schedule_type
@@ -127,7 +129,7 @@ try {
         LIMIT 1
     ");
     
-    $availability_stmt->execute([$lawyer_id, $day_name, $date, $date, $date]);
+    $availability_stmt->execute([$lawyer_id, $date, $date]);
     $availability = $availability_stmt->fetch();
     
     if (!$availability) {
@@ -174,7 +176,7 @@ try {
         FROM consultations
         WHERE lawyer_id = ?
         AND consultation_date = ?
-        AND status IN ('pending', 'confirmed')
+        AND c_status IN ('pending', 'confirmed')
     ");
     $total_booked_stmt->execute([$lawyer_id, $date]);
     $total_booked = $total_booked_stmt->fetch()['count'];
@@ -203,7 +205,7 @@ try {
             WHERE lawyer_id = ?
             AND consultation_date = ?
             AND consultation_time = ?
-            AND status IN ('pending', 'confirmed')
+            AND c_status IN ('pending', 'confirmed')
         ");
         $slot_booked_stmt->execute([$lawyer_id, $date, $slot_time]);
         $slot_booked = $slot_booked_stmt->fetch()['count'];
@@ -230,7 +232,7 @@ try {
         'success' => true,
         'time_slots' => $time_slots,
         'date' => $date,
-        'lawyer' => $lawyer['first_name'] . ' ' . $lawyer['last_name'],
+        'lawyer' => $lawyer['lp_fullname'],
         'slot_duration' => $slot_duration,
         'max_appointments' => (int)$max_appointments,
         'total_booked' => (int)$total_booked,

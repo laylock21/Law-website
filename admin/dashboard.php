@@ -246,7 +246,7 @@ $active_page = "dashboard";
                     <?php else: ?>
                         <?php foreach ($practice_areas as $area): ?>
                             <div class="admin-area-item">
-                                <span class="admin-area-name"><?php echo htmlspecialchars($area['practice_area']); ?></span>
+                                <span class="admin-area-name"><?php echo htmlspecialchars($area['area_name']); ?></span>
                                 <span class="admin-area-count"><?php echo $area['count']; ?></span>
                             </div>
                         <?php endforeach; ?>

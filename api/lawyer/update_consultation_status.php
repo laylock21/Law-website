@@ -35,7 +35,7 @@ try {
     $pdo = getDBConnection();
     
     // Verify consultation belongs to this lawyer or is unassigned
-    $check = $pdo->prepare('SELECT id, status, lawyer_id FROM consultations WHERE id = ? AND (lawyer_id = ? OR lawyer_id IS NULL)');
+    $check = $pdo->prepare('SELECT c_id as id, c_status as status, lawyer_id FROM consultations WHERE c_id = ? AND (lawyer_id = ? OR lawyer_id IS NULL)');
     $check->execute([$consultation_id, $lawyer_id]);
     $current_consultation = $check->fetch();
     
@@ -80,11 +80,11 @@ try {
     
     // Update status and cancellation reason if applicable
     if ($new_status === 'cancelled') {
-        $upd = $pdo->prepare('UPDATE consultations SET status = ?, cancellation_reason = ? WHERE id = ?');
+        $upd = $pdo->prepare('UPDATE consultations SET c_status = ?, c_cancellation_reason = ? WHERE c_id = ?');
         $upd->execute([$new_status, $cancellation_reason, $consultation_id]);
     } else {
         // Clear cancellation reason if status is not cancelled
-        $upd = $pdo->prepare('UPDATE consultations SET status = ?, cancellation_reason = NULL WHERE id = ?');
+        $upd = $pdo->prepare('UPDATE consultations SET c_status = ?, c_cancellation_reason = NULL WHERE c_id = ?');
         $upd->execute([$new_status, $consultation_id]);
     }
     

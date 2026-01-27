@@ -35,10 +35,13 @@ try {
 
 	// Fetch consultations - Include consultations assigned to this lawyer OR designated as 'Any' (lawyer_id IS NULL)
 	$list_stmt = $pdo->prepare('
-		SELECT *
-		FROM consultations
-		WHERE lawyer_id = ? OR lawyer_id IS NULL
-		ORDER BY created_at DESC
+		SELECT c.c_id as id, c.c_full_name as full_name, c.c_email as email, c.c_phone as phone,
+		       c.c_practice_area as practice_area, c.c_consultation_date as consultation_date,
+		       c.c_consultation_time as consultation_time, c.c_status as status,
+		       c.c_case_description as case_description, c.created_at, c.lawyer_id
+		FROM consultations c
+		WHERE c.lawyer_id = ? OR c.lawyer_id IS NULL
+		ORDER BY c.created_at DESC
 		LIMIT ? OFFSET ?
 	');
 	$list_stmt->execute([$lawyer_id, $limit, $offset]);
