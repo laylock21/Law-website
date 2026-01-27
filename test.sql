@@ -3,13 +3,13 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 26, 2026 at 09:42 AM
+-- Generation Time: Jan 27, 2026 at 03:17 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
-SET time_zone = "+00:00";
+SET time_zone = "+08:00";
 
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -29,7 +29,6 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `consultations` (
   `c_id` int(11) NOT NULL,
-  `client_user_id` int(11) DEFAULT NULL,
   `c_full_name` varchar(100) NOT NULL,
   `c_email` varchar(100) NOT NULL,
   `c_phone` varchar(20) NOT NULL,
@@ -139,7 +138,7 @@ CREATE TABLE `users` (
   `temporary_password` enum('temporary') DEFAULT NULL,
   `email` varchar(100) NOT NULL,
   `phone` varchar(20) DEFAULT NULL,
-  `role` enum('admin','lawyer','client') NOT NULL DEFAULT 'lawyer',
+  `role` enum('admin','lawyer') NOT NULL DEFAULT 'lawyer',
   `is_active` tinyint(1) DEFAULT 1,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -155,8 +154,7 @@ ALTER TABLE `consultations`
   ADD PRIMARY KEY (`c_id`),
   ADD KEY `idx_consult_lawyer` (`lawyer_id`),
   ADD KEY `idx_consult_status` (`c_status`),
-  ADD KEY `idx_consult_date` (`consultation_date`),
-  ADD KEY `client_user_id` (`client_user_id`);
+  ADD KEY `idx_consult_date` (`consultation_date`);
 
 --
 -- Indexes for table `lawyer_availability`
@@ -250,8 +248,7 @@ ALTER TABLE `users`
 -- Constraints for table `consultations`
 --
 ALTER TABLE `consultations`
-  ADD CONSTRAINT `consultations_ibfk_1` FOREIGN KEY (`client_user_id`) REFERENCES `users` (`user_id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `consultations_ibfk_2` FOREIGN KEY (`lawyer_id`) REFERENCES `users` (`user_id`);
+  ADD CONSTRAINT `consultations_ibfk_1` FOREIGN KEY (`lawyer_id`) REFERENCES `users` (`user_id`);
 
 --
 -- Constraints for table `lawyer_availability`
@@ -283,7 +280,7 @@ DELIMITER $$
 --
 -- Events
 --
-CREATE DEFINER=`root`@`localhost` EVENT `delete_expired_schedules` ON SCHEDULE EVERY 1 DAY STARTS '2026-01-19 11:41:23' ON COMPLETION NOT PRESERVE ENABLE DO DELETE FROM lawyer_availability
+CREATE DEFINER=`root`@`localhost` EVENT `delete_expired_schedules` ON SCHEDULE EVERY 1 DAY STARTS '2026-01-28 11:41:23' ON COMPLETION NOT PRESERVE ENABLE DO DELETE FROM lawyer_availability
   WHERE
     (
       schedule_type = 'blocked'
