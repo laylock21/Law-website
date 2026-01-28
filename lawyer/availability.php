@@ -281,6 +281,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             // Check for affected appointments
+            require_once '../vendor/autoload.php'; // Load Composer dependencies (PHPMailer)
             require_once '../includes/EmailNotification.php';
             $emailNotification = new EmailNotification($pdo);
             $affected_appointments = $emailNotification->getAffectedAppointments($lawyer_id, $block_date);
@@ -379,6 +380,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             // Check for affected appointments in the date range
+            require_once '../vendor/autoload.php'; // Load Composer dependencies (PHPMailer)
             require_once '../includes/EmailNotification.php';
             $emailNotification = new EmailNotification($pdo);
             

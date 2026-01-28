@@ -21,7 +21,7 @@ class EmailNotification {
     // ============================================
     
     // STEP 1: Enable/Disable SMTP (set to false to queue only, true to send)
-    private $smtp_enabled = false; // ENABLED - Ready to send emails!
+    private $smtp_enabled = true; // ENABLED - Ready to send emails!
     
     // STEP 1.5: Enable/Disable debug logging (set to false for production)
     private $debug_enabled = true; // Set to false for better performance

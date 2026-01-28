@@ -1,0 +1,329 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                    NOTIFICATION SYSTEM FLOW DIAGRAM                           ║
+║                         (Schema Compatible)                                   ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          1. APPOINTMENT CONFIRMATION                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    [Client Books]  ──────────────────────────────────────────┐
+         │                                                     │
+         ▼                                                     ▼
+    [consultations]                                    [Admin Confirms]
+         │                                                     │
+         │ c_id, c_full_name, c_email,                       │
+         │ c_consultation_date, c_consultation_time,         │
+         │ lawyer_id, c_practice_area                        │
+         │                                                     │
+         └──────────────────┬──────────────────────────────────┘
+                            ▼
+              notifyAppointmentConfirmed($appointment_id)
+                            │
+                            ├─── Query: consultations + lawyer_profile
+                            │    (Get client & lawyer details)
+                            │
+                            ├─── Check for duplicates
+                            │    (notification_queue)
+                            │
+                            ├─── Generate email HTML
+                            │    (getAppointmentConfirmationTemplate)
+                            │
+                            └─── Queue notification
+                                 ▼
+                          [notification_queue]
+                                 │
+                                 │ nq_id, user_id, consultation_id,
+                                 │ email, subject, message,
+                                 │ notification_type='confirmation',
+                                 │ nq_status='pending'
+                                 │
+                                 ▼
+                    processPendingNotifications()
+                                 │
+                                 ├─── Load PHPMailer
+                                 ├─── Configure SMTP
+                                 ├─── Generate DOCX
+                                 │    │
+                                 │    └─── [DocxGenerator]
+                                 │         │
+                                 │         ├─── Create temp structure
+                                 │         ├─── Generate XML content
+                                 │         ├─── Create ZIP (DOCX)
+                                 │         └─── Save to uploads/generated_docs/
+                                 │
+                                 ├─── Attach DOCX to email
+                                 ├─── Send via SMTP
+                                 ├─── Update status to 'sent'
+                                 └─── Cleanup DOCX file
+                                      ▼
+                              [Client Receives Email]
+                                      │
+                                      ├─── HTML email with details
+                                      └─── DOCX attachment
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          2. APPOINTMENT CANCELLATION                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    [Lawyer Blocks Date]  ────────────────────────────────────┐
+         │                                                     │
+         ▼                                                     ▼
+    [lawyer_availability]                              [Admin Cancels]
+         │                                                     │
+         │ schedule_type='blocked'                            │
+         │ specific_date                                      │
+         │                                                     │
+         └──────────────────┬──────────────────────────────────┘
+                            ▼
+              notifyAppointmentCancelled($appointment_id, $reason)
+                            │
+                            ├─── Query: consultations + lawyer_profile
+                            │    (Get affected appointments)
+                            │
+                            ├─── Generate cancellation email
+                            │    (getAppointmentCancellationTemplate)
+                            │
+                            └─── Queue notification
+                                 ▼
+                          [notification_queue]
+                                 │
+                                 │ notification_type='appointment_cancelled'
+                                 │ nq_status='pending'
+                                 │
+                                 ▼
+                    processPendingNotifications()
+                                 │
+                                 ├─── Generate DOCX (cancellation)
+                                 ├─── Send email with attachment
+                                 └─── Update consultation status
+                                      ▼
+                              [Client Receives Notice]
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          3. APPOINTMENT COMPLETION                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    [Lawyer Completes]  ──────────────────────────────────────┐
+         │                                                     │
+         ▼                                                     ▼
+    [consultations]                                    [Admin Completes]
+         │                                                     │
+         │ c_status='completed'                               │
+         │                                                     │
+         └──────────────────┬──────────────────────────────────┘
+                            ▼
+              notifyAppointmentCompleted($appointment_id)
+                            │
+                            ├─── Query: consultations + lawyer_profile
+                            │    (Get consultation details)
+                            │
+                            ├─── Generate completion email
+                            │    (getAppointmentCompletionTemplate)
+                            │
+                            └─── Queue notification
+                                 ▼
+                          [notification_queue]
+                                 │
+                                 │ notification_type='appointment_completed'
+                                 │ nq_status='pending'
+                                 │
+                                 ▼
+                    processPendingNotifications()
+                                 │
+                                 ├─── Generate DOCX (completion certificate)
+                                 ├─── Send thank you email
+                                 └─── Include feedback request
+                                      ▼
+                              [Client Receives Certificate]
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      4. NEW CONSULTATION (LAWYER ALERT)                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    [Client Submits Request]
+         │
+         ▼
+    [consultations]
+         │
+         │ c_status='pending'
+         │ lawyer_id (may be NULL)
+         │
+         ▼
+    notifyLawyerNewConsultation($consultation_id)
+         │
+         ├─── If lawyer_id assigned:
+         │    └─── Notify specific lawyer
+         │
+         └─── If lawyer_id NULL:
+              └─── Query: users + lawyer_specializations + practice_areas
+                   (Find lawyers by specialization)
+                   │
+                   └─── Notify all matching lawyers
+                        ▼
+                 [notification_queue]
+                        │
+                        │ notification_type='new_consultation'
+                        │ nq_status='pending'
+                        │
+                        ▼
+           processPendingNotifications()
+                        │
+                        └─── Send lawyer notification
+                             (No DOCX attachment)
+                             ▼
+                     [Lawyer Receives Alert]
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                            DATABASE RELATIONSHIPS                             ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+    [users]
+       │
+       │ user_id (PK)
+       │
+       ├──────────────────┬──────────────────┬──────────────────┐
+       │                  │                  │                  │
+       ▼                  ▼                  ▼                  ▼
+  [lawyer_profile]  [consultations]  [notification_queue]  [lawyer_specializations]
+       │                  │                  │                  │
+       │ lawyer_id (FK)   │ lawyer_id (FK)   │ user_id (FK)     │ lawyer_id (FK)
+       │ lp_fullname      │ c_full_name      │ consultation_id  │ pa_id (FK)
+       │                  │ c_email          │ email            │
+       │                  │ c_status         │ nq_status        ▼
+       │                  │                  │              [practice_areas]
+       │                  │                  │                  │
+       │                  │                  │                  │ pa_id (PK)
+       │                  │                  │                  │ area_name
+       │                  │                  │                  │
+       │                  └──────────────────┴──────────────────┘
+       │                           │
+       │                           │ consultation_id (FK)
+       │                           │
+       └───────────────────────────┘
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                              DOCX GENERATION FLOW                             ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+    [EmailNotification]
+           │
+           │ attachConsultationDocument()
+           │
+           ▼
+    [DocxGenerator]
+           │
+           ├─── 1. Create temp directory structure
+           │    │
+           │    ├─── /word/
+           │    ├─── /_rels/
+           │    ├─── /word/_rels/
+           │    └─── /docProps/
+           │
+           ├─── 2. Generate XML files
+           │    │
+           │    ├─── [Content_Types].xml
+           │    ├─── _rels/.rels
+           │    ├─── word/document.xml (main content)
+           │    ├─── word/_rels/document.xml.rels
+           │    ├─── docProps/core.xml
+           │    └─── docProps/app.xml
+           │
+           ├─── 3. Create ZIP archive
+           │    │
+           │    └─── Add all files to ZIP
+           │         (This becomes the .docx file)
+           │
+           ├─── 4. Save to uploads/generated_docs/
+           │    │
+           │    └─── consultation_[type]_[timestamp].docx
+           │
+           └─── 5. Cleanup temp directory
+                │
+                └─── Delete all temp files
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                            NOTIFICATION QUEUE STATES                          ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+    [pending] ──────────────────────────────────────┐
+       │                                             │
+       │ processPendingNotifications()               │
+       │                                             │
+       ├─── Success ──────────> [sent]              │
+       │                            │                │
+       │                            └─── (Final)     │
+       │                                             │
+       └─── Failure ──────────> [failed]            │
+                                    │                │
+                                    │ attempts < 3   │
+                                    │                │
+                                    └────────────────┘
+                                         (Retry)
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                              FILE CLEANUP PROCESS                             ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+    [DOCX Generated]
+           │
+           ├─── Attached to email
+           │
+           ├─── Email sent successfully
+           │    │
+           │    └─── cleanupDocxFiles()
+           │         │
+           │         └─── Delete DOCX immediately
+           │
+           └─── Email failed
+                │
+                └─── cleanupDocxFiles()
+                     │
+                     └─── Delete DOCX immediately
+
+    [Periodic Cleanup]
+           │
+           │ cleanupOldDocxFiles()
+           │ (Called during processPendingNotifications)
+           │
+           └─── Delete files older than 1 hour
+                (Safety measure for orphaned files)
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                              SECURITY MEASURES                                ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+    [SQL Injection Prevention]
+           │
+           └─── All queries use prepared statements
+                with bound parameters
+
+    [Email Validation]
+           │
+           └─── filter_var($email, FILTER_VALIDATE_EMAIL)
+
+    [Duplicate Prevention]
+           │
+           ├─── Check notification_queue for recent sends
+           │    (5-10 minute windows)
+           │
+           └─── Prevent spam to clients and lawyers
+
+    [File Security]
+           │
+           ├─── Automatic cleanup after send
+           ├─── Periodic cleanup of old files
+           └─── Temp files in system temp directory
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                              END OF DIAGRAM
+═══════════════════════════════════════════════════════════════════════════════

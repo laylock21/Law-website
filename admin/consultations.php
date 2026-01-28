@@ -42,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
     if (!empty($selected_consultations) && in_array($action, ['confirm', 'complete', 'pending', 'cancelled'])) {
         try {
             $pdo = getDBConnection();
+            require_once '../vendor/autoload.php'; // Load Composer dependencies (PHPMailer)
             require_once '../includes/EmailNotification.php';
             $emailNotification = new EmailNotification($pdo);
             

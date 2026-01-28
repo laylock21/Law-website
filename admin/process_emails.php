@@ -13,6 +13,7 @@ if (!isset($_SESSION['user_logged_in']) || $_SESSION['user_logged_in'] !== true 
 }
 
 require_once '../config/database.php';
+require_once '../vendor/autoload.php'; // Load Composer dependencies (PHPMailer)
 require_once '../includes/EmailNotification.php';
 
 $message = '';
@@ -97,6 +98,69 @@ $active_page = "emails";
     <title>Process Emails - Admin</title>
     <link rel="stylesheet" href="../src/admin/css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            z-index: 9999;
+            animation: slideIn 0.3s ease-out;
+            min-width: 250px;
+        }
+        
+        .toast.success {
+            background: #27ae60;
+        }
+        
+        .toast.error {
+            background: #e74c3c;
+        }
+        
+        .toast.info {
+            background: #3a3a3a;
+        }
+        
+        .toast .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .toast {
+                bottom: 10px;
+                right: 10px;
+                left: 10px;
+                min-width: auto;
+            }
+        }
+    </style>
 </head>
 <body class="admin-page">
     <?php include 'partials/sidebar.php'; ?>
@@ -123,18 +187,6 @@ $active_page = "emails";
                 </a>
             </div>
         </div>
-
-        <?php if ($message): ?>
-            <div class="alert alert-success ep-mobile-alert">
-                <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($message); ?>
-            </div>
-        <?php endif; ?> 
-
-        <?php if ($error): ?>
-            <div class="alert alert-error ep-mobile-alert">
-                <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?>
-            </div>
-        <?php endif; ?>
 
         <!-- Statistics Cards -->
         <div class="stats-grid ep-mobile-stats-grid" style=gap:16px;margin-bottom:32px;>
@@ -211,7 +263,7 @@ $active_page = "emails";
                         </table>
                     </div>
             <?php endif; ?>
-                <form method="POST" style="text-align: center; margin: 20px 0; padding-top:32px">
+                <form method="POST" style="text-align: center; margin: 20px 0; padding-top:32px" id="emailForm">
                     <input type="hidden" name="action" value="process_emails">
                     <button type="submit" class="btn btn-primary" style="padding: 15px 30px; font-size: 18px;" id="SendAllPendingEmails">
                         <i class="fas fa-paper-plane"></i> Send All Pending Emails
@@ -221,5 +273,54 @@ $active_page = "emails";
 
         </div>
     </main>
+    
+    <script>
+        function showToast(message, type = 'info', duration = 3000) {
+            // Remove any existing toasts
+            const existingToasts = document.querySelectorAll('.toast');
+            existingToasts.forEach(toast => toast.remove());
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            if (type === 'info') {
+                toast.innerHTML = `
+                    <div class="spinner"></div>
+                    <span>${message}</span>
+                `;
+            } else {
+                const icon = type === 'success' ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-exclamation-circle"></i>';
+                toast.innerHTML = `
+                    ${icon}
+                    <span>${message}</span>
+                `;
+            }
+            
+            document.body.appendChild(toast);
+            
+            if (duration > 0) {
+                setTimeout(() => {
+                    toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
+            }
+            
+            return toast;
+        }
+        
+        // Show toast on form submit
+        document.getElementById('emailForm').addEventListener('submit', function(e) {
+            showToast('Processing emails...', 'info', 0);
+        });
+        
+        // Show toast for existing messages
+        <?php if ($message): ?>
+            showToast('<?php echo addslashes($message); ?>', 'success', 5000);
+        <?php endif; ?>
+        
+        <?php if ($error): ?>
+            showToast('<?php echo addslashes($error); ?>', 'error', 5000);
+        <?php endif; ?>
+    </script>
 </body>
 </html>

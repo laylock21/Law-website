@@ -94,6 +94,7 @@ try {
                             $all_affected_ids = [];
                             $weekdays_text = $reason . ' (Blocked by Admin)';
                             
+                            require_once '../vendor/autoload.php'; // Load Composer dependencies (PHPMailer)
                             require_once '../includes/EmailNotification.php';
                             $emailNotification = new EmailNotification($pdo);
                         
@@ -219,6 +220,7 @@ try {
                         $insert_stmt->execute([$lawyer_id, $block_date, $reason]);
                         
                         // Check for affected appointments and send notifications
+                        require_once '../vendor/autoload.php'; // Load Composer dependencies (PHPMailer)
                         require_once '../includes/EmailNotification.php';
                         $emailNotification = new EmailNotification($pdo);
                         $affected_appointments = $emailNotification->getAffectedAppointments($lawyer_id, $block_date);

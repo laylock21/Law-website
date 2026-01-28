@@ -94,6 +94,7 @@ try {
     }
     
     // Send email notifications for status changes
+    require_once '../../vendor/autoload.php'; // Load Composer dependencies (PHPMailer)
     require_once '../../includes/EmailNotification.php';
     $emailNotification = new EmailNotification($pdo);
     $queued = false;
