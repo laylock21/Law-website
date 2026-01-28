@@ -2512,14 +2512,6 @@ input[type="radio"]:focus {
     table-layout: auto; /* Auto layout for flexible content */
 }
 
-/* Column width distribution */
-.lawyers-table th:nth-child(1), /* Photo */
-.lawyers-table td:nth-child(1) {
-    width: 70px;
-    min-width: 70px;
-    text-align: center;
-}
-
 .lawyers-table th:nth-child(2), /* Name */
 .lawyers-table td:nth-child(2) {
     width: 180px;

@@ -455,29 +455,6 @@ $active_page = "lawyer";
                 <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
             <?php endif; ?>
 
-            <!-- Statistics -->
-            <div class="section" style="padding:32px;">
-                <h2>Statistics</h2>
-                <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number"><?php echo count($lawyers); ?></div>
-                    <div>Total Lawyers</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number"><?php echo count(array_filter($lawyers, fn($l) => $l['is_active'])); ?></div>
-                    <div>Active Lawyers</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number"><?php echo count(array_filter($lawyers, fn($l) => !empty($l['profile']))); ?></div>
-                    <div>With Profile Pictures</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number"><?php echo count($practice_areas); ?></div>
-                    <div>Practice Areas</div>
-                </div>
-            </div>
-        </div>
-
         <!-- Existing Lawyers -->
         <div class="section" style="padding:32px 0 0 16px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 16px;">
@@ -492,7 +469,6 @@ $active_page = "lawyer";
                     <table class="lawyers-table">
                         <thead>
                             <tr>
-                                <th>Photo</th>
                                 <th>Name</th>
                                 <th>Username</th>
                                 <th>Email</th>
@@ -506,20 +482,7 @@ $active_page = "lawyer";
                         <tbody>
                             <?php foreach ($lawyers as $lawyer): ?>
                                 <tr>
-                                    <td>
-                                        <?php if ($lawyer['profile']): ?>
-                                            <img src="data:image/jpeg;base64,<?php echo base64_encode($lawyer['profile']); ?>" 
-                                                 alt="Profile" class="profile-pic">
-                                        <?php else: ?>
-                                            <img src="../src/img/default-avatar.png" alt="Default" class="profile-pic">
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <strong><?php echo htmlspecialchars($lawyer['lp_fullname'] ?? 'N/A'); ?></strong>
-                                        <?php if ($lawyer['lp_description']): ?>
-                                            <br><small style="color: #666;"><?php echo htmlspecialchars(substr($lawyer['lp_description'], 0, 50)) . (strlen($lawyer['lp_description']) > 50 ? '...' : ''); ?></small>
-                                        <?php endif; ?>
-                                    </td>
+                                    <td><strong><?php echo htmlspecialchars($lawyer['lp_fullname'] ?? 'N/A'); ?></strong></td>
                                     <td><?php echo htmlspecialchars($lawyer['username']); ?></td>
                                     <td><?php echo htmlspecialchars($lawyer['email']); ?></td>
                                     <td><?php echo htmlspecialchars($lawyer['phone'] ?: 'Not set'); ?></td>
@@ -542,35 +505,10 @@ $active_page = "lawyer";
                                     </td>
                                     <td><?php echo date('M j, Y', strtotime($lawyer['created_at'])); ?></td>
                                     <td>
-                                        <a href="manage_lawyer_schedule.php?lawyer_id=<?php echo $lawyer['user_id']; ?>" 
-                                           class="btn btn-primary" 
-                                           title="Manage Schedule">
-                                            📅
-                                        </a>
-                                        
-                                        <form method="POST" style="display: inline;" id="toggleForm<?php echo $lawyer['user_id']; ?>">
-                                            <input type="hidden" name="action" value="toggle_status">
-                                            <input type="hidden" name="lawyer_id" value="<?php echo $lawyer['user_id']; ?>">
-                                            <input type="hidden" name="current_status" value="<?php echo $lawyer['is_active']; ?>">
-                                            <button type="button" class="btn <?php echo $lawyer['is_active'] ? 'btn-warning' : 'btn-success'; ?>" 
-                                                    onclick="confirmToggleStatus('<?php echo htmlspecialchars($lawyer['lp_fullname'] ?? 'Unknown'); ?>', <?php echo $lawyer['is_active']; ?>, <?php echo $lawyer['user_id']; ?>)">
-                                                <?php echo $lawyer['is_active'] ? 'Deactivate' : 'Activate'; ?>
-                                            </button>
-                                        </form>
-                                        
                                         <button type="button" class="btn btn-secondary" 
                                                 onclick="openPasswordResetModal(<?php echo $lawyer['user_id']; ?>, '<?php echo htmlspecialchars($lawyer['lp_fullname'] ?? 'Unknown'); ?>')">
                                                 🔐
                                         </button>
-                                        
-                                        <form method="POST" style="display: inline;" id="deleteForm<?php echo $lawyer['user_id']; ?>">
-                                            <input type="hidden" name="action" value="delete_lawyer">
-                                            <input type="hidden" name="lawyer_id" value="<?php echo $lawyer['user_id']; ?>">
-                                            <button type="button" class="btn btn-danger" 
-                                                    onclick="confirmDelete('<?php echo htmlspecialchars($lawyer['lp_fullname'] ?? 'Unknown'); ?>', <?php echo $lawyer['consultation_count']; ?>, <?php echo $lawyer['user_id']; ?>)">
-                                                🗑️
-                                            </button>
-                                        </form>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -581,164 +519,6 @@ $active_page = "lawyer";
         </div>
     </div>
 
-    <!-- Password Reset Modal -->
-    <div id="passwordResetModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Reset Password</h3>
-                <span class="close" onclick="closePasswordResetModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <p>Reset password for: <strong id="resetLawyerName"></strong></p>
-                
-                <form id="passwordResetForm" method="POST">
-                    <input type="hidden" name="action" value="reset_password">
-                    <input type="hidden" id="resetLawyerId" name="lawyer_id">
-                    
-                    <!-- Password Options -->
-                    <div class="form-group">
-                        <label>Password Reset Options</label>
-                        <div class="password-setup-container" style="display: flex; flex-direction: column; gap: 16px; margin-top: 10px;">
-                            <div class="password-option" style="background: white; border: 2px solid #e0e0e0; border-radius: 10px; padding: 16px; transition: all 0.3s ease;">
-                                <label class="password-option-label" style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; margin: 0;">
-                                    <input type="radio" name="password_option" value="auto" checked style="margin-top: 4px; width: 18px; height: 18px; accent-color: #c5a253;">
-                                    <div class="option-content">
-                                        <strong style="display: block; font-size: 15px; color: #000; margin-bottom: 4px;">Auto-generate temporary password</strong>
-                                        <small style="display: block; color: #666; font-size: 13px; line-height: 1.4;">System will create a secure temporary password that the lawyer must change on first login</small>
-                                    </div>
-                                </label>
-                            </div>
-                            
-                            <div class="password-option" style="background: white; border: 2px solid #e0e0e0; border-radius: 10px; padding: 16px; transition: all 0.3s ease;">
-                                <label class="password-option-label" style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; margin: 0;">
-                                    <input type="radio" name="password_option" value="custom" style="margin-top: 4px; width: 18px; height: 18px; accent-color: #c5a253;">
-                                    <div class="option-content">
-                                        <strong style="display: block; font-size: 15px; color: #000; margin-bottom: 4px;">Set custom password</strong>
-                                    </div>
-                                </label>
-                                <div id="reset-custom-password-fields" class="custom-password-fields" style="display: none; margin-top: 16px; padding-top: 16px; border-top: 2px solid rgba(197, 162, 83, 0.2);">
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                                        <div>
-                                            <label for="reset_custom_password" style="display: block; margin-bottom: 6px; font-weight: 600; color: #000; font-size: 14px;">Password</label>
-                                            <input type="password" id="reset_custom_password" name="custom_password" placeholder="Enter password" style="width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
-                                            <small style="color: #666; display: block; margin-top: 4px; font-size: 12px;">Minimum 8 characters</small>
-                                        </div>
-                                        <div>
-                                            <label for="reset_confirm_password" style="display: block; margin-bottom: 6px; font-weight: 600; color: #000; font-size: 14px;">Confirm Password</label>
-                                            <input type="password" id="reset_confirm_password" name="confirm_password" placeholder="Confirm password" style="width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
-                                            <small id="reset-password-match" style="display: block; margin-top: 4px; font-size: 12px;"></small>
-                                        </div>
-                                    </div>
-                                    <div style="margin-top: 10px;">
-                                        <label class="checkbox-label" style="display: flex !important; align-items: center !important; gap: 8px; cursor: pointer; font-size: 13px; color: #333; line-height: 1;">
-                                            <input type="checkbox" id="reset_force_change" name="force_change" checked style="width: 16px; height: 16px; accent-color: #c5a253; flex-shrink: 0; margin: 0; vertical-align: middle;">
-                                            <span style="line-height: 1.3; display: inline-block;">Force password change on first login</span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="modal-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closePasswordResetModal()">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Reset Password</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <style>
-    /* Password Reset Modal Header - Clean White Background */
-    #passwordResetModal .modal-header {
-        background: white !important;
-        background-image: none !important;
-        background-color: white !important;
-        color: #333 !important;
-    }
-    
-    #passwordResetModal .modal-header h3 {
-        color: #333 !important;
-        background: none !important;
-    }
-    
-    #passwordResetModal .modal-header h3::before {
-        display: none !important;
-        content: none !important;
-    }
-    
-    #passwordResetModal .close {
-        color: #333 !important;
-        background: rgba(0,0,0,0.05) !important;
-    }
-    
-    #passwordResetModal .close:hover {
-        background: rgba(0,0,0,0.1) !important;
-    }
-    
-    /* Ensure Cancel button is visible */
-    #passwordResetModal .btn-secondary {
-        background: #6c757d !important;
-        color: white !important;
-        border: none !important;
-    }
-    
-    #passwordResetModal .btn-secondary:hover {
-        background: #5a6268 !important;
-    }
-    
-    /* Password Reset Modal Styles */
-    .password-option:has(input[type="radio"]:checked) {
-        border-color: #c5a253 !important;
-        background: linear-gradient(135deg, #faf7f0 0%, white 100%) !important;
-        box-shadow: 0 4px 12px rgba(197, 162, 83, 0.15);
-    }
-
-    .password-option-label input[type="radio"] {
-        cursor: pointer;
-    }
-
-    .custom-password-fields {
-        animation: slideDown 0.3s ease;
-    }
-
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            max-height: 0;
-        }
-        to {
-            opacity: 1;
-            max-height: 500px;
-        }
-    }
-
-    .password-option:has(input[type="radio"]:checked) .custom-password-fields {
-        display: block !important;
-    }
-
-    .checkbox-label {
-        transition: color 0.3s ease;
-    }
-
-    .checkbox-label:hover {
-        color: #c5a253;
-    }
-
-    .checkbox-label input[type="checkbox"] {
-        cursor: pointer;
-    }
-
-    /* Input Focus Animations */
-    #reset_custom_password:focus,
-    #reset_confirm_password:focus {
-        border-color: #c5a253 !important;
-        box-shadow: 0 0 0 3px rgba(197, 162, 83, 0.1) !important;
-        transform: translateY(-1px);
-        transition: all 0.3s ease;
-    }
-    </style>
 
     <script>
         // Enhanced page interactions
@@ -1150,141 +930,6 @@ Generated: ${new Date().toLocaleString()}`;
             printWindow.document.close();
             printWindow.print();
         }
-        
-        // Enhanced delete confirmation with consultation warning using unified modal
-        async function confirmDelete(lawyerName, consultationCount, lawyerId) {
-            let message = `Are you sure you want to permanently delete "${lawyerName}"?`;
-            
-            if (consultationCount > 0) {
-                message += `\n\nWARNING: This lawyer has ${consultationCount} consultation(s) that will also be permanently deleted!`;
-            }
-            
-            message += `\n\nThis action cannot be undone.`;
-            
-            const confirmed = await ConfirmModal.confirm({
-                title: 'Delete Lawyer',
-                message: message,
-                confirmText: 'Delete',
-                cancelText: 'Cancel',
-                type: 'danger'
-            });
-            
-            if (confirmed) {
-                document.getElementById('deleteForm' + lawyerId).submit();
-            }
-        }
-        
-        // Toggle status confirmation using unified modal
-        async function confirmToggleStatus(lawyerName, currentStatus, lawyerId) {
-            const action = currentStatus ? 'deactivate' : 'activate';
-            const message = `Are you sure you want to ${action} "${lawyerName}"?`;
-            
-            const confirmed = await ConfirmModal.confirm({
-                title: `${action.charAt(0).toUpperCase() + action.slice(1)} Lawyer`,
-                message: message,
-                confirmText: action.charAt(0).toUpperCase() + action.slice(1),
-                cancelText: 'Cancel',
-                type: currentStatus ? 'warning' : 'success'
-            });
-            
-            if (confirmed) {
-                document.getElementById('toggleForm' + lawyerId).submit();
-            }
-        }
-        
-        // Password Reset Modal Functions
-        function openPasswordResetModal(lawyerId, lawyerName) {
-            document.getElementById('resetLawyerId').value = lawyerId;
-            document.getElementById('resetLawyerName').textContent = lawyerName;
-            document.getElementById('passwordResetModal').style.display = 'flex';
-            
-            // Reset form
-            document.getElementById('passwordResetForm').reset();
-            document.querySelector('input[name="password_option"][value="auto"]').checked = true;
-            document.getElementById('reset-custom-password-fields').style.display = 'none';
-            document.getElementById('reset_custom_password').required = false;
-            document.getElementById('reset_confirm_password').required = false;
-        }
-        
-        function closePasswordResetModal() {
-            document.getElementById('passwordResetModal').style.display = 'none';
-        }
-        
-        // Password reset option handling
-        document.querySelectorAll('input[name="password_option"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                const customFields = document.getElementById('reset-custom-password-fields');
-                if (this.value === 'custom') {
-                    customFields.style.display = 'block';
-                    document.getElementById('reset_custom_password').required = true;
-                    document.getElementById('reset_confirm_password').required = true;
-                } else {
-                    customFields.style.display = 'none';
-                    document.getElementById('reset_custom_password').required = false;
-                    document.getElementById('reset_confirm_password').required = false;
-                }
-            });
-        });
-        
-        // Password confirmation validation for reset
-        const resetConfirmPasswordField = document.getElementById('reset_confirm_password');
-        if (resetConfirmPasswordField) {
-            resetConfirmPasswordField.addEventListener('input', function() {
-                const password = document.getElementById('reset_custom_password').value;
-                const confirm = this.value;
-                const matchIndicator = document.getElementById('reset-password-match');
-                
-                if (confirm === '') {
-                    matchIndicator.textContent = '';
-                    return;
-                }
-                
-                if (password === confirm) {
-                    matchIndicator.textContent = '✓ Passwords match';
-                    matchIndicator.style.color = '#28a745';
-                    this.style.borderColor = '#28a745';
-                } else {
-                    matchIndicator.textContent = '✗ Passwords do not match';
-                    matchIndicator.style.color = '#dc3545';
-                    this.style.borderColor = '#dc3545';
-                }
-            });
-        }
-        
-        // Password strength indicator for reset
-        const resetCustomPasswordField = document.getElementById('reset_custom_password');
-        if (resetCustomPasswordField) {
-            resetCustomPasswordField.addEventListener('input', function() {
-                const password = this.value;
-                const confirm = document.getElementById('reset_confirm_password');
-                
-                // Clear confirm field validation when password changes
-                if (confirm && confirm.value) {
-                    const matchIndicator = document.getElementById('reset-password-match');
-                    if (matchIndicator) {
-                        matchIndicator.textContent = '';
-                    }
-                    confirm.style.borderColor = '#e9ecef';
-                }
-                
-                // Basic strength indication
-                if (password.length >= 8) {
-                    this.style.borderColor = '#28a745';
-                } else if (password.length > 0) {
-                    this.style.borderColor = '#ffc107';
-                } else {
-                    this.style.borderColor = '#e9ecef';
-                }
-            });
-        }
-        
-        // Close modal when clicking outside
-        window.addEventListener('click', function(event) {
-            const modal = document.getElementById('passwordResetModal');
-            if (event.target === modal) {
-                closePasswordResetModal();
-            }
-        });
         
         // Reset password visibility functions
         window.resetPasswordVisible = true;
