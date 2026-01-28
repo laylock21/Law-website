@@ -3,13 +3,13 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 27, 2026 at 08:29 AM
+-- Generation Time: Jan 28, 2026 at 03:15 AM
 -- Server version: 10.4.32-MariaDB
--- PHP Version: 8.0.30
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
-SET time_zone = "+08:00";
+SET time_zone = "+00:00";
 
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -18,7 +18,7 @@ SET time_zone = "+08:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `test`
+-- Database: `testlaw`
 --
 
 -- --------------------------------------------------------
@@ -32,12 +32,15 @@ CREATE TABLE `consultations` (
   `c_full_name` varchar(100) NOT NULL,
   `c_email` varchar(100) NOT NULL,
   `c_phone` varchar(20) NOT NULL,
-  `case_description` text NOT NULL,
+  `c_practice_area` varchar(100) DEFAULT NULL,
+  `c_case_description` text DEFAULT NULL,
+  `c_selected_lawyer` varchar(100) DEFAULT NULL,
+  `c_selected_date` date DEFAULT NULL,
   `lawyer_id` int(11) NOT NULL,
-  `consultation_date` date NOT NULL,
-  `consultation_time` time NOT NULL,
+  `c_consultation_date` date NOT NULL,
+  `c_consultation_time` time NOT NULL,
   `c_status` enum('pending','confirmed','cancelled','completed') DEFAULT 'pending',
-  `cancellation_reason` varchar(255) DEFAULT NULL,
+  `c_cancellation_reason` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -72,11 +75,10 @@ CREATE TABLE `lawyer_availability` (
 
 CREATE TABLE `lawyer_profile` (
   `lawyer_id` int(11) NOT NULL,
-  `lawyer_prefix` enum('Atty.','Atty. Jr.','Esq.') DEFAULT 'Atty.',
+  `lawyer_prefix` enum('Atty.','Atty. Jr.','Esq.','Dr.','Mr.','Mrs','Ms.') DEFAULT 'Atty.',
   `lp_fullname` varchar(150) NOT NULL,
   `lp_description` text DEFAULT NULL,
-  `profile` longblob DEFAULT NULL,
-  `booking_hours_per_week` int(11) DEFAULT NULL
+  `profile` longblob DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -104,7 +106,7 @@ CREATE TABLE `notification_queue` (
   `email` varchar(255) NOT NULL,
   `subject` varchar(255) NOT NULL,
   `message` text NOT NULL,
-  `notification_type` enum('appointment_cancelled','schedule_changed','other','confirmation') DEFAULT 'other',
+  `notification_type` enum('confirmation','appointment_cancelled','schedule_changed','appointment_completed','other') DEFAULT 'other',
   `nq_status` enum('pending','sent','failed') DEFAULT 'pending',
   `attempts` int(11) DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -150,15 +152,15 @@ CREATE TABLE `users` (
 --
 
 CREATE TABLE `user_sessions` (
-  `id` varchar(128) NOT NULL COMMENT 'SHA-256 hash of session_id()',
-  `user_id` int(11) DEFAULT NULL,
+  `id` varchar(64) NOT NULL,
+  `user_id` int(11) NOT NULL,
   `ip_address` varchar(45) NOT NULL,
   `user_agent` varchar(255) NOT NULL,
-  `status` enum('active','expired','logged_out','invalid') DEFAULT 'active',
+  `status` enum('active','expired','invalid','logged_out') DEFAULT 'active',
   `last_activity` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `expires_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `expires_at` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Indexes for dumped tables
@@ -171,7 +173,7 @@ ALTER TABLE `consultations`
   ADD PRIMARY KEY (`c_id`),
   ADD KEY `idx_consult_lawyer` (`lawyer_id`),
   ADD KEY `idx_consult_status` (`c_status`),
-  ADD KEY `idx_consult_date` (`consultation_date`);
+  ADD KEY `idx_consult_date` (`c_consultation_date`);
 
 --
 -- Indexes for table `lawyer_availability`
@@ -222,6 +224,15 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `uk_users_email` (`email`),
   ADD KEY `idx_users_role` (`role`),
   ADD KEY `idx_users_active` (`is_active`);
+
+--
+-- Indexes for table `user_sessions`
+--
+ALTER TABLE `user_sessions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_user_sessions_user_id` (`user_id`),
+  ADD KEY `idx_user_sessions_status` (`status`),
+  ADD KEY `idx_user_sessions_expires` (`expires_at`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -292,6 +303,12 @@ ALTER TABLE `lawyer_specializations`
 ALTER TABLE `notification_queue`
   ADD CONSTRAINT `notification_queue_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `notification_queue_ibfk_2` FOREIGN KEY (`consultation_id`) REFERENCES `consultations` (`c_id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `user_sessions`
+--
+ALTER TABLE `user_sessions`
+  ADD CONSTRAINT `user_sessions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

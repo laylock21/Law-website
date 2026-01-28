@@ -342,6 +342,7 @@ try {
         // Send email notification to lawyer(s)
         $email_queued = false;
         try {
+            require_once '../vendor/autoload.php'; // Load Composer dependencies (PHPMailer)
             require_once '../includes/EmailNotification.php';
             $emailNotification = new EmailNotification($pdo);
             $email_queued = $emailNotification->notifyLawyerNewConsultation($consultation_id);

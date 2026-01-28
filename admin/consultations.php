@@ -42,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
     if (!empty($selected_consultations) && in_array($action, ['confirm', 'complete', 'pending', 'cancelled'])) {
         try {
             $pdo = getDBConnection();
+            require_once '../vendor/autoload.php'; // Load Composer dependencies (PHPMailer)
             require_once '../includes/EmailNotification.php';
             $emailNotification = new EmailNotification($pdo);
             
@@ -84,12 +85,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
                         if ($update_stmt->rowCount() > 0) {
                             $updated_count++;
                             
-                            // Send email notification for confirm and complete actions
+                            // Send email notification for confirm, complete, and cancel actions
                             $queued = false;
                             if ($new_status === 'confirmed') {
                                 $queued = $emailNotification->notifyAppointmentConfirmed($consultation_id);
                             } elseif ($new_status === 'completed') {
                                 $queued = $emailNotification->notifyAppointmentCompleted($consultation_id);
+                            } elseif ($new_status === 'cancelled') {
+                                $queued = $emailNotification->notifyAppointmentCancelled($consultation_id, 'Cancelled by admin');
                             }
                             
                             if ($queued) {
@@ -186,37 +189,42 @@ try {
     
     if (!empty($search_query)) {
         $conditions[] = "(
-            c_full_name LIKE ? OR 
-            c_email LIKE ? OR 
-            c_phone LIKE ? OR 
-            c_status LIKE ? OR
-            c_id LIKE ?
+            c.c_full_name LIKE ? OR 
+            c.c_email LIKE ? OR 
+            c.c_phone LIKE ? OR 
+            c.c_status LIKE ? OR
+            c.c_id LIKE ? OR
+            c.c_case_description LIKE ? OR
+            c.c_practice_area LIKE ? OR
+            lp.lp_fullname LIKE ?
         )";
         
         $search_term = "%{$search_query}%";
-        $search_params = array_merge($search_params, array_fill(0, 5, $search_term));
+        $search_params = array_merge($search_params, array_fill(0, 8, $search_term));
     }
     
     // Add status filter
     if ($status_filter !== 'all') {
-        $conditions[] = "c_status = ?";
+        $conditions[] = "c.c_status = ?";
         $search_params[] = $status_filter;
     }
     
     $search_conditions = !empty($conditions) ? ' WHERE ' . implode(' AND ', $conditions) : '';
     
-    // Get total count with search and filter
-    $count_query = "SELECT COUNT(*) FROM consultations" . $search_conditions;
+    // Get total count with search and filter (with JOIN for lawyer name search)
+    $count_query = "SELECT COUNT(*) FROM consultations c 
+                    LEFT JOIN lawyer_profile lp ON c.lawyer_id = lp.lawyer_id" . $search_conditions;
     $count_stmt = $pdo->prepare($count_query);
     $count_stmt->execute($search_params);
     $total_consultations = $count_stmt->fetchColumn();
     $total_pages = ceil($total_consultations / $limit);
     
-    // Get consultations with sorting, search, and filter
+    // Get consultations with sorting, search, and filter (with JOIN for lawyer name search)
     $query = "
-        SELECT * FROM consultations 
+        SELECT c.* FROM consultations c
+        LEFT JOIN lawyer_profile lp ON c.lawyer_id = lp.lawyer_id
         {$search_conditions}
-        ORDER BY {$sort_by} {$sort_order}
+        ORDER BY c.{$sort_by} {$sort_order}
         LIMIT ? OFFSET ?
     ";
     
@@ -247,6 +255,59 @@ $active_page = "consultations";
     <link rel="stylesheet" href="../includes/confirmation-modal.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* Toast notification styles */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            z-index: 9999;
+            animation: slideIn 0.3s ease-out;
+            min-width: 300px;
+            max-width: 500px;
+        }
+        
+        .toast.success {
+            background: #27ae60;
+        }
+        
+        .toast.error {
+            background: #e74c3c;
+        }
+        
+        .toast i {
+            font-size: 1.25rem;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+        
         /* Mobile responsive styles for consultations page */
         @media (max-width: 768px) {
             .consultations-stats {
@@ -343,13 +404,6 @@ $active_page = "consultations";
 
     <main class="admin-main-content">
         <div class="container">
-            <?php if (isset($success_message)): ?>
-                <div class="admin-alert admin-alert-success"><?php echo htmlspecialchars($success_message); ?></div>
-            <?php endif; ?>
-            
-            <?php if (isset($error_message)): ?>
-                <div class="admin-alert admin-alert-error"><?php echo htmlspecialchars($error_message); ?></div>
-            <?php endif; ?>
 
             <div class="admin-stats-grid consultations-stats" style="grid-template-columns: repeat(5, 1fr);">
                 <div class="admin-stat-card">
@@ -576,6 +630,38 @@ $active_page = "consultations";
     ?>
     
     <script>
+    // Toast notification function
+    function showToast(message, type = 'success', duration = 5000) {
+        // Remove any existing toasts
+        const existingToasts = document.querySelectorAll('.toast');
+        existingToasts.forEach(toast => toast.remove());
+        
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        const icon = type === 'success' ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-exclamation-circle"></i>';
+        toast.innerHTML = `
+            ${icon}
+            <span>${message}</span>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => toast.remove(), 300);
+        }, duration);
+    }
+    
+    // Show toast for PHP messages
+    <?php if (isset($success_message)): ?>
+        showToast('<?php echo addslashes($success_message); ?>', 'success', 5000);
+    <?php endif; ?>
+    
+    <?php if (isset($error_message)): ?>
+        showToast('<?php echo addslashes($error_message); ?>', 'error', 5000);
+    <?php endif; ?>
+    
     function toggleSelectAll() {
         const selectAllCheckbox = document.getElementById('select-all');
         const consultationCheckboxes = document.querySelectorAll('.consultation-checkbox');

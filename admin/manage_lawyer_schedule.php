@@ -1,7 +1,7 @@
 <?php
 /**
  * Admin - Manage Lawyer Schedule
- * Block/unblock schedules on behalf of lawyers
+ * Block/delete blocked schedules on behalf of lawyers
  */
 
 session_start();
@@ -94,6 +94,7 @@ try {
                             $all_affected_ids = [];
                             $weekdays_text = $reason . ' (Blocked by Admin)';
                             
+                            require_once '../vendor/autoload.php'; // Load Composer dependencies (PHPMailer)
                             require_once '../includes/EmailNotification.php';
                             $emailNotification = new EmailNotification($pdo);
                         
@@ -145,8 +146,8 @@ try {
                                 $placeholders = str_repeat('?,', count($all_affected_ids) - 1) . '?';
                                 $cancel_stmt = $pdo->prepare("
                                     UPDATE consultations 
-                                    SET status = 'cancelled'
-                                    WHERE id IN ($placeholders)
+                                    SET c_status = 'cancelled'
+                                    WHERE c_id IN ($placeholders)
                                     AND lawyer_id = ?
                                 ");
                                 $params = array_merge($all_affected_ids, [$lawyer_id]);
@@ -198,10 +199,10 @@ try {
                         }
                     } else {
                         // Single date blocking
-                        // Check if date is already blocked (max_appointments = 0 means blocked)
+                        // Check if date is already blocked
                         $check_stmt = $pdo->prepare("
-                            SELECT id FROM lawyer_availability 
-                            WHERE user_id = ? AND specific_date = ? AND max_appointments = 0
+                            SELECT la_id FROM lawyer_availability 
+                            WHERE lawyer_id = ? AND specific_date = ? AND schedule_type = 'blocked'
                         ");
                         $check_stmt->execute([$lawyer_id, $block_date]);
                         
@@ -212,14 +213,14 @@ try {
                         // Insert blocked date with schedule_type = 'blocked'
                         $insert_stmt = $pdo->prepare("
                             INSERT INTO lawyer_availability 
-                            (user_id, schedule_type, specific_date, start_time, end_time, max_appointments, is_active, weekdays)
+                            (lawyer_id, schedule_type, specific_date, start_time, end_time, max_appointments, la_is_active, blocked_reason)
                             VALUES (?, 'blocked', ?, '00:00:00', '23:59:59', 0, 1, ?)
                         ");
                         
-                        $weekdays = $reason . ' (Blocked by Admin)';
-                        $insert_stmt->execute([$lawyer_id, $block_date, $weekdays]);
+                        $insert_stmt->execute([$lawyer_id, $block_date, $reason]);
                         
                         // Check for affected appointments and send notifications
+                        require_once '../vendor/autoload.php'; // Load Composer dependencies (PHPMailer)
                         require_once '../includes/EmailNotification.php';
                         $emailNotification = new EmailNotification($pdo);
                         $affected_appointments = $emailNotification->getAffectedAppointments($lawyer_id, $block_date);
@@ -242,8 +243,8 @@ try {
                             
                             $cancel_stmt = $pdo->prepare("
                                 UPDATE consultations 
-                                SET status = 'cancelled'
-                                WHERE id IN ($placeholders)
+                                SET c_status = 'cancelled'
+                                WHERE c_id IN ($placeholders)
                                 AND lawyer_id = ?
                             ");
                             
@@ -284,33 +285,33 @@ try {
                     header('Location: manage_lawyer_schedule.php?lawyer_id=' . $lawyer_id);
                     exit;
                     
-                case 'unblock_date':
+                case 'delete_blocked_date':
                     $availability_id = (int)($_POST['availability_id'] ?? 0);
                     
                     if ($availability_id <= 0) {
                         throw new Exception('Invalid availability ID');
                     }
                     
-                    // Delete the blocked schedule (max_appointments = 0)
+                    // Delete the blocked schedule
                     $delete_stmt = $pdo->prepare("
                         DELETE FROM lawyer_availability 
-                        WHERE id = ? AND user_id = ? AND max_appointments = 0
+                        WHERE la_id = ? AND lawyer_id = ? AND schedule_type = 'blocked'
                     ");
                     $delete_stmt->execute([$availability_id, $lawyer_id]);
                     
                     if ($delete_stmt->rowCount() === 0) {
-                        throw new Exception('Failed to unblock date. It may have already been removed.');
+                        throw new Exception('Failed to delete blocked date. It may have already been removed.');
                     }
                     
-                    $_SESSION['schedule_message'] = "Date unblocked successfully";
+                    $_SESSION['schedule_message'] = "Blocked date deleted successfully";
                     header('Location: manage_lawyer_schedule.php?lawyer_id=' . $lawyer_id);
                     exit;
                     
-                case 'bulk_unblock':
+                case 'bulk_delete_blocked':
                     $blocked_ids = $_POST['blocked_ids'] ?? '';
                     
                     if (empty($blocked_ids)) {
-                        throw new Exception('No dates selected for unblocking');
+                        throw new Exception('No dates selected for deletion');
                     }
                     
                     $ids_array = explode(',', $blocked_ids);
@@ -325,7 +326,7 @@ try {
                     $placeholders = implode(',', array_fill(0, count($ids_array), '?'));
                     $delete_stmt = $pdo->prepare("
                         DELETE FROM lawyer_availability 
-                        WHERE la_id IN ($placeholders) AND lawyer_id = ? AND max_appointments = 0
+                        WHERE la_id IN ($placeholders) AND lawyer_id = ? AND schedule_type = 'blocked'
                     ");
                     
                     $params = array_merge($ids_array, [$lawyer_id]);
@@ -333,7 +334,7 @@ try {
                     
                     $deleted_count = $delete_stmt->rowCount();
                     
-                    $_SESSION['schedule_message'] = "Successfully unblocked $deleted_count date(s)";
+                    $_SESSION['schedule_message'] = "Successfully deleted $deleted_count blocked date(s)";
                     header('Location: manage_lawyer_schedule.php?lawyer_id=' . $lawyer_id);
                     exit;
             }
@@ -365,12 +366,12 @@ try {
     $blocked_page = isset($_GET['blocked_page']) ? max(1, (int)$_GET['blocked_page']) : 1;
     $blocked_offset = ($blocked_page - 1) * $blocked_per_page;
     
-    // Get total count of blocked dates (max_appointments = 0 means blocked)
+    // Get total count of blocked dates (schedule_type = 'blocked')
     $blocked_count_stmt = $pdo->prepare("
         SELECT COUNT(*) 
         FROM lawyer_availability
-        WHERE user_id = ? 
-        AND max_appointments = 0
+        WHERE lawyer_id = ? 
+        AND schedule_type = 'blocked'
         AND specific_date >= CURDATE()
     ");
     $blocked_count_stmt->execute([$lawyer_id]);
@@ -379,7 +380,7 @@ try {
     
     // Get paginated blocked dates for this lawyer
     $blocked_stmt = $pdo->prepare("
-        SELECT la_id as id, specific_date, blocked_reason, created_at
+        SELECT la_id, specific_date, blocked_reason, created_at
         FROM lawyer_availability
         WHERE lawyer_id = ? 
         AND schedule_type = 'blocked'
@@ -392,13 +393,13 @@ try {
     
     // Get upcoming consultations that might be affected
     $consultations_stmt = $pdo->prepare("
-        SELECT id, consultation_date, consultation_time, status,
-               full_name, email, phone
+        SELECT c_id as id, c_consultation_date as consultation_date, c_consultation_time as consultation_time, c_status as status,
+               c_full_name as full_name, c_email as email, c_phone as phone
         FROM consultations
         WHERE lawyer_id = ? 
-        AND consultation_date >= CURDATE()
-        AND status IN ('pending', 'confirmed')
-        ORDER BY consultation_date ASC, consultation_time ASC
+        AND c_consultation_date >= CURDATE()
+        AND c_status IN ('pending', 'confirmed')
+        ORDER BY c_consultation_date ASC, c_consultation_time ASC
         LIMIT 10
     ");
     $consultations_stmt->execute([$lawyer_id]);
@@ -443,7 +444,7 @@ try {
                     container.style.opacity = '1';
                     container.style.pointerEvents = 'auto';
                     
-                    // Re-attach form submission handlers to reload after unblock
+                    // Re-attach form submission handlers to reload after delete
                     attachFormHandlers();
                     
                     // Restore bulk mode state if active
@@ -485,7 +486,7 @@ try {
                     .then(response => response.text())
                     .then(() => {
                         // Show success notification
-                        showNotification('Date unblocked successfully', 'success');
+                        showNotification('Blocked date deleted successfully', 'success');
                         
                         // Get current page
                         const currentPageEl = document.querySelector('.pagination .current');
@@ -503,8 +504,8 @@ try {
                         loadBlockedDates(currentPage);
                     })
                     .catch(error => {
-                        console.error('Error unblocking date:', error);
-                        showNotification('Error unblocking date. Please try again.', 'error');
+                        console.error('Error deleting blocked date:', error);
+                        showNotification('Error deleting blocked date. Please try again.', 'error');
                     });
                 });
             });
@@ -538,10 +539,10 @@ try {
             updateBulkActions();
         }
         
-        function bulkUnblock() {
+        function bulkDeleteBlocked() {
             const checkboxes = document.querySelectorAll('.blocked-checkbox:checked');
             if (checkboxes.length === 0) {
-                showNotification('Please select at least one blocked date to unblock.', 'error');
+                showNotification('Please select at least one blocked date to delete.', 'error');
                 return;
             }
             
@@ -550,7 +551,7 @@ try {
             
             // Create form data
             const formData = new FormData();
-            formData.append('action', 'bulk_unblock');
+            formData.append('action', 'bulk_delete_blocked');
             formData.append('blocked_ids', ids.join(','));
             
             // Submit via AJAX
@@ -561,7 +562,7 @@ try {
             .then(response => response.text())
             .then(() => {
                 // Show success notification
-                showNotification(`Successfully unblocked ${count} date(s)`, 'success');
+                showNotification(`Successfully deleted ${count} blocked date(s)`, 'success');
                 
                 // Get current page
                 const currentPageEl = document.querySelector('.pagination .current');
@@ -579,8 +580,8 @@ try {
                 loadBlockedDates(currentPage);
             })
             .catch(error => {
-                console.error('Error unblocking dates:', error);
-                showNotification('Error unblocking dates. Please try again.', 'error');
+                console.error('Error deleting blocked dates:', error);
+                showNotification('Error deleting blocked dates. Please try again.', 'error');
             });
         }
         
@@ -829,15 +830,15 @@ try {
                             <div style="display: flex; gap: 10px;">
                                 <button type="button" class="btn btn-secondary" onclick="selectAllBlocked()">Select All</button>
                                 <button type="button" class="btn btn-secondary" onclick="deselectAllBlocked()">Deselect All</button>
-                                <button type="button" class="btn btn-danger" onclick="bulkUnblock()">
-                                    <i class="fas fa-trash"></i> Unblock Selected
+                                <button type="button" class="btn btn-danger" onclick="bulkDeleteBlocked()">
+                                    <i class="fas fa-trash"></i> Delete Selected
                                 </button>
                             </div>
                         </div>
                     </div>
                     
-                    <form id="bulk-unblock-form" method="POST">
-                        <input type="hidden" name="action" value="bulk_unblock">
+                    <form id="bulk-delete-form" method="POST">
+                        <input type="hidden" name="action" value="bulk_delete_blocked">
                         <input type="hidden" name="blocked_ids" id="blocked-ids-input">
                     </form>
                     
@@ -845,7 +846,7 @@ try {
                         <div class="blocked-date-item" style="position: relative;">
                             <!-- Checkbox for multi-select -->
                             <div class="bulk-checkbox-container" style="position: absolute; top: 50%; left: 15px; transform: translateY(-50%); display: none;">
-                                <input type="checkbox" class="blocked-checkbox" value="<?php echo $blocked['id']; ?>" 
+                                <input type="checkbox" class="blocked-checkbox" value="<?php echo $blocked['la_id']; ?>" 
                                        onchange="updateBulkActions()" 
                                        style="width: 20px; height: 20px; cursor: pointer;">
                             </div>
@@ -856,17 +857,16 @@ try {
                                     </span>
                                     <br>
                                     <strong><?php echo date('l, F j, Y', strtotime($blocked['specific_date'])); ?></strong>
-                                    <?php endif; ?>
                                     <small style="display: block; margin-top: 4px;">
                                         <?php echo $blocked['blocked_reason'] ? htmlspecialchars($blocked['blocked_reason']) : 'Unavailable'; ?>
                                     </small>
                                     <small style="color: #999;">Blocked on: <?php echo date('M j, Y g:i A', strtotime($blocked['created_at'])); ?></small>
                                 </div>
                                 <form method="POST" style="display: inline;">
-                                    <input type="hidden" name="action" value="unblock_date">
-                                    <input type="hidden" name="availability_id" value="<?php echo $blocked['id']; ?>">
-                                    <button type="submit" class="btn btn-success">
-                                        <i class="fas fa-check"></i> Unblock
+                                    <input type="hidden" name="action" value="delete_blocked_date">
+                                    <input type="hidden" name="availability_id" value="<?php echo $blocked['la_id']; ?>">
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="fas fa-trash"></i> Delete
                                     </button>
                                 </form>
                             </div>
