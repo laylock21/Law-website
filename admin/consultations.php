@@ -84,12 +84,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
                         if ($update_stmt->rowCount() > 0) {
                             $updated_count++;
                             
-                            // Send email notification for confirm and complete actions
+                            // Send email notification for confirm, complete, and cancel actions
                             $queued = false;
                             if ($new_status === 'confirmed') {
                                 $queued = $emailNotification->notifyAppointmentConfirmed($consultation_id);
                             } elseif ($new_status === 'completed') {
                                 $queued = $emailNotification->notifyAppointmentCompleted($consultation_id);
+                            } elseif ($new_status === 'cancelled') {
+                                $queued = $emailNotification->notifyAppointmentCancelled($consultation_id, 'Cancelled by admin');
                             }
                             
                             if ($queued) {
@@ -186,37 +188,42 @@ try {
     
     if (!empty($search_query)) {
         $conditions[] = "(
-            c_full_name LIKE ? OR 
-            c_email LIKE ? OR 
-            c_phone LIKE ? OR 
-            c_status LIKE ? OR
-            c_id LIKE ?
+            c.c_full_name LIKE ? OR 
+            c.c_email LIKE ? OR 
+            c.c_phone LIKE ? OR 
+            c.c_status LIKE ? OR
+            c.c_id LIKE ? OR
+            c.c_case_description LIKE ? OR
+            c.c_practice_area LIKE ? OR
+            lp.lp_fullname LIKE ?
         )";
         
         $search_term = "%{$search_query}%";
-        $search_params = array_merge($search_params, array_fill(0, 5, $search_term));
+        $search_params = array_merge($search_params, array_fill(0, 8, $search_term));
     }
     
     // Add status filter
     if ($status_filter !== 'all') {
-        $conditions[] = "c_status = ?";
+        $conditions[] = "c.c_status = ?";
         $search_params[] = $status_filter;
     }
     
     $search_conditions = !empty($conditions) ? ' WHERE ' . implode(' AND ', $conditions) : '';
     
-    // Get total count with search and filter
-    $count_query = "SELECT COUNT(*) FROM consultations" . $search_conditions;
+    // Get total count with search and filter (with JOIN for lawyer name search)
+    $count_query = "SELECT COUNT(*) FROM consultations c 
+                    LEFT JOIN lawyer_profile lp ON c.lawyer_id = lp.lawyer_id" . $search_conditions;
     $count_stmt = $pdo->prepare($count_query);
     $count_stmt->execute($search_params);
     $total_consultations = $count_stmt->fetchColumn();
     $total_pages = ceil($total_consultations / $limit);
     
-    // Get consultations with sorting, search, and filter
+    // Get consultations with sorting, search, and filter (with JOIN for lawyer name search)
     $query = "
-        SELECT * FROM consultations 
+        SELECT c.* FROM consultations c
+        LEFT JOIN lawyer_profile lp ON c.lawyer_id = lp.lawyer_id
         {$search_conditions}
-        ORDER BY {$sort_by} {$sort_order}
+        ORDER BY c.{$sort_by} {$sort_order}
         LIMIT ? OFFSET ?
     ";
     

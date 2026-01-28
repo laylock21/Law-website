@@ -47,7 +47,7 @@ class EmailNotification {
     public function queueNotification($user_id, $email, $subject, $message, $type = 'other', $consultation_id = null) {
         try {
             $stmt = $this->pdo->prepare("
-                INSERT INTO notification_queue (user_id, email, subject, message, notification_type, consultation_id, status)
+                INSERT INTO notification_queue (user_id, email, subject, message, notification_type, consultation_id, nq_status)
                 VALUES (?, ?, ?, ?, ?, ?, 'pending')
             ");
             
@@ -556,7 +556,7 @@ class EmailNotification {
             // Get pending notifications
             $stmt = $this->pdo->prepare("
                 SELECT * FROM notification_queue 
-                WHERE status = 'pending' 
+                WHERE nq_status = 'pending' 
                 AND attempts < 3
                 ORDER BY created_at ASC
                 LIMIT 10
@@ -626,10 +626,10 @@ class EmailNotification {
                     // Mark as sent
                     $update = $this->pdo->prepare("
                         UPDATE notification_queue 
-                        SET status = 'sent', sent_at = NOW() 
-                        WHERE id = ?
+                        SET nq_status = 'sent', sent_at = NOW() 
+                        WHERE nq_id = ?
                     ");
-                    $update->execute([$notification['id']]);
+                    $update->execute([$notification['nq_id']]);
                     $sent++;
                     
                 } catch (Exception $e) {
@@ -639,10 +639,10 @@ class EmailNotification {
                     // Mark as failed
                     $update = $this->pdo->prepare("
                         UPDATE notification_queue 
-                        SET status = 'failed', attempts = attempts + 1, error_message = ? 
-                        WHERE id = ?
+                        SET nq_status = 'failed', attempts = attempts + 1, error_message = ? 
+                        WHERE nq_id = ?
                     ");
-                    $update->execute([$e->getMessage(), $notification['id']]);
+                    $update->execute([$e->getMessage(), $notification['nq_id']]);
                     $failed++;
                 }
             }

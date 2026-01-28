@@ -366,8 +366,15 @@ $active_page = "profile";
                     <div class="card-body">
                         <div class="profile-picture-horizontal">
                             <div class="profile-image-section">
+                                <?php
+                                // Display profile picture from LONGBLOB
+                                $profile_src = '../src/img/default-avatar.png'; // Default
+                                if (!empty($lawyer['profile_picture'])) {
+                                    $profile_src = 'data:image/jpeg;base64,' . base64_encode($lawyer['profile_picture']);
+                                }
+                                ?>
                                 <img id="profile-preview" 
-                                     src="<?php echo getProfilePictureUrl($lawyer['profile_picture'] ?? ''); ?>" 
+                                     src="<?php echo $profile_src; ?>" 
                                      alt="Profile Picture" 
                                      class="profile-image-horizontal">
                             </div>

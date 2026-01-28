@@ -74,27 +74,34 @@ try {
     // Process and save the image
     processProfilePicture($uploaded_file['tmp_name'], $destination_path);
     
-    // Update database with new filename in lawyer_profile table
+    // Read the processed image file as binary data for BLOB storage
+    $image_binary_data = file_get_contents($destination_path);
+    
+    if ($image_binary_data === false) {
+        throw new Exception("Failed to read processed image file");
+    }
+    
+    // Update database with binary image data in lawyer_profile table
     // First check if lawyer_profile record exists
     $check_profile_stmt = $pdo->prepare("SELECT lawyer_id FROM lawyer_profile WHERE lawyer_id = ?");
     $check_profile_stmt->execute([$lawyer_id]);
     
     if ($check_profile_stmt->fetch()) {
-        // Update existing record
+        // Update existing record with BLOB data
         $update_stmt = $pdo->prepare("
             UPDATE lawyer_profile 
             SET profile = ? 
             WHERE lawyer_id = ?
         ");
     } else {
-        // Insert new record
+        // Insert new record with BLOB data
         $update_stmt = $pdo->prepare("
             INSERT INTO lawyer_profile (lawyer_id, profile, lp_fullname) 
             VALUES (?, ?, '')
         ");
     }
     
-    $update_result = $update_stmt->execute([$filename, $lawyer_id]);
+    $update_result = $update_stmt->execute([$image_binary_data, $lawyer_id]);
     
     if (!$update_result) {
         // If database update fails, remove the uploaded file

@@ -193,11 +193,8 @@ $active_page = "emails";
                             <tbody>
                                 <?php foreach ($pending_notifications as $notif): ?>
                                     <tr>
-                                        <td><?php echo $notif['id']; ?></td>
+                                        <td><?php echo $notif['nq_id']; ?></td>
                                         <td>
-                                            <?php if ($notif['first_name']): ?>
-                                                <strong><?php echo htmlspecialchars($notif['first_name'] . ' ' . $notif['last_name']); ?></strong><br>
-                                            <?php endif; ?>
                                             <small><?php echo htmlspecialchars($notif['email']); ?></small>
                                         </td>
                                         <td><?php echo htmlspecialchars($notif['subject']); ?></td>

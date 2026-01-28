@@ -29,12 +29,12 @@ try {
     $per_page = 5;
     $offset = ($page - 1) * $per_page;
     
-    // Get total count (max_appointments = 0 means blocked)
+    // Get total count (schedule_type = 'blocked')
     $count_stmt = $pdo->prepare("
         SELECT COUNT(*) 
         FROM lawyer_availability
-        WHERE user_id = ? 
-        AND max_appointments = 0
+        WHERE lawyer_id = ? 
+        AND schedule_type = 'blocked'
         AND specific_date >= CURDATE()
     ");
     $count_stmt->execute([$lawyer_id]);
@@ -43,10 +43,10 @@ try {
     
     // Get paginated blocked dates
     $blocked_stmt = $pdo->prepare("
-        SELECT id, specific_date, start_date, end_date, weekdays as blocked_reason, created_at
+        SELECT la_id, specific_date, blocked_reason, created_at
         FROM lawyer_availability
-        WHERE user_id = ? 
-        AND max_appointments = 0
+        WHERE lawyer_id = ? 
+        AND schedule_type = 'blocked'
         AND specific_date >= CURDATE()
         ORDER BY specific_date ASC
         LIMIT ? OFFSET ?
@@ -71,15 +71,15 @@ try {
                 <div style="display: flex; gap: 10px;">
                     <button type="button" class="btn btn-secondary" onclick="selectAllBlocked()">Select All</button>
                     <button type="button" class="btn btn-secondary" onclick="deselectAllBlocked()">Deselect All</button>
-                    <button type="button" class="btn btn-danger" onclick="bulkUnblock()">
-                        <i class="fas fa-trash"></i> Unblock Selected
+                    <button type="button" class="btn btn-danger" onclick="bulkDeleteBlocked()">
+                        <i class="fas fa-trash"></i> Delete Selected
                     </button>
                 </div>
             </div>
         </div>
         
-        <form id="bulk-unblock-form" method="POST" action="manage_lawyer_schedule.php?lawyer_id=<?php echo $lawyer_id; ?>">
-            <input type="hidden" name="action" value="bulk_unblock">
+        <form id="bulk-delete-form" method="POST" action="manage_lawyer_schedule.php?lawyer_id=<?php echo $lawyer_id; ?>">
+            <input type="hidden" name="action" value="bulk_delete_blocked">
             <input type="hidden" name="blocked_ids" id="blocked-ids-input">
         </form>
         
@@ -87,35 +87,27 @@ try {
             <div class="blocked-date-item" style="position: relative;">
                 <!-- Checkbox for multi-select -->
                 <div class="bulk-checkbox-container" style="position: absolute; top: 50%; left: 15px; transform: translateY(-50%); display: none;">
-                    <input type="checkbox" class="blocked-checkbox" value="<?php echo $blocked['id']; ?>" 
+                    <input type="checkbox" class="blocked-checkbox" value="<?php echo $blocked['la_id']; ?>" 
                            onchange="updateBulkActions()" 
                            style="width: 20px; height: 20px; cursor: pointer;">
                 </div>
                 <div class="blocked-date-content" style="display: flex; justify-content: space-between; align-items: center; transition: margin-left 0.3s ease; margin-left: 0;">
                     <div class="date-info">
-                        <?php if (!empty($blocked['start_date']) && !empty($blocked['end_date'])): ?>
-                            <span style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; font-weight: 600; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; display: inline-block; margin-bottom: 8px;">
-                                <i class="fas fa-calendar-times"></i> BLOCKED RANGE
-                            </span>
-                            <br>
-                            <strong><?php echo date('M d, Y', strtotime($blocked['start_date'])); ?> - <?php echo date('M d, Y', strtotime($blocked['end_date'])); ?></strong>
-                        <?php else: ?>
-                            <span style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; font-weight: 600; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; display: inline-block; margin-bottom: 8px;">
-                                <i class="fas fa-ban"></i> BLOCKED DATE
-                            </span>
-                            <br>
-                            <strong><?php echo date('l, F j, Y', strtotime($blocked['specific_date'])); ?></strong>
-                        <?php endif; ?>
+                        <span style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; font-weight: 600; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; display: inline-block; margin-bottom: 8px;">
+                            <i class="fas fa-ban"></i> BLOCKED DATE
+                        </span>
+                        <br>
+                        <strong><?php echo date('l, F j, Y', strtotime($blocked['specific_date'])); ?></strong>
                         <small style="display: block; margin-top: 4px;">
                             <?php echo $blocked['blocked_reason'] ? htmlspecialchars($blocked['blocked_reason']) : 'Unavailable'; ?>
                         </small>
                         <small style="color: #999;">Blocked on: <?php echo date('M j, Y g:i A', strtotime($blocked['created_at'])); ?></small>
                     </div>
                     <form method="POST" action="manage_lawyer_schedule.php?lawyer_id=<?php echo $lawyer_id; ?>" style="display: inline;">
-                        <input type="hidden" name="action" value="unblock_date">
-                        <input type="hidden" name="availability_id" value="<?php echo $blocked['id']; ?>">
-                        <button type="submit" class="btn btn-success">
-                            <i class="fas fa-check"></i> Unblock
+                        <input type="hidden" name="action" value="delete_blocked_date">
+                        <input type="hidden" name="availability_id" value="<?php echo $blocked['la_id']; ?>">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Delete
                         </button>
                     </form>
                 </div>
