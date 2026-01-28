@@ -399,6 +399,10 @@ $active_page = $active_page ?? "";
             <i class="fas fa-calendar-check"></i>
             <span>Consultations</span>
         </a>
+        <a href="create_consultation.php" class="adm-sidebar-link <?php echo ($active_page === 'create_consultation') ? 'adm-active' : ''; ?>">
+            <i class="fas fa-plus-circle"></i>
+            <span>Create Consultation</span>
+        </a>
         <a href="manage_lawyers.php" class="adm-sidebar-link <?php echo ($active_page === 'lawyers') ? 'adm-active' : ''; ?>">
             <i class="fas fa-users"></i>
             <span>Lawyers</span>
@@ -414,6 +418,10 @@ $active_page = $active_page ?? "";
         <a href="notification_queue.php" class="adm-sidebar-link <?php echo ($active_page === 'queue') ? 'adm-active' : ''; ?>">
             <i class="fas fa-list"></i>
             <span>Queue</span>
+        </a>
+        <a href="export.php" class="adm-sidebar-link <?php echo ($active_page === 'export') ? 'adm-active' : ''; ?>">
+            <i class="fas fa-file-export"></i>
+            <span>Export</span>
         </a>
     </nav>
     
@@ -440,6 +448,8 @@ $active_page = $active_page ?? "";
                 <p>Consultation and lawyers system overview</p>
             <?php elseif ($active_page === 'consultations'): ?>
                 <p>Consultation and lawyer management oversight</p>
+            <?php elseif ($active_page === 'create_consultation'): ?>
+                <p>Manually create a new consultation request</p>
             <?php elseif ($active_page === 'lawyers'): ?>
                 <p>Create, manage, and monitor lawyer accounts</p>
             <?php elseif ($active_page === 'practice_areas'): ?>
@@ -448,6 +458,8 @@ $active_page = $active_page ?? "";
                 <p>Configure email sending for pending notifications</p>
             <?php elseif ($active_page === 'queue'): ?>
                 <p>Monitor and manage email notification queue status</p>
+            <?php elseif ($active_page === 'export'): ?>
+                <p>Export consultation data in various formats</p>
             <?php endif; ?>
         </div>
     </div>

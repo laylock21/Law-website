@@ -286,6 +286,18 @@ $active_page = "dashboard";
                         <h3>Quick Actions</h3>
                     </div>
                     <div class="admin-quick-actions-vertical">
+                        <a href="create_consultation.php" class="admin-quick-action-btn">
+                            <div class="action-icon">
+                                <i class="fas fa-plus-circle"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Create Consultation</h4>
+                                <p>Manually create a new consultation request</p>
+                            </div>
+                            <div class="action-arrow">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                        </a>
                         <a href="consultations.php" class="admin-quick-action-btn">
                             <div class="action-icon">
                                 <i class="fas fa-calendar-check"></i>

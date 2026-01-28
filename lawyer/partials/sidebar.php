@@ -407,6 +407,10 @@ $active_page = $active_page ?? "";
             <i class="fas fa-user"></i>
             <span>Profile</span>
         </a>
+        <a href="export.php" class="lw-sidebar-link <?php echo ($active_page === 'export') ? 'lw-active' : ''; ?>">
+            <i class="fas fa-file-export"></i>
+            <span>Export</span>
+        </a>
     </nav>
     
     <div class="lw-sidebar-footer">
@@ -436,6 +440,8 @@ $active_page = $active_page ?? "";
                 <p>Manage your schedule and availability</p>
             <?php elseif ($active_page === 'profile'): ?>
                 <p>Update your profile information and settings</p>
+            <?php elseif ($active_page === 'export'): ?>
+                <p>Export your availability schedule in various formats</p>
             <?php endif; ?>
         </div>
     </div>
