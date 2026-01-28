@@ -2131,7 +2131,7 @@ p, span, div, label {
 }
 
 .admin-btn-primary { 
-    background-color: #0b1d3a; 
+    background-color: #c5a253; 
     color: white; 
 }
 
@@ -2800,12 +2800,12 @@ input[type="radio"]:focus {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary-color), #1a2b4a);
+    background: #c5a253;
     color: white;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #1a2b4a, var(--primary-color));
+    background: #b08f42;
 }
 
 .btn-success {
@@ -2966,30 +2966,23 @@ input[type="radio"]:focus {
     box-shadow: var(--card-shadow);
     padding: 0;
     width: calc(100% - 32px); /* Add gap on the right */
-    cursor: grab;
-    user-select: none;
-}
-
-.table-wrapper:active {
-    cursor: grabbing;
 }
 
 .table-wrapper::-webkit-scrollbar {
-    height: 12px;
+    height: 0;
+    display: none;
 }
 
 .table-wrapper::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 6px;
+    display: none;
 }
 
 .table-wrapper::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 6px;
+    display: none;
 }
 
 .table-wrapper::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+    display: none;
 }
 
 /* =============================================================================
@@ -4380,21 +4373,21 @@ input[type="radio"]:focus {
 
 /* Buttons - Blue & Yellow Theme */
 .btn-primary {
-    background: linear-gradient(135deg, #daa520 0%, #b8860b 100%);
-    color: #0b1d3a;
+    background: #c5a253;
+    color: white;
     border: none;
     padding: 12px 24px;
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(218, 165, 32, 0.3);
+    box-shadow: 0 4px 12px rgba(197, 162, 83, 0.3);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #b8860b 0%, #daa520 100%);
+    background: #b08f42;
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(218, 165, 32, 0.4);
+    box-shadow: 0 6px 20px rgba(197, 162, 83, 0.4);
 }
 
 .btn-secondary {
@@ -4477,8 +4470,8 @@ input[type="radio"]:focus {
 }
 
 .status-active {
-    background: linear-gradient(135deg, #daa520 0%, #b8860b 100%);
-    color: #0b1d3a;
+    background: #c5a253;
+    color: white;
 }
 
 .status-inactive {
