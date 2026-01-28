@@ -64,6 +64,69 @@ $active_page = "consultations";
 	<link rel="stylesheet" href="../src/lawyer/css/mobile-responsive.css">
 	<link rel="stylesheet" href="../includes/confirmation-modal.css">
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+	<style>
+		/* Toast notification styles */
+		.toast {
+			position: fixed;
+			top: 20px;
+			right: 20px;
+			background: #333;
+			color: white;
+			padding: 1rem 1.5rem;
+			border-radius: 4px;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+			display: flex;
+			align-items: center;
+			gap: 0.75rem;
+			z-index: 9999;
+			animation: slideIn 0.3s ease-out;
+			min-width: 300px;
+			max-width: 500px;
+		}
+		
+		.toast.success {
+			background: #27ae60;
+		}
+		
+		.toast.error {
+			background: #e74c3c;
+		}
+		
+		.toast i {
+			font-size: 1.25rem;
+		}
+		
+		@keyframes slideIn {
+			from {
+				transform: translateX(400px);
+				opacity: 0;
+			}
+			to {
+				transform: translateX(0);
+				opacity: 1;
+			}
+		}
+		
+		@keyframes slideOut {
+			from {
+				transform: translateX(0);
+				opacity: 1;
+			}
+			to {
+				transform: translateX(400px);
+				opacity: 0;
+			}
+		}
+		
+		@media (max-width: 768px) {
+			.toast {
+				top: 10px;
+				right: 10px;
+				left: 10px;
+				min-width: auto;
+			}
+		}
+	</style>
 </head>
 <body class="lawyer-page">
 	<div class="lawyer-dashboard">
@@ -178,6 +241,29 @@ $active_page = "consultations";
 	</div>
 	
 	<script>
+	// Toast notification function
+	function showToast(message, type = 'success', duration = 5000) {
+		// Remove any existing toasts
+		const existingToasts = document.querySelectorAll('.toast');
+		existingToasts.forEach(toast => toast.remove());
+		
+		const toast = document.createElement('div');
+		toast.className = `toast ${type}`;
+		
+		const icon = type === 'success' ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-exclamation-circle"></i>';
+		toast.innerHTML = `
+			${icon}
+			<span>${message}</span>
+		`;
+		
+		document.body.appendChild(toast);
+		
+		setTimeout(() => {
+			toast.style.animation = 'slideOut 0.3s ease-out';
+			setTimeout(() => toast.remove(), 300);
+		}, duration);
+	}
+	
 	function toggleCancellationReason() {
 		const statusSelect = document.getElementById('new_status');
 		const reasonGroup = document.getElementById('cancellation_reason_group');
@@ -228,16 +314,8 @@ $active_page = "consultations";
 							statusBadge.textContent = data.new_status.charAt(0).toUpperCase() + data.new_status.slice(1);
 						}
 						
-						// Show success modal
-						if (typeof ConfirmModal !== 'undefined') {
-							await ConfirmModal.alert({
-								title: 'Success',
-								message: data.message,
-								type: 'success'
-							});
-						} else {
-							alert(data.message);
-						}
+						// Show success toast
+						showToast(data.message, 'success', 5000);
 						
 						// Trigger async email processing
 						fetch('../process_emails_async.php', {
@@ -250,32 +328,15 @@ $active_page = "consultations";
 						submitBtn.disabled = false;
 						submitBtn.textContent = originalText;
 					} else {
-						// Show error modal
-						if (typeof ConfirmModal !== 'undefined') {
-							await ConfirmModal.alert({
-								title: 'Error',
-								message: data.message,
-								type: 'error'
-							});
-						} else {
-							alert(data.message);
-						}
+						// Show error toast
+						showToast(data.message, 'error', 5000);
 						
 						submitBtn.disabled = false;
 						submitBtn.textContent = originalText;
 					}
 				} catch (error) {
 					console.error('Error:', error);
-					
-					if (typeof ConfirmModal !== 'undefined') {
-						await ConfirmModal.alert({
-							title: 'Error',
-							message: 'Error updating status. Please try again.',
-							type: 'error'
-						});
-					} else {
-						alert('Error updating status. Please try again.');
-					}
+					showToast('Error updating status. Please try again.', 'error', 5000);
 					
 					submitBtn.disabled = false;
 					submitBtn.textContent = originalText;
@@ -291,22 +352,13 @@ $active_page = "consultations";
 		echo $_SESSION['async_email_script'];
 		unset($_SESSION['async_email_script']);
 	}
-	// Show consultation message via unified modal if set
+	// Show consultation message via toast if set
 	if (isset($_SESSION['consultation_message'])) {
 		$consultation_message = $_SESSION['consultation_message'];
 		unset($_SESSION['consultation_message']);
 		echo "\n<script>\n";
-		echo "document.addEventListener('DOMContentLoaded', async function(){\n";
-		echo "  var msg = " . json_encode($consultation_message) . ";\n";
-		echo "  if (typeof ConfirmModal !== 'undefined') {\n";
-		echo "    await ConfirmModal.alert({\n";
-		echo "      title: 'Success',\n";
-		echo "      message: msg,\n";
-		echo "      type: 'success'\n";
-		echo "    });\n";
-		echo "  } else {\n";
-		echo "    alert(msg);\n";
-		echo "  }\n";
+		echo "document.addEventListener('DOMContentLoaded', function(){\n";
+		echo "  showToast(" . json_encode($consultation_message) . ", 'success', 5000);\n";
 		echo "});\n";
 		echo "</script>\n";
 	}

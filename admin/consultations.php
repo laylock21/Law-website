@@ -255,6 +255,59 @@ $active_page = "consultations";
     <link rel="stylesheet" href="../includes/confirmation-modal.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* Toast notification styles */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            z-index: 9999;
+            animation: slideIn 0.3s ease-out;
+            min-width: 300px;
+            max-width: 500px;
+        }
+        
+        .toast.success {
+            background: #27ae60;
+        }
+        
+        .toast.error {
+            background: #e74c3c;
+        }
+        
+        .toast i {
+            font-size: 1.25rem;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+        
         /* Mobile responsive styles for consultations page */
         @media (max-width: 768px) {
             .consultations-stats {
@@ -351,13 +404,6 @@ $active_page = "consultations";
 
     <main class="admin-main-content">
         <div class="container">
-            <?php if (isset($success_message)): ?>
-                <div class="admin-alert admin-alert-success"><?php echo htmlspecialchars($success_message); ?></div>
-            <?php endif; ?>
-            
-            <?php if (isset($error_message)): ?>
-                <div class="admin-alert admin-alert-error"><?php echo htmlspecialchars($error_message); ?></div>
-            <?php endif; ?>
 
             <div class="admin-stats-grid consultations-stats" style="grid-template-columns: repeat(5, 1fr);">
                 <div class="admin-stat-card">
@@ -584,6 +630,38 @@ $active_page = "consultations";
     ?>
     
     <script>
+    // Toast notification function
+    function showToast(message, type = 'success', duration = 5000) {
+        // Remove any existing toasts
+        const existingToasts = document.querySelectorAll('.toast');
+        existingToasts.forEach(toast => toast.remove());
+        
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        const icon = type === 'success' ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-exclamation-circle"></i>';
+        toast.innerHTML = `
+            ${icon}
+            <span>${message}</span>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => toast.remove(), 300);
+        }, duration);
+    }
+    
+    // Show toast for PHP messages
+    <?php if (isset($success_message)): ?>
+        showToast('<?php echo addslashes($success_message); ?>', 'success', 5000);
+    <?php endif; ?>
+    
+    <?php if (isset($error_message)): ?>
+        showToast('<?php echo addslashes($error_message); ?>', 'error', 5000);
+    <?php endif; ?>
+    
     function toggleSelectAll() {
         const selectAllCheckbox = document.getElementById('select-all');
         const consultationCheckboxes = document.querySelectorAll('.consultation-checkbox');

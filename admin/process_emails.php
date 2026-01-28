@@ -101,7 +101,7 @@ $active_page = "emails";
     <style>
         .toast {
             position: fixed;
-            bottom: 20px;
+            top: 20px;
             right: 20px;
             background: #333;
             color: white;

@@ -317,7 +317,7 @@ $active_page = "consultations";
         
         .toast {
             position: fixed;
-            bottom: 20px;
+            top: 20px;
             right: 20px;
             background: #333;
             color: white;
@@ -370,7 +370,7 @@ $active_page = "consultations";
         
         @media (max-width: 768px) {
             .toast {
-                bottom: 10px;
+                top: 10px;
                 right: 10px;
                 left: 10px;
                 min-width: auto;
