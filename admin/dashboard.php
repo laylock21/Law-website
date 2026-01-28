@@ -36,16 +36,16 @@ try {
     $cancelled_count = $cancelled_stmt->fetchColumn();
     
     // Recent consultations
-    $recent_stmt = $pdo->query("SELECT c_id, c_full_name, c_status, consultation_date, created_at, lawyer_id FROM consultations ORDER BY created_at DESC LIMIT 5");
+    $recent_stmt = $pdo->query("SELECT c_id, c_full_name, c_status, c_consultation_date, created_at, lawyer_id FROM consultations ORDER BY created_at DESC LIMIT 5");
     $recent_consultations = $recent_stmt->fetchAll();
     
     // Get lawyer names for recent consultations
     $lawyer_names = [];
     if (!empty($recent_consultations)) {
-        $lawyer_ids = array_unique(array_column($recent_consultations, 'lawyer_id'));
+        $lawyer_ids = array_filter(array_unique(array_column($recent_consultations, 'lawyer_id')));
         if (!empty($lawyer_ids)) {
             $placeholders = implode(',', array_fill(0, count($lawyer_ids), '?'));
-            $lawyer_stmt = $pdo->prepare("SELECT user_id, CONCAT(lp_fullname) as full_name FROM lawyer_profile WHERE lawyer_id IN ($placeholders)");
+            $lawyer_stmt = $pdo->prepare("SELECT lawyer_id, lp_fullname as full_name FROM lawyer_profile WHERE lawyer_id IN ($placeholders)");
             $lawyer_stmt->execute($lawyer_ids);
             $lawyer_names = $lawyer_stmt->fetchAll(PDO::FETCH_KEY_PAIR);
         }
@@ -68,8 +68,12 @@ try {
     $active_lawyers_stmt = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'lawyer' AND is_active = 1");
     $active_lawyers = $active_lawyers_stmt->fetchColumn();
     
+    // Debug logging
+    error_log("Admin Dashboard - Total Lawyers: $total_lawyers, Active Lawyers: $active_lawyers");
+    
 } catch (Exception $e) {
     $error_message = "Database error: " . $e->getMessage();
+    error_log("Admin Dashboard Error: " . $e->getMessage());
 }
 ?>
 

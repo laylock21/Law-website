@@ -41,16 +41,15 @@ try {
     // Handle Personal Information Form
     if ($form_type === 'personal_info') {
         // Validate and sanitize input data
-        $prefix = trim($_POST['prefix'] ?? '');
-        $first_name = trim($_POST['first_name'] ?? '');
-        $last_name = trim($_POST['last_name'] ?? '');
+        $lawyer_prefix = trim($_POST['lawyer_prefix'] ?? '');
+        $fullname = trim($_POST['fullname'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $phone = trim($_POST['phone'] ?? '');
         $description = trim($_POST['description'] ?? '');
         
         // Basic validation
-        if (empty($first_name) || empty($last_name) || empty($email)) {
-            throw new Exception("First name, last name, and email are required fields.");
+        if (empty($fullname) || empty($email)) {
+            throw new Exception("Full name and email are required fields.");
         }
         
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -87,15 +86,7 @@ try {
         }
         
         // Update lawyer_profile table
-        // Construct fullname: if prefix is provided, include it; otherwise just first + last name
-        $fullname_parts = [];
-        if (!empty($prefix)) {
-            $fullname_parts[] = $prefix;
-        }
-        $fullname_parts[] = $first_name;
-        $fullname_parts[] = $last_name;
-        $fullname = implode(' ', array_filter($fullname_parts)); // array_filter removes empty values
-        
+        // Store fullname without prefix (prefix is stored separately)
         $update_profile_stmt = $pdo->prepare("
             UPDATE lawyer_profile 
             SET lawyer_prefix = ?,
@@ -105,7 +96,7 @@ try {
         ");
         
         $update_profile_result = $update_profile_stmt->execute([
-            $prefix,
+            $lawyer_prefix,
             $fullname,
             $description,
             $lawyer_id
@@ -116,9 +107,9 @@ try {
         }
         
         // Update session data with new name
-        $_SESSION['lawyer_name'] = $first_name . ' ' . $last_name;
+        $_SESSION['lawyer_name'] = $fullname;
         
-        $fields_updated = ['prefix', 'first_name', 'last_name', 'email', 'phone', 'description'];
+        $fields_updated = ['lawyer_prefix', 'fullname', 'email', 'phone', 'description'];
     }
     
     // Handle Specializations Form

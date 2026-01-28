@@ -53,22 +53,8 @@ try {
         throw new Exception("Lawyer profile not found");
     }
     
-    // Split fullname into first and last name if needed
-    if (!empty($lawyer['lp_fullname'])) {
-        $fullname = $lawyer['lp_fullname'];
-        
-        // Remove prefix from fullname if it exists
-        if (!empty($lawyer['lawyer_prefix'])) {
-            $prefix = $lawyer['lawyer_prefix'];
-            // Remove prefix and any trailing spaces/dots
-            $fullname = preg_replace('/^' . preg_quote($prefix, '/') . '\s*/i', '', $fullname);
-        }
-        
-        // Now split the remaining name into first and last
-        $name_parts = explode(' ', trim($fullname), 2);
-        $lawyer['first_name'] = $name_parts[0] ?? '';
-        $lawyer['last_name'] = $name_parts[1] ?? '';
-    }
+    // Set fullname for display (without prefix, as prefix is separate)
+    $lawyer['fullname'] = $lawyer['lp_fullname'] ?? '';
     $lawyer['profile_picture'] = $lawyer['profile'] ?? null;
     
     // Get all practice areas for specialization selection
@@ -460,41 +446,34 @@ $active_page = "profile";
                         </div>
                         <div class="card-body">
                             <div class="form-grid-large">
+                                <div class="form-group" style="grid-column: span 2;">
+                                    <label for="fullname">
+                                        <i class="fas fa-user"></i>
+                                        <span>Full Name</span>
+                                        <span class="required">*</span>
+                                    </label>
+                                    <input type="text" id="fullname" name="fullname" 
+                                           value="<?php echo htmlspecialchars($lawyer['fullname'] ?? ''); ?>" 
+                                           required class="form-input" 
+                                           placeholder="e.g., John Doe">
+                                    <small class="form-hint">Enter your full name without prefix (prefix is selected below)</small>
+                                </div>
+                                
                                 <div class="form-group">
-                                    <label for="prefix">
+                                    <label for="lawyer_prefix">
                                         <i class="fas fa-id-badge"></i>
                                         <span>Prefix</span>
                                     </label>
-                                    <select id="prefix" name="prefix" class="form-input">
+                                    <select id="lawyer_prefix" name="lawyer_prefix" class="form-input">
                                         <option value="">Select Prefix</option>
                                         <option value="Atty." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Atty.') ? 'selected' : ''; ?>>Atty.</option>
+                                        <option value="Atty. Jr." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Atty. Jr.') ? 'selected' : ''; ?>>Atty. Jr.</option>
+                                        <option value="Esq." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Esq.') ? 'selected' : ''; ?>>Esq.</option>
                                         <option value="Mr." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Mr.') ? 'selected' : ''; ?>>Mr.</option>
                                         <option value="Ms." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Ms.') ? 'selected' : ''; ?>>Ms.</option>
                                         <option value="Mrs." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Mrs.') ? 'selected' : ''; ?>>Mrs.</option>
                                         <option value="Dr." <?php echo (isset($lawyer['lawyer_prefix']) && $lawyer['lawyer_prefix'] === 'Dr.') ? 'selected' : ''; ?>>Dr.</option>
                                     </select>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="first_name">
-                                        <i class="fas fa-user"></i>
-                                        <span>First Name</span>
-                                        <span class="required">*</span>
-                                    </label>
-                                    <input type="text" id="first_name" name="first_name" 
-                                           value="<?php echo htmlspecialchars($lawyer['first_name'] ?? ''); ?>" 
-                                           required class="form-input">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="last_name">
-                                        <i class="fas fa-user"></i>
-                                        <span>Last Name</span>
-                                        <span class="required">*</span>
-                                    </label>
-                                    <input type="text" id="last_name" name="last_name" 
-                                           value="<?php echo htmlspecialchars($lawyer['last_name'] ?? ''); ?>" 
-                                           required class="form-input">
                                 </div>
                                 
                                 <div class="form-group">

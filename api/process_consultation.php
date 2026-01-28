@@ -173,9 +173,17 @@ try {
     // Feature: Get lawyer ID from lawyer name
     $lawyer_id = null;
     if ($selected_lawyer) {
-        // Remove one or more "Atty. " prefixes if present (frontend may send duplicated prefixes)
-        $lawyer_name_clean = preg_replace('/^(Atty\.\s*)+/i', '', $selected_lawyer);
+        // Clean the lawyer name - remove all common prefixes
+        $lawyer_name_clean = $selected_lawyer;
+        $prefixes = ['Atty. Jr.', 'Atty.', 'Esq.', 'Mr.', 'Ms.', 'Mrs.', 'Dr.'];
         
+        // Remove prefixes (try longest first to avoid partial matches)
+        foreach ($prefixes as $prefix) {
+            $lawyer_name_clean = preg_replace('/^' . preg_quote($prefix, '/') . '\s+/i', '', $lawyer_name_clean);
+        }
+        $lawyer_name_clean = trim($lawyer_name_clean);
+        
+        // Try multiple matching strategies
         $lawyer_stmt = $pdo->prepare("
             SELECT u.user_id as id FROM users u
             INNER JOIN lawyer_profile lp ON u.user_id = lp.lawyer_id
@@ -183,13 +191,25 @@ try {
                 lp.lp_fullname = ?
                 OR CONCAT(COALESCE(lp.lawyer_prefix, ''), ' ', lp.lp_fullname) = ?
                 OR CONCAT(COALESCE(lp.lawyer_prefix, ''), lp.lp_fullname) = ?
+                OR lp.lp_fullname = ?
             )
             AND u.role = 'lawyer' 
             AND u.is_active = 1
+            LIMIT 1
         ");
-        $lawyer_stmt->execute([$lawyer_name_clean, $lawyer_name_clean, $lawyer_name_clean]);
+        $lawyer_stmt->execute([
+            $selected_lawyer,           // Try exact match with prefix
+            $selected_lawyer,           // Try with space between prefix and name
+            $selected_lawyer,           // Try without space
+            $lawyer_name_clean          // Try cleaned name without prefix
+        ]);
         $lawyer = $lawyer_stmt->fetch();
         $lawyer_id = $lawyer ? $lawyer['id'] : null;
+        
+        // Log if lawyer not found for debugging
+        if (!$lawyer_id) {
+            error_log("WARNING: Could not find lawyer for name: '$selected_lawyer' (cleaned: '$lawyer_name_clean')");
+        }
     }
     
     // Feature: Check appointment limits before accepting new consultation

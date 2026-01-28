@@ -39,11 +39,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             
             // Update status and cancellation reason if applicable
             if ($new_status === 'cancelled') {
-                $stmt = $pdo->prepare("UPDATE consultations SET c_status = ?, cancellation_reason = ? WHERE c_id = ?");
+                $stmt = $pdo->prepare("UPDATE consultations SET c_status = ?, c_cancellation_reason = ? WHERE c_id = ?");
                 $stmt->execute([$new_status, $cancellation_reason, $consultation_id]);
             } else {
                 // Clear cancellation reason if status is not cancelled
-                $stmt = $pdo->prepare("UPDATE consultations SET c_status = ?, cancellation_reason = NULL WHERE c_id = ?");
+                $stmt = $pdo->prepare("UPDATE consultations SET c_status = ?, c_cancellation_reason = NULL WHERE c_id = ?");
                 $stmt->execute([$new_status, $consultation_id]);
             }
             
@@ -242,8 +242,8 @@ $active_page = "consultations";
                                 <th>Consultation Date</th>
                                 <td>
                                     <?php 
-                                    if ($consultation['consultation_date']) {
-                                        echo date('l, F d, Y', strtotime($consultation['consultation_date']));
+                                    if ($consultation['c_consultation_date']) {
+                                        echo date('l, F d, Y', strtotime($consultation['c_consultation_date']));
                                     } else {
                                         echo 'No specific date requested';
                                     }
@@ -254,8 +254,8 @@ $active_page = "consultations";
                                 <th>Consultation Time</th>
                                 <td>
                                     <?php 
-                                    if (!empty($consultation['consultation_time'])) {
-                                        echo '<i class="fas fa-clock" style="color: var(--gold);"></i> ' . date('g:i A', strtotime($consultation['consultation_time']));
+                                    if (!empty($consultation['c_consultation_time'])) {
+                                        echo '<i class="fas fa-clock" style="color: var(--gold);"></i> ' . date('g:i A', strtotime($consultation['c_consultation_time']));
                                     } else {
                                         echo '<span style="color: #999;">No specific time selected</span>';
                                     }
@@ -265,7 +265,7 @@ $active_page = "consultations";
                             <tr>
                                 <th>Case Description</th>
                                 <td>
-                                    <div class="case-description"><?php echo nl2br(htmlspecialchars($consultation['case_description'])); ?></div>
+                                    <div class="case-description"><?php echo nl2br(htmlspecialchars($consultation['c_case_description'])); ?></div>
                                 </td>
                             </tr>
                             <tr>

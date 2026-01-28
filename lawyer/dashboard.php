@@ -308,7 +308,7 @@ $active_page = "dashboard";
                                     <div class="col-client">
                                         <div class="client-name"><?php echo htmlspecialchars($consultation['c_full_name']); ?></div>
                                         <?php 
-                                        $description = $consultation['case_description'];
+                                        $description = $consultation['c_case_description'];
                                         $shortDesc = substr($description, 0, 25);
                                         $isLong = strlen($description) > 25;
                                         ?>
@@ -324,10 +324,10 @@ $active_page = "dashboard";
                                         <div class="contact-phone"><?php echo htmlspecialchars($consultation['c_phone']); ?></div>
                                     </div>
                                     <div class="col-date">
-                                        <?php if ($consultation['consultation_date']): ?>
-                                            <div class="consultation-date"><?php echo date('M j, Y', strtotime($consultation['consultation_date'])); ?></div>
-                                            <?php if (!empty($consultation['consultation_time'])): ?>
-                                                <div class="consultation-time"><?php echo date('g:i A', strtotime($consultation['consultation_time'])); ?></div>
+                                        <?php if ($consultation['c_consultation_date']): ?>
+                                            <div class="consultation-date"><?php echo date('M j, Y', strtotime($consultation['c_consultation_date'])); ?></div>
+                                            <?php if (!empty($consultation['c_consultation_time'])): ?>
+                                                <div class="consultation-time"><?php echo date('g:i A', strtotime($consultation['c_consultation_time'])); ?></div>
                                             <?php endif; ?>
                                         <?php else: ?>
                                             <div class="consultation-date">Not scheduled</div>

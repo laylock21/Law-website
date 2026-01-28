@@ -73,11 +73,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
                         // Update status and cancellation reason
                         if ($action === 'cancelled') {
                             // Set cancellation reason when cancelled
-                            $update_stmt = $pdo->prepare("UPDATE consultations SET c_status = ?, cancellation_reason = ? WHERE c_id = ?");
+                            $update_stmt = $pdo->prepare("UPDATE consultations SET c_status = ?, c_cancellation_reason = ? WHERE c_id = ?");
                             $update_stmt->execute([$new_status, 'Cancelled by admin', $consultation_id]);
                         } else {
                             // Clear cancellation reason when changing to pending, confirmed, or completed
-                            $update_stmt = $pdo->prepare("UPDATE consultations SET c_status = ?, cancellation_reason = NULL WHERE c_id = ?");
+                            $update_stmt = $pdo->prepare("UPDATE consultations SET c_status = ?, c_cancellation_reason = NULL WHERE c_id = ?");
                             $update_stmt->execute([$new_status, $consultation_id]);
                         }
                         
@@ -170,7 +170,7 @@ $sort_order = isset($_GET['order']) && $_GET['order'] === 'asc' ? 'ASC' : 'DESC'
 // Allowed sort columns for security
 $allowed_sort_columns = [
     'c_id', 'c_full_name', 'c_email', 'c_phone', 
-    'consultation_date', 'c_status', 'created_at'
+    'c_consultation_date', 'c_status', 'created_at'
 ];
 
 if (!in_array($sort_by, $allowed_sort_columns)) {
@@ -477,7 +477,7 @@ $active_page = "consultations";
                                 <th><?php echo getSortableHeader('c_email', 'Email', $sort_by, $sort_order); ?></th>
                                 <th><?php echo getSortableHeader('c_phone', 'Phone', $sort_by, $sort_order); ?></th>
                                 <th>Lawyer</th>
-                                <th><?php echo getSortableHeader('consultation_date', 'Date', $sort_by, $sort_order); ?></th>
+                                <th><?php echo getSortableHeader('c_consultation_date', 'Date', $sort_by, $sort_order); ?></th>
                                 <th><?php echo getSortableHeader('c_status', 'Status', $sort_by, $sort_order); ?></th>
                                 <th><?php echo getSortableHeader('created_at', 'Created', $sort_by, $sort_order); ?></th>
                                 <th>Actions</th>
@@ -506,11 +506,11 @@ $active_page = "consultations";
                                     </td>
                                     <td>
                                         <?php 
-                                        if ($consultation['consultation_date']) {
-                                            echo date('M d, Y', strtotime($consultation['consultation_date']));
+                                        if ($consultation['c_consultation_date']) {
+                                            echo date('M d, Y', strtotime($consultation['c_consultation_date']));
                                             // Show time if available
-                                            if (!empty($consultation['consultation_time'])) {
-                                                echo '<br><small style="color: #666;"><i class="fas fa-clock"></i> ' . date('g:i A', strtotime($consultation['consultation_time'])) . '</small>';
+                                            if (!empty($consultation['c_consultation_time'])) {
+                                                echo '<br><small style="color: #666;"><i class="fas fa-clock"></i> ' . date('g:i A', strtotime($consultation['c_consultation_time'])) . '</small>';
                                             }
                                         } else {
                                             echo 'No date';
