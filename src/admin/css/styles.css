@@ -4421,7 +4421,7 @@ input[type="radio"]:focus {
 }
 
 .lawyers-table thead {
-    background: linear-gradient(135deg, #050505 0%, #808080 100%);
+    background: #3a3a3a;
     color: white;
 }
 
