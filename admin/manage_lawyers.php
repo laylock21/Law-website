@@ -387,6 +387,10 @@ if (isset($_SESSION['lawyer_message'])) {
     unset($_SESSION['lawyer_message']);
 }
 
+// Initialize variables
+$lawyers = [];
+$practice_areas = [];
+
 try {
     $pdo = getDBConnection();
     
