@@ -387,6 +387,10 @@ if (isset($_SESSION['lawyer_message'])) {
     unset($_SESSION['lawyer_message']);
 }
 
+// Initialize variables
+$lawyers = [];
+$practice_areas = [];
+
 try {
     $pdo = getDBConnection();
     
@@ -505,10 +509,9 @@ $active_page = "lawyer";
                                     </td>
                                     <td><?php echo date('M j, Y', strtotime($lawyer['created_at'])); ?></td>
                                     <td>
-                                        <button type="button" class="btn btn-secondary" 
-                                                onclick="openPasswordResetModal(<?php echo $lawyer['user_id']; ?>, '<?php echo htmlspecialchars($lawyer['lp_fullname'] ?? 'Unknown'); ?>')">
-                                                🔐
-                                        </button>
+                                        <a href="lawyer_details.php?id=<?php echo $lawyer['user_id']; ?>" class="btn btn-primary" style="text-decoration: none; background: #c5a253 !important; color: white !important; border: none !important; outline: none !important; box-shadow: none !important; border-radius: 8px !important; padding: 10px 24px !important; font-weight: 600 !important;">
+                                            <i class="fas fa-eye"></i> VIEW DETAILS
+                                        </a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -1081,43 +1084,6 @@ Generated: ${new Date().toLocaleString()}`;
                     notification.remove();
                 }, 300);
             }, 3000);
-        }
-
-        // Drag to scroll functionality for table
-        const tableWrapper = document.querySelector('.table-wrapper');
-        if (tableWrapper) {
-            let isDown = false;
-            let startX;
-            let scrollLeft;
-
-            tableWrapper.addEventListener('mousedown', (e) => {
-                // Only enable drag on the wrapper, not on buttons or links
-                if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.closest('button') || e.target.closest('a')) {
-                    return;
-                }
-                isDown = true;
-                tableWrapper.style.cursor = 'grabbing';
-                startX = e.pageX - tableWrapper.offsetLeft;
-                scrollLeft = tableWrapper.scrollLeft;
-            });
-
-            tableWrapper.addEventListener('mouseleave', () => {
-                isDown = false;
-                tableWrapper.style.cursor = 'grab';
-            });
-
-            tableWrapper.addEventListener('mouseup', () => {
-                isDown = false;
-                tableWrapper.style.cursor = 'grab';
-            });
-
-            tableWrapper.addEventListener('mousemove', (e) => {
-                if (!isDown) return;
-                e.preventDefault();
-                const x = e.pageX - tableWrapper.offsetLeft;
-                const walk = (x - startX) * 2; // Scroll speed multiplier
-                tableWrapper.scrollLeft = scrollLeft - walk;
-            });
         }
     </script>
 
