@@ -81,8 +81,25 @@ try {
         $params[] = $data['c_consultation_date'] !== '' ? $data['c_consultation_date'] : null;
     }
     if (isset($data['c_consultation_time'])) {
+        $time_value = $data['c_consultation_time'];
+        
+        // Validate and normalize time format
+        if ($time_value !== '' && $time_value !== null) {
+            // Accept both HH:MM and HH:MM:SS formats
+            if (!preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $time_value)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Invalid time format. Use HH:MM or HH:MM:SS']);
+                exit;
+            }
+            
+            // Normalize to HH:MM:SS format
+            if (preg_match('/^\d{2}:\d{2}$/', $time_value)) {
+                $time_value .= ':00'; // Add seconds if not present
+            }
+        }
+        
         $updates[] = "c_consultation_time = ?";
-        $params[] = $data['c_consultation_time'] !== '' ? $data['c_consultation_time'] : null;
+        $params[] = $time_value !== '' ? $time_value : null;
     }
     
     // Status fields

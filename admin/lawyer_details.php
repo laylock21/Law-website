@@ -15,6 +15,8 @@ if (!isset($_SESSION['user_logged_in']) || $_SESSION['user_logged_in'] !== true 
 require_once '../config/database.php';
 require_once '../config/Logger.php';
 
+Logger::init('INFO');
+
 $message = '';
 $error = '';
 $lawyer_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -152,9 +154,9 @@ try {
             lp.profile,
             GROUP_CONCAT(DISTINCT pa.area_name SEPARATOR ', ') as specializations,
             (SELECT COUNT(*) FROM consultations c WHERE c.lawyer_id = u.user_id) as consultation_count,
-            (SELECT COUNT(*) FROM consultations c WHERE c.lawyer_id = u.user_id AND c.status = 'pending') as pending_count,
-            (SELECT COUNT(*) FROM consultations c WHERE c.lawyer_id = u.user_id AND c.status = 'confirmed') as confirmed_count,
-            (SELECT COUNT(*) FROM consultations c WHERE c.lawyer_id = u.user_id AND c.status = 'completed') as completed_count
+            (SELECT COUNT(*) FROM consultations c WHERE c.lawyer_id = u.user_id AND c.c_status = 'pending') as pending_count,
+            (SELECT COUNT(*) FROM consultations c WHERE c.lawyer_id = u.user_id AND c.c_status = 'confirmed') as confirmed_count,
+            (SELECT COUNT(*) FROM consultations c WHERE c.lawyer_id = u.user_id AND c.c_status = 'completed') as completed_count
         FROM users u
         LEFT JOIN lawyer_profile lp ON u.user_id = lp.lawyer_id
         LEFT JOIN lawyer_specializations ls ON u.user_id = ls.lawyer_id
@@ -373,7 +375,7 @@ $active_page = "lawyer";
                     <!-- Profile Picture - Left -->
                     <div style="flex-shrink: 0;">
                         <?php if (!empty($lawyer['profile'])): ?>
-                            <img src="../uploads/profile_pictures/<?php echo htmlspecialchars($lawyer['profile']); ?>" 
+                            <img src="data:image/jpeg;base64,<?php echo base64_encode($lawyer['profile']); ?>" 
                                  alt="<?php echo htmlspecialchars($lawyer['lp_fullname']); ?>" 
                                  style="width: 150px; height: 150px; border-radius: 12px; object-fit: cover; border: 4px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
                         <?php else: ?>

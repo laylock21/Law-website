@@ -75,8 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_format'])) {
         // Export based on format
         if ($format === 'csv') {
             exportCSV($availability, $lawyer_name);
-        } elseif ($format === 'json') {
-            exportJSON($availability, $lawyer_name);
+        } elseif ($format === 'pdf') {
+            exportPDF($availability, $lawyer_name);
         }
         
     } catch (Exception $e) {
@@ -132,22 +132,107 @@ function exportCSV($data, $lawyer_name) {
     exit;
 }
 
-function exportJSON($data, $lawyer_name) {
-    $filename = 'availability_' . date('Y-m-d_His') . '.json';
+function exportPDF($data, $lawyer_name) {
+    require_once '../vendor/autoload.php';
     
-    header('Content-Type: application/json; charset=utf-8');
+    $filename = 'availability_' . date('Y-m-d_His') . '.pdf';
+    
+    // Create new Spreadsheet
+    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    
+    // Set document properties
+    $spreadsheet->getProperties()
+        ->setCreator('MD Law Firm')
+        ->setTitle('Availability Schedule Report')
+        ->setSubject('Lawyer Availability')
+        ->setDescription('Availability schedule export for ' . $lawyer_name);
+    
+    // Add header information
+    $sheet->setCellValue('A1', 'Availability Schedule Report');
+    $sheet->mergeCells('A1:E1');
+    $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
+    $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    
+    $sheet->setCellValue('A2', 'Lawyer: ' . $lawyer_name);
+    $sheet->mergeCells('A2:E2');
+    $sheet->getStyle('A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    
+    $sheet->setCellValue('A3', 'Generated: ' . date('F d, Y g:i A'));
+    $sheet->mergeCells('A3:E3');
+    $sheet->getStyle('A3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    
+    $sheet->setCellValue('A4', 'Total Records: ' . count($data));
+    $sheet->mergeCells('A4:E4');
+    $sheet->getStyle('A4')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    
+    // Add column headers
+    $headerRow = 6;
+    $headers = ['Schedule Type', 'Day/Date', 'Time', 'Max Appointments', 'Status'];
+    $column = 'A';
+    foreach ($headers as $header) {
+        $sheet->setCellValue($column . $headerRow, $header);
+        $column++;
+    }
+    
+    // Style header row
+    $sheet->getStyle('A' . $headerRow . ':E' . $headerRow)->applyFromArray([
+        'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+        'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'C5A253']],
+        'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
+        'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]]
+    ]);
+    
+    // Add data rows
+    $row = $headerRow + 1;
+    foreach ($data as $item) {
+        $dayDate = $item['specific_date'] ?? ($item['weekday'] ?? 'N/A');
+        $timeRange = date('g:i A', strtotime($item['start_time'])) . ' - ' . date('g:i A', strtotime($item['end_time']));
+        $status = $item['la_is_active'] ? 'Active' : 'Inactive';
+        $scheduleType = ucfirst(str_replace('_', ' ', $item['schedule_type']));
+        
+        $sheet->setCellValue('A' . $row, $scheduleType);
+        $sheet->setCellValue('B' . $row, $dayDate);
+        $sheet->setCellValue('C' . $row, $timeRange);
+        $sheet->setCellValue('D' . $row, $item['max_appointments']);
+        $sheet->setCellValue('E' . $row, $status);
+        
+        // Alternate row colors
+        if ($row % 2 == 0) {
+            $sheet->getStyle('A' . $row . ':E' . $row)->applyFromArray([
+                'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F9F9F9']]
+            ]);
+        }
+        
+        $row++;
+    }
+    
+    // Add borders to all data
+    $sheet->getStyle('A' . $headerRow . ':E' . ($row - 1))->applyFromArray([
+        'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['rgb' => 'DDDDDD']]]
+    ]);
+    
+    // Auto-size columns
+    foreach (range('A', 'E') as $col) {
+        $sheet->getColumnDimension($col)->setAutoSize(true);
+    }
+    
+    // Add footer
+    $footerRow = $row + 2;
+    $sheet->setCellValue('A' . $footerRow, 'MD Law Firm - Confidential Document');
+    $sheet->mergeCells('A' . $footerRow . ':E' . $footerRow);
+    $sheet->getStyle('A' . $footerRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $sheet->getStyle('A' . $footerRow)->getFont()->setSize(9)->setItalic(true);
+    
+    // Generate PDF
+    $writer = new \PhpOffice\PhpSpreadsheet\Writer\Pdf\Dompdf($spreadsheet);
+    
+    header('Content-Type: application/pdf');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
     header('Pragma: no-cache');
     header('Expires: 0');
     
-    $export_data = [
-        'exported_by' => $lawyer_name,
-        'exported_at' => date('Y-m-d H:i:s'),
-        'total_records' => count($data),
-        'availability_schedules' => $data
-    ];
-    
-    echo json_encode($export_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    $writer->save('php://output');
     exit;
 }
 
@@ -185,12 +270,6 @@ $active_page = "export";
     <link rel="stylesheet" href="../src/lawyer/css/mobile-responsive.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .export-container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 30px;
-        }
-        
         .export-card {
             background: white;
             border-radius: 12px;
@@ -380,10 +459,6 @@ $active_page = "export";
         }
         
         @media (max-width: 768px) {
-            .export-container {
-                padding: 20px 15px;
-            }
-            
             .form-row {
                 grid-template-columns: 1fr;
             }
@@ -398,7 +473,7 @@ $active_page = "export";
     <?php include 'partials/sidebar.php'; ?>
     
     <main class="lawyer-main-content">
-        <div class="export-container">
+        <div class="container">
             <?php if (isset($error_message)): ?>
                 <div class="error-message" style="background: #f8d7da; color: #721c24; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
                     <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error_message); ?>
@@ -452,12 +527,12 @@ $active_page = "export";
                                 </label>
                             </div>
                             <div class="format-option">
-                                <input type="radio" name="export_format" id="format_json" value="json">
-                                <label for="format_json" class="format-label">
-                                    <div class="format-icon"><i class="fas fa-file-code"></i></div>
+                                <input type="radio" name="export_format" id="format_pdf" value="pdf">
+                                <label for="format_pdf" class="format-label">
+                                    <div class="format-icon"><i class="fas fa-file-pdf"></i></div>
                                     <div class="format-info">
-                                        <h4>JSON</h4>
-                                        <p>Developer friendly</p>
+                                        <h4>PDF</h4>
+                                        <p>Professional reports</p>
                                     </div>
                                 </label>
                             </div>

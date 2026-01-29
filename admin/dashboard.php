@@ -42,7 +42,7 @@ try {
     // Get lawyer names for recent consultations
     $lawyer_names = [];
     if (!empty($recent_consultations)) {
-        $lawyer_ids = array_filter(array_unique(array_column($recent_consultations, 'lawyer_id')));
+        $lawyer_ids = array_values(array_filter(array_unique(array_column($recent_consultations, 'lawyer_id'))));
         if (!empty($lawyer_ids)) {
             $placeholders = implode(',', array_fill(0, count($lawyer_ids), '?'));
             $lawyer_stmt = $pdo->prepare("SELECT lawyer_id, lp_fullname as full_name FROM lawyer_profile WHERE lawyer_id IN ($placeholders)");
@@ -63,17 +63,32 @@ try {
     
     // Lawyer statistics
     $total_lawyers_stmt = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'lawyer'");
-    $total_lawyers = $total_lawyers_stmt->fetchColumn();
+    $total_lawyers = (int)$total_lawyers_stmt->fetchColumn();
     
     $active_lawyers_stmt = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'lawyer' AND is_active = 1");
-    $active_lawyers = $active_lawyers_stmt->fetchColumn();
+    $active_lawyers = (int)$active_lawyers_stmt->fetchColumn();
     
     // Debug logging
     error_log("Admin Dashboard - Total Lawyers: $total_lawyers, Active Lawyers: $active_lawyers");
     
+    // Additional debug - check if queries are working
+    $debug_users = $pdo->query("SELECT user_id, username, role, is_active FROM users")->fetchAll();
+    error_log("All users in database: " . print_r($debug_users, true));
+    
 } catch (Exception $e) {
     $error_message = "Database error: " . $e->getMessage();
     error_log("Admin Dashboard Error: " . $e->getMessage());
+    
+    // Set default values so page doesn't break
+    $total_lawyers = 0;
+    $active_lawyers = 0;
+    $total_consultations = 0;
+    $pending_count = 0;
+    $confirmed_count = 0;
+    $completed_count = 0;
+    $cancelled_count = 0;
+    $recent_consultations = [];
+    $practice_areas = [];
 }
 ?>
 

@@ -74,8 +74,13 @@ if (empty($consultationDate) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $consultati
     $errors[] = 'Valid consultation date is required';
 }
 
-if (empty($consultationTime) || !preg_match('/^\d{2}:\d{2}$/', $consultationTime)) {
+if (empty($consultationTime) || !preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $consultationTime)) {
     $errors[] = 'Valid consultation time is required';
+}
+
+// Normalize time format to HH:MM:SS
+if (!empty($consultationTime) && preg_match('/^\d{2}:\d{2}$/', $consultationTime)) {
+    $consultationTime .= ':00'; // Add seconds if not present
 }
 
 if (!in_array($status, ['pending', 'confirmed'])) {
@@ -171,7 +176,7 @@ try {
         $consultationDate,
         $lawyerId,
         $consultationDate,
-        $consultationTime . ':00',
+        $consultationTime,
         $status
     ]);
     

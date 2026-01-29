@@ -24,10 +24,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 // Get lawyer name from query parameter
 $lawyer_name = $_GET['lawyer'] ?? '';
+$lawyer_id = $_GET['lawyer_id'] ?? '';
 
-if (empty($lawyer_name)) {
+if (empty($lawyer_name) && empty($lawyer_id)) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Lawyer name is required']);
+    echo json_encode(['success' => false, 'message' => 'Lawyer name or ID is required']);
     exit;
 }
 
@@ -54,24 +55,40 @@ try {
         throw new Exception('Consultations table schema mismatch (missing date/status columns)');
     }
     
-    // Get lawyer ID and date preferences from name
-    // Try to match with full name including prefix, or without prefix
-    $lawyer_stmt = $pdo->prepare("
-        SELECT 
-            u.user_id as id,
-            lp.lp_fullname,
-            lp.lawyer_prefix
-        FROM users u
-        INNER JOIN lawyer_profile lp ON u.user_id = lp.lawyer_id
-        WHERE (
-            lp.lp_fullname = ?
-            OR CONCAT(COALESCE(lp.lawyer_prefix, ''), ' ', lp.lp_fullname) = ?
-            OR CONCAT(COALESCE(lp.lawyer_prefix, ''), lp.lp_fullname) = ?
-        )
-        AND u.role = 'lawyer' 
-        AND u.is_active = 1
-    ");
-    $lawyer_stmt->execute([$lawyer_name, $lawyer_name, $lawyer_name]);
+    // Get lawyer by ID or name
+    if (!empty($lawyer_id)) {
+        // Search by ID
+        $lawyer_stmt = $pdo->prepare("
+            SELECT 
+                u.user_id as id,
+                lp.lp_fullname,
+                lp.lawyer_prefix
+            FROM users u
+            INNER JOIN lawyer_profile lp ON u.user_id = lp.lawyer_id
+            WHERE u.user_id = ?
+            AND u.role = 'lawyer' 
+            AND u.is_active = 1
+        ");
+        $lawyer_stmt->execute([$lawyer_id]);
+    } else {
+        // Search by name (original logic)
+        $lawyer_stmt = $pdo->prepare("
+            SELECT 
+                u.user_id as id,
+                lp.lp_fullname,
+                lp.lawyer_prefix
+            FROM users u
+            INNER JOIN lawyer_profile lp ON u.user_id = lp.lawyer_id
+            WHERE (
+                lp.lp_fullname = ?
+                OR CONCAT(COALESCE(lp.lawyer_prefix, ''), ' ', lp.lp_fullname) = ?
+                OR CONCAT(COALESCE(lp.lawyer_prefix, ''), lp.lp_fullname) = ?
+            )
+            AND u.role = 'lawyer' 
+            AND u.is_active = 1
+        ");
+        $lawyer_stmt->execute([$lawyer_name, $lawyer_name, $lawyer_name]);
+    }
     $lawyer = $lawyer_stmt->fetch();
     
     if (!$lawyer) {
@@ -375,7 +392,8 @@ try {
         
         echo json_encode([
             'success' => true,
-            'lawyer' => $lawyer_name,
+            'lawyer' => $lawyer_name ?: $lawyer['lp_fullname'],
+            'lawyer_id' => $lawyer['id'],
             'available_dates' => $date_list,
             'detailed_availability' => array_values($available_dates),
             'date_status_map' => $date_status_map, // NEW: Complete status map

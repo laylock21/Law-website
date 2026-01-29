@@ -18,6 +18,7 @@ if ($pdo) {
     // Log the logout event before clearing session
     if (isset($_SESSION['user_id'])) {
         require_once 'config/Logger.php';
+        Logger::init('INFO');
         Logger::security('user_logout', [
             'user_id' => $_SESSION['user_id'],
             'role' => $_SESSION['user_role'] ?? 'unknown'

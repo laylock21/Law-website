@@ -226,6 +226,68 @@ $active_page = "create_consultation";
             font-size: 20px;
         }
         
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            z-index: 9999;
+            animation: slideIn 0.3s ease-out;
+            min-width: 250px;
+        }
+        
+        .toast.success {
+            background: #27ae60;
+        }
+        
+        .toast.error {
+            background: #e74c3c;
+        }
+        
+        .toast.info {
+            background: #3a3a3a;
+        }
+        
+        .toast .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .toast {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                min-width: auto;
+            }
+        }
+        
         @media (max-width: 768px) {
             .form-grid {
                 grid-template-columns: 1fr;
@@ -279,20 +341,6 @@ $active_page = "create_consultation";
                                        required>
                             </div>
                             <div class="form-group">
-                                <label for="email">
-                                    Email Address
-                                    <span class="required">*</span>
-                                </label>
-                                <input type="email" 
-                                       id="email" 
-                                       name="email" 
-                                       class="form-control" 
-                                       placeholder="client@example.com"
-                                       required>
-                            </div>
-                        </div>
-                        <div class="form-grid" style="margin-top: 20px;">
-                            <div class="form-group">
                                 <label for="phone">
                                     Phone Number
                                     <span class="required">*</span>
@@ -309,22 +357,19 @@ $active_page = "create_consultation";
                                     11 digits (e.g., 09123456789)
                                 </small>
                             </div>
+                        </div>
+                        <div class="form-grid single-column" style="margin-top: 20px;">
                             <div class="form-group">
-                                <label for="practiceArea">
-                                    Practice Area
+                                <label for="email">
+                                    Email Address
                                     <span class="required">*</span>
                                 </label>
-                                <select id="practiceArea" 
-                                        name="practiceArea" 
-                                        class="form-control"
-                                        required>
-                                    <option value="">Select practice area</option>
-                                    <?php foreach ($practice_areas as $area): ?>
-                                        <option value="<?php echo htmlspecialchars($area['area_name']); ?>">
-                                            <?php echo htmlspecialchars($area['area_name']); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
+                                <input type="email" 
+                                       id="email" 
+                                       name="email" 
+                                       class="form-control" 
+                                       placeholder="client@example.com"
+                                       required>
                             </div>
                         </div>
                     </div>
@@ -358,6 +403,23 @@ $active_page = "create_consultation";
                         </div>
                         <div class="form-grid">
                             <div class="form-group">
+                                <label for="practiceArea">
+                                    Practice Area
+                                    <span class="required">*</span>
+                                </label>
+                                <select id="practiceArea" 
+                                        name="practiceArea" 
+                                        class="form-control"
+                                        required>
+                                    <option value="">Select practice area</option>
+                                    <?php foreach ($practice_areas as $area): ?>
+                                        <option value="<?php echo htmlspecialchars($area['area_name']); ?>">
+                                            <?php echo htmlspecialchars($area['area_name']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="form-group">
                                 <label for="lawyer">
                                     Assigned Lawyer
                                     <span class="required">*</span>
@@ -365,53 +427,37 @@ $active_page = "create_consultation";
                                 <select id="lawyer" 
                                         name="lawyer" 
                                         class="form-control"
-                                        required>
-                                    <option value="">Select a lawyer</option>
-                                    <?php foreach ($lawyers as $lawyer): ?>
-                                        <option value="<?php echo $lawyer['user_id']; ?>" 
-                                                data-name="<?php echo htmlspecialchars($lawyer['lp_fullname']); ?>">
-                                            <?php 
-                                            $prefix = $lawyer['lawyer_prefix'] ? $lawyer['lawyer_prefix'] . ' ' : '';
-                                            echo htmlspecialchars($prefix . $lawyer['lp_fullname']); 
-                                            ?>
-                                        </option>
-                                    <?php endforeach; ?>
+                                        required
+                                        disabled>
+                                    <option value="">Select practice area first</option>
                                 </select>
                             </div>
+                        </div>
+                        <div class="form-grid" style="margin-top: 20px;">
                             <div class="form-group">
                                 <label for="consultationDate">
                                     Consultation Date
                                     <span class="required">*</span>
                                 </label>
-                                <input type="date" 
-                                       id="consultationDate" 
-                                       name="consultationDate" 
-                                       class="form-control"
-                                       min="<?php echo date('Y-m-d'); ?>"
-                                       required>
+                                <select id="consultationDate" 
+                                        name="consultationDate" 
+                                        class="form-control"
+                                        required
+                                        disabled>
+                                    <option value="">Select lawyer first</option>
+                                </select>
                             </div>
-                        </div>
-                        <div class="form-grid" style="margin-top: 20px;">
                             <div class="form-group">
                                 <label for="consultationTime">
                                     Consultation Time
                                     <span class="required">*</span>
                                 </label>
-                                <input type="time" 
-                                       id="consultationTime" 
-                                       name="consultationTime" 
-                                       class="form-control"
-                                       required>
-                            </div>
-                            <div class="form-group">
-                                <label for="status">
-                                    Initial Status
-                                </label>
-                                <select id="status" 
-                                        name="status" 
-                                        class="form-control">
-                                    <option value="pending">Pending</option>
-                                    <option value="confirmed">Confirmed</option>
+                                <select id="consultationTime" 
+                                        name="consultationTime" 
+                                        class="form-control"
+                                        required
+                                        disabled>
+                                    <option value="">Select date first</option>
                                 </select>
                             </div>
                         </div>
@@ -434,6 +480,40 @@ $active_page = "create_consultation";
     </main>
 
     <script>
+        // Toast notification function
+        function showToast(message, type = 'info', duration = 3000) {
+            // Remove any existing toasts
+            const existingToasts = document.querySelectorAll('.toast');
+            existingToasts.forEach(toast => toast.remove());
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            if (type === 'info') {
+                toast.innerHTML = `
+                    <div class="spinner"></div>
+                    <span>${message}</span>
+                `;
+            } else {
+                const icon = type === 'success' ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-exclamation-circle"></i>';
+                toast.innerHTML = `
+                    ${icon}
+                    <span>${message}</span>
+                `;
+            }
+            
+            document.body.appendChild(toast);
+            
+            if (duration > 0) {
+                setTimeout(() => {
+                    toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
+            }
+            
+            return toast;
+        }
+        
         // Add touched class when field is interacted with
         document.querySelectorAll('.form-control').forEach(field => {
             field.addEventListener('blur', function() {
@@ -456,6 +536,160 @@ $active_page = "create_consultation";
             this.value = this.value.replace(/\D/g, '').substring(0, 11);
         });
         
+        // Practice Area change - Load lawyers by specialization
+        document.getElementById('practiceArea').addEventListener('change', async function() {
+            const practiceArea = this.value;
+            const lawyerSelect = document.getElementById('lawyer');
+            const dateSelect = document.getElementById('consultationDate');
+            const timeSelect = document.getElementById('consultationTime');
+            
+            // Reset dependent fields
+            lawyerSelect.innerHTML = '<option value="">Loading lawyers...</option>';
+            lawyerSelect.disabled = true;
+            dateSelect.innerHTML = '<option value="">Select lawyer first</option>';
+            dateSelect.disabled = true;
+            timeSelect.innerHTML = '<option value="">Select date first</option>';
+            timeSelect.disabled = true;
+            
+            if (!practiceArea) {
+                lawyerSelect.innerHTML = '<option value="">Select practice area first</option>';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`../api/get_lawyers_by_specialization.php?specialization=${encodeURIComponent(practiceArea)}`);
+                const data = await response.json();
+                
+                if (data.success && data.lawyers.length > 0) {
+                    lawyerSelect.innerHTML = '<option value="">Select a lawyer</option>';
+                    data.lawyers.forEach(lawyer => {
+                        const option = document.createElement('option');
+                        option.value = lawyer.id;
+                        option.textContent = lawyer.name;
+                        option.setAttribute('data-name', lawyer.full_name);
+                        lawyerSelect.appendChild(option);
+                    });
+                    lawyerSelect.disabled = false;
+                } else {
+                    lawyerSelect.innerHTML = '<option value="">No lawyers available for this practice area</option>';
+                }
+            } catch (error) {
+                console.error('Error loading lawyers:', error);
+                lawyerSelect.innerHTML = '<option value="">Error loading lawyers</option>';
+            }
+        });
+        
+        // Lawyer change - Load available dates
+        document.getElementById('lawyer').addEventListener('change', async function() {
+            const lawyerId = this.value;
+            const dateSelect = document.getElementById('consultationDate');
+            const timeSelect = document.getElementById('consultationTime');
+            
+            // Reset dependent fields
+            dateSelect.innerHTML = '<option value="">Loading dates...</option>';
+            dateSelect.disabled = true;
+            timeSelect.innerHTML = '<option value="">Select date first</option>';
+            timeSelect.disabled = true;
+            
+            if (!lawyerId) {
+                dateSelect.innerHTML = '<option value="">Select lawyer first</option>';
+                return;
+            }
+            
+            try {
+                // Calculate 3 months from today
+                const today = new Date();
+                const endDate = new Date();
+                endDate.setMonth(endDate.getMonth() + 3);
+                
+                const startDateStr = today.toISOString().split('T')[0];
+                const endDateStr = endDate.toISOString().split('T')[0];
+                
+                const response = await fetch(`../api/get_lawyer_availability.php?lawyer_id=${lawyerId}&start_date=${startDateStr}&end_date=${endDateStr}`);
+                const data = await response.json();
+                
+                if (data.success && data.available_dates && data.available_dates.length > 0) {
+                    dateSelect.innerHTML = '<option value="">Select a date</option>';
+                    
+                    // Use detailed_availability if available, otherwise use available_dates
+                    const dates = data.detailed_availability || data.available_dates.map(date => ({date: date}));
+                    
+                    dates.forEach(dateInfo => {
+                        const dateValue = typeof dateInfo === 'string' ? dateInfo : dateInfo.date;
+                        const dateObj = new Date(dateValue + 'T00:00:00');
+                        const formattedDate = dateObj.toLocaleDateString('en-US', { 
+                            weekday: 'short', 
+                            year: 'numeric', 
+                            month: 'short', 
+                            day: 'numeric' 
+                        });
+                        
+                        const option = document.createElement('option');
+                        option.value = dateValue;
+                        option.textContent = formattedDate;
+                        
+                        // Add slots info if available
+                        if (dateInfo.max_appointments && dateInfo.booked !== undefined) {
+                            const slotsLeft = dateInfo.max_appointments - dateInfo.booked;
+                            option.textContent += ` (${slotsLeft} slot${slotsLeft !== 1 ? 's' : ''} left)`;
+                        }
+                        
+                        dateSelect.appendChild(option);
+                    });
+                    dateSelect.disabled = false;
+                } else {
+                    dateSelect.innerHTML = '<option value="">No available dates in the next 3 months</option>';
+                }
+            } catch (error) {
+                console.error('Error loading dates:', error);
+                dateSelect.innerHTML = '<option value="">Error loading dates</option>';
+            }
+        });
+        
+        // Date change - Load available time slots
+        document.getElementById('consultationDate').addEventListener('change', async function() {
+            const lawyerId = document.getElementById('lawyer').value;
+            const selectedDate = this.value;
+            const timeSelect = document.getElementById('consultationTime');
+            
+            timeSelect.innerHTML = '<option value="">Loading time slots...</option>';
+            timeSelect.disabled = true;
+            
+            if (!selectedDate) {
+                timeSelect.innerHTML = '<option value="">Select date first</option>';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`../api/get_time_slots.php?lawyer_id=${lawyerId}&date=${selectedDate}`);
+                const data = await response.json();
+                
+                if (data.success && data.time_slots && data.time_slots.length > 0) {
+                    timeSelect.innerHTML = '<option value="">Select a time</option>';
+                    data.time_slots.forEach(slot => {
+                        const option = document.createElement('option');
+                        option.value = slot.time_24h || slot.time;
+                        option.textContent = slot.display || slot.time_formatted || slot.time;
+                        
+                        if (!slot.available) {
+                            option.disabled = true;
+                            option.textContent += ' (Booked)';
+                        }
+                        
+                        timeSelect.appendChild(option);
+                    });
+                    timeSelect.disabled = false;
+                } else if (data.blocked) {
+                    timeSelect.innerHTML = '<option value="">Date is blocked</option>';
+                } else {
+                    timeSelect.innerHTML = '<option value="">No time slots available</option>';
+                }
+            } catch (error) {
+                console.error('Error loading time slots:', error);
+                timeSelect.innerHTML = '<option value="">Error loading time slots</option>';
+            }
+        });
+        
         // Form submission
         document.getElementById('createConsultationForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -473,7 +707,7 @@ $active_page = "create_consultation";
             });
             
             if (!isValid) {
-                alert('Please fill in all required fields correctly.');
+                showToast('Please fill in all required fields correctly.', 'error', 4000);
                 return;
             }
             
@@ -481,6 +715,9 @@ $active_page = "create_consultation";
             const originalText = submitBtn.innerHTML;
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+            
+            // Show creating toast
+            showToast('Creating consultation...', 'info', 0);
             
             const formData = new FormData(this);
             const lawyerSelect = document.getElementById('lawyer');
@@ -496,16 +733,18 @@ $active_page = "create_consultation";
                 const result = await response.json();
                 
                 if (result.success) {
-                    // Show success message and redirect
-                    alert('Consultation created successfully!');
-                    window.location.href = 'consultations.php';
+                    // Show success message
+                    showToast('Consultation created successfully!', 'success', 2000);
+                    setTimeout(() => {
+                        window.location.href = 'consultations.php';
+                    }, 1500);
                 } else {
-                    alert('Error: ' + result.message);
+                    showToast('Error: ' + result.message, 'error', 5000);
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalText;
                 }
             } catch (error) {
-                alert('An error occurred. Please try again.');
+                showToast('An error occurred. Please try again.', 'error', 4000);
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
             }

@@ -5,13 +5,20 @@
  */
 
 class ErrorHandler {
-    private static $log_file = 'logs/error.log';
+    private static $log_file = null;
     private static $debug_mode = false; // Set to false in production
     
     /**
      * Initialize error handling
      */
     public static function init() {
+        // Set absolute path to error log
+        if (self::$log_file === null) {
+            $current_dir = __DIR__;
+            $project_root = dirname($current_dir);
+            self::$log_file = $project_root . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'error.log';
+        }
+        
         // Set error reporting
         error_reporting(E_ALL);
         

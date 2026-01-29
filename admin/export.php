@@ -45,12 +45,6 @@ $active_page = "export";
     <link rel="stylesheet" href="../src/admin/css/styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .export-container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 30px;
-        }
-        
         .export-card {
             background: white;
             border-radius: 12px;
@@ -297,16 +291,13 @@ $active_page = "export";
         }
         
         @media (max-width: 768px) {
-            .export-container {
-                padding: 20px 15px;
-            }
-            
             .form-row {
                 grid-template-columns: 1fr;
             }
             
             .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(1, 1fr);
+                justify-content: center;
             }
         }
     </style>
@@ -315,7 +306,7 @@ $active_page = "export";
     <?php include 'partials/sidebar.php'; ?>
     
     <main class="admin-main-content">
-        <div class="export-container">
+        <div class="container">
             <!-- Statistics Card -->
             <div class="export-card">
                 <h2><i class="fas fa-chart-bar"></i> Consultation Statistics</h2>
@@ -363,12 +354,12 @@ $active_page = "export";
                                 </label>
                             </div>
                             <div class="format-option">
-                                <input type="radio" name="export_format" id="format_json" value="json">
-                                <label for="format_json" class="format-label">
-                                    <div class="format-icon"><i class="fas fa-file-code"></i></div>
+                                <input type="radio" name="export_format" id="format_pdf" value="pdf">
+                                <label for="format_pdf" class="format-label">
+                                    <div class="format-icon"><i class="fas fa-file-pdf"></i></div>
                                     <div class="format-info">
-                                        <h4>JSON</h4>
-                                        <p>Developer friendly</p>
+                                        <h4>PDF</h4>
+                                        <p>Professional reports</p>
                                     </div>
                                 </label>
                             </div>

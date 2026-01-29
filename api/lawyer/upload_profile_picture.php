@@ -32,6 +32,7 @@ try {
     require_once '../../config/database.php';
     require_once '../../config/upload_config.php';
     require_once '../../config/Logger.php';
+    Logger::init('INFO');
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'Configuration error: ' . $e->getMessage()]);
     exit;

@@ -89,8 +89,8 @@ try {
     // Export based on format
     if ($format === 'csv') {
         exportCSV($consultations);
-    } elseif ($format === 'json') {
-        exportJSON($consultations);
+    } elseif ($format === 'pdf') {
+        exportPDF($consultations);
     } else {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Invalid format']);
@@ -153,20 +153,124 @@ function exportCSV($data) {
     exit;
 }
 
-function exportJSON($data) {
-    $filename = 'consultations_export_' . date('Y-m-d_His') . '.json';
+function exportPDF($data) {
+    require_once '../../vendor/autoload.php';
     
-    header('Content-Type: application/json; charset=utf-8');
+    $filename = 'consultations_export_' . date('Y-m-d_His') . '.pdf';
+    
+    // Create new Spreadsheet
+    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    
+    // Set document properties
+    $spreadsheet->getProperties()
+        ->setCreator('MD Law Firm')
+        ->setTitle('Consultations Report')
+        ->setSubject('Consultation Records')
+        ->setDescription('Consultation records export');
+    
+    // Add header information
+    $sheet->setCellValue('A1', 'Consultations Report');
+    $sheet->mergeCells('A1:H1');
+    $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
+    $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    
+    $sheet->setCellValue('A2', 'Generated: ' . date('F d, Y g:i A'));
+    $sheet->mergeCells('A2:H2');
+    $sheet->getStyle('A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    
+    $sheet->setCellValue('A3', 'Total Records: ' . count($data));
+    $sheet->mergeCells('A3:H3');
+    $sheet->getStyle('A3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    
+    // Add column headers
+    $headerRow = 5;
+    $headers = ['ID', 'Client Name', 'Email', 'Phone', 'Practice Area', 'Date & Time', 'Lawyer', 'Status'];
+    $column = 'A';
+    foreach ($headers as $header) {
+        $sheet->setCellValue($column . $headerRow, $header);
+        $column++;
+    }
+    
+    // Style header row
+    $sheet->getStyle('A' . $headerRow . ':H' . $headerRow)->applyFromArray([
+        'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+        'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'C5A253']],
+        'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
+        'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]]
+    ]);
+    
+    // Add data rows
+    $row = $headerRow + 1;
+    foreach ($data as $item) {
+        $consultationDateTime = '';
+        if ($item['c_consultation_date'] && $item['c_consultation_time']) {
+            $consultationDateTime = date('M d, Y', strtotime($item['c_consultation_date'])) . ' ' . 
+                                   date('g:i A', strtotime($item['c_consultation_time']));
+        } else {
+            $consultationDateTime = 'Not scheduled';
+        }
+        
+        $sheet->setCellValue('A' . $row, $item['c_id']);
+        $sheet->setCellValue('B' . $row, $item['c_full_name']);
+        $sheet->setCellValue('C' . $row, $item['c_email']);
+        $sheet->setCellValue('D' . $row, $item['c_phone'] ?? '');
+        $sheet->setCellValue('E' . $row, $item['c_practice_area'] ?? 'N/A');
+        $sheet->setCellValue('F' . $row, $consultationDateTime);
+        $sheet->setCellValue('G' . $row, $item['lawyer_name'] ?? 'Not assigned');
+        $sheet->setCellValue('H' . $row, ucfirst($item['c_status']));
+        
+        // Color code status
+        $statusColors = [
+            'pending' => 'FFF3CD',
+            'confirmed' => 'D1ECF1',
+            'completed' => 'D4EDDA',
+            'cancelled' => 'F8D7DA'
+        ];
+        $statusColor = $statusColors[strtolower($item['c_status'])] ?? 'FFFFFF';
+        $sheet->getStyle('H' . $row)->applyFromArray([
+            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => $statusColor]]
+        ]);
+        
+        // Alternate row colors
+        if ($row % 2 == 0) {
+            $sheet->getStyle('A' . $row . ':G' . $row)->applyFromArray([
+                'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F9F9F9']]
+            ]);
+        }
+        
+        $row++;
+    }
+    
+    // Add borders to all data
+    $sheet->getStyle('A' . $headerRow . ':H' . ($row - 1))->applyFromArray([
+        'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['rgb' => 'DDDDDD']]]
+    ]);
+    
+    // Auto-size columns
+    foreach (range('A', 'H') as $col) {
+        $sheet->getColumnDimension($col)->setAutoSize(true);
+    }
+    
+    // Add footer
+    $footerRow = $row + 2;
+    $sheet->setCellValue('A' . $footerRow, 'MD Law Firm - Confidential Document');
+    $sheet->mergeCells('A' . $footerRow . ':H' . $footerRow);
+    $sheet->getStyle('A' . $footerRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $sheet->getStyle('A' . $footerRow)->getFont()->setSize(9)->setItalic(true);
+    
+    // Set page orientation to landscape
+    $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
+    $sheet->getPageSetup()->setPaperSize(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_A4);
+    
+    // Generate PDF
+    $writer = new \PhpOffice\PhpSpreadsheet\Writer\Pdf\Dompdf($spreadsheet);
+    
+    header('Content-Type: application/pdf');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
     header('Pragma: no-cache');
     header('Expires: 0');
     
-    $export_data = [
-        'exported_at' => date('Y-m-d H:i:s'),
-        'total_records' => count($data),
-        'consultations' => $data
-    ];
-    
-    echo json_encode($export_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    $writer->save('php://output');
     exit;
 }

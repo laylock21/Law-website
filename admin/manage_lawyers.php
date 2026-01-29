@@ -16,6 +16,8 @@ require_once '../config/database.php';
 require_once '../config/upload_config.php';
 require_once '../config/Logger.php';
 
+Logger::init('INFO');
+
 $message = '';
 $error = '';
 
@@ -393,6 +395,10 @@ $practice_areas = [];
 
 try {
     $pdo = getDBConnection();
+    
+    if (!$pdo) {
+        throw new Exception('Failed to connect to database');
+    }
     
     // Get lawyers with their specializations and consultation counts
     $lawyers_stmt = $pdo->query("

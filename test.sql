@@ -309,6 +309,35 @@ ALTER TABLE `notification_queue`
 --
 ALTER TABLE `user_sessions`
   ADD CONSTRAINT `user_sessions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+-- --------------------------------------------------------
+
+--
+-- Enable MySQL Event Scheduler
+--
+
+SET GLOBAL event_scheduler = ON;
+
+-- --------------------------------------------------------
+
+--
+-- Event to auto-cleanup expired schedules
+--
+
+DELIMITER $$
+
+CREATE EVENT IF NOT EXISTS auto_cleanup_expired_schedules
+ON SCHEDULE EVERY 1 DAY
+STARTS CURRENT_TIMESTAMP
+DO
+BEGIN
+  DELETE FROM lawyer_availability
+  WHERE schedule_type IN ('one_time', 'blocked')
+  AND specific_date < CURDATE();
+END$$
+
+DELIMITER ;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

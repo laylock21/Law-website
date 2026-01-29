@@ -5,7 +5,7 @@
  */
 
 class Logger {
-    private static $log_dir = 'logs/';
+    private static $log_dir = null;
     private static $log_levels = [
         'DEBUG' => 0,
         'INFO' => 1,
@@ -22,6 +22,14 @@ class Logger {
      */
     public static function init($level = 'INFO') {
         self::$current_level = $level;
+        
+        // Set absolute path to logs directory (relative to document root)
+        if (self::$log_dir === null) {
+            // Find the project root by looking for config directory
+            $current_dir = __DIR__;
+            $project_root = dirname($current_dir); // Go up from config/ to root
+            self::$log_dir = $project_root . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR;
+        }
         
         // Create logs directory if it doesn't exist
         if (!is_dir(self::$log_dir)) {

@@ -21,6 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 require_once '../../config/database.php';
 require_once '../../config/Logger.php';
 
+Logger::init('INFO');
+
 $lawyer_id = $_SESSION['lawyer_id'];
 
 try {

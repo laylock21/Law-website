@@ -569,6 +569,7 @@ $active_page = "consultations";
                             <div class="form-group">
                                 <label>Practice Area</label>
                                 <select id="edit_practice_area">
+                                    <option value="">Select practice area</option>
                                     <?php foreach ($all_practice_areas as $pa): ?>
                                         <option value="<?php echo htmlspecialchars($pa['area_name']); ?>" 
                                             <?php echo ($consultation['c_practice_area'] === $pa['area_name']) ? 'selected' : ''; ?>>
@@ -579,25 +580,23 @@ $active_page = "consultations";
                             </div>
                             <div class="form-group">
                                 <label>Assigned Lawyer</label>
-                                <select id="edit_lawyer">
-                                    <option value="">Not assigned</option>
-                                    <?php foreach ($all_lawyers as $lawyer): ?>
-                                        <option value="<?php echo $lawyer['lawyer_id']; ?>" 
-                                            <?php echo ($consultation['lawyer_id'] == $lawyer['lawyer_id']) ? 'selected' : ''; ?>>
-                                            <?php echo htmlspecialchars($lawyer['lp_fullname']); ?>
-                                        </option>
-                                    <?php endforeach; ?>
+                                <select id="edit_lawyer" disabled>
+                                    <option value="">Select practice area first</option>
                                 </select>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Consultation Date</label>
-                                <input type="date" id="edit_date" value="<?php echo $consultation['c_consultation_date']; ?>">
+                                <select id="edit_date" disabled>
+                                    <option value="">Select lawyer first</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label>Consultation Time</label>
-                                <input type="time" id="edit_time" value="<?php echo $consultation['c_consultation_time']; ?>">
+                                <select id="edit_time" disabled>
+                                    <option value="">Select date first</option>
+                                </select>
                             </div>
                         </div>
                         <div class="form-actions">
@@ -807,7 +806,193 @@ $active_page = "consultations";
         // Initialize cancellation field visibility on page load
         document.addEventListener('DOMContentLoaded', function() {
             toggleCancellationField();
+            initializeCascadingDropdowns();
         });
+        
+        // Cascading Dropdowns Logic
+        function initializeCascadingDropdowns() {
+            const practiceAreaSelect = document.getElementById('edit_practice_area');
+            const lawyerSelect = document.getElementById('edit_lawyer');
+            const dateSelect = document.getElementById('edit_date');
+            const timeSelect = document.getElementById('edit_time');
+            
+            // Store original values
+            const originalPracticeArea = '<?php echo addslashes($consultation['c_practice_area'] ?? ''); ?>';
+            const originalLawyerId = '<?php echo $consultation['lawyer_id'] ?? ''; ?>';
+            const originalDate = '<?php echo $consultation['c_consultation_date'] ?? ''; ?>';
+            const originalTime = '<?php echo $consultation['c_consultation_time'] ?? ''; ?>';
+            
+            // Practice Area change
+            practiceAreaSelect.addEventListener('change', async function() {
+                const practiceArea = this.value;
+                
+                lawyerSelect.innerHTML = '<option value="">Loading lawyers...</option>';
+                lawyerSelect.disabled = true;
+                dateSelect.innerHTML = '<option value="">Select lawyer first</option>';
+                dateSelect.disabled = true;
+                timeSelect.innerHTML = '<option value="">Select date first</option>';
+                timeSelect.disabled = true;
+                
+                if (!practiceArea) {
+                    lawyerSelect.innerHTML = '<option value="">Select practice area first</option>';
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`../api/get_lawyers_by_specialization.php?specialization=${encodeURIComponent(practiceArea)}`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.lawyers.length > 0) {
+                        lawyerSelect.innerHTML = '<option value="">Select a lawyer</option>';
+                        data.lawyers.forEach(lawyer => {
+                            const option = document.createElement('option');
+                            option.value = lawyer.id;
+                            option.textContent = lawyer.name;
+                            option.setAttribute('data-name', lawyer.full_name);
+                            if (lawyer.id == originalLawyerId) {
+                                option.selected = true;
+                            }
+                            lawyerSelect.appendChild(option);
+                        });
+                        lawyerSelect.disabled = false;
+                        
+                        // If original lawyer is selected, trigger date loading
+                        if (originalLawyerId && lawyerSelect.value == originalLawyerId) {
+                            lawyerSelect.dispatchEvent(new Event('change'));
+                        }
+                    } else {
+                        lawyerSelect.innerHTML = '<option value="">No lawyers available for this practice area</option>';
+                    }
+                } catch (error) {
+                    console.error('Error loading lawyers:', error);
+                    lawyerSelect.innerHTML = '<option value="">Error loading lawyers</option>';
+                }
+            });
+            
+            // Lawyer change
+            lawyerSelect.addEventListener('change', async function() {
+                const lawyerId = this.value;
+                
+                dateSelect.innerHTML = '<option value="">Loading dates...</option>';
+                dateSelect.disabled = true;
+                timeSelect.innerHTML = '<option value="">Select date first</option>';
+                timeSelect.disabled = true;
+                
+                if (!lawyerId) {
+                    dateSelect.innerHTML = '<option value="">Select lawyer first</option>';
+                    return;
+                }
+                
+                try {
+                    const today = new Date();
+                    const endDate = new Date();
+                    endDate.setMonth(endDate.getMonth() + 3);
+                    
+                    const startDateStr = today.toISOString().split('T')[0];
+                    const endDateStr = endDate.toISOString().split('T')[0];
+                    
+                    const response = await fetch(`../api/get_lawyer_availability.php?lawyer_id=${lawyerId}&start_date=${startDateStr}&end_date=${endDateStr}`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.available_dates && data.available_dates.length > 0) {
+                        dateSelect.innerHTML = '<option value="">Select a date</option>';
+                        
+                        const dates = data.detailed_availability || data.available_dates.map(date => ({date: date}));
+                        
+                        dates.forEach(dateInfo => {
+                            const dateValue = typeof dateInfo === 'string' ? dateInfo : dateInfo.date;
+                            const dateObj = new Date(dateValue + 'T00:00:00');
+                            const formattedDate = dateObj.toLocaleDateString('en-US', { 
+                                weekday: 'short', 
+                                year: 'numeric', 
+                                month: 'short', 
+                                day: 'numeric' 
+                            });
+                            
+                            const option = document.createElement('option');
+                            option.value = dateValue;
+                            option.textContent = formattedDate;
+                            
+                            if (dateInfo.max_appointments && dateInfo.booked !== undefined) {
+                                const slotsLeft = dateInfo.max_appointments - dateInfo.booked;
+                                option.textContent += ` (${slotsLeft} slot${slotsLeft !== 1 ? 's' : ''} left)`;
+                            }
+                            
+                            if (dateValue === originalDate) {
+                                option.selected = true;
+                            }
+                            
+                            dateSelect.appendChild(option);
+                        });
+                        dateSelect.disabled = false;
+                        
+                        // If original date is selected, trigger time loading
+                        if (originalDate && dateSelect.value === originalDate) {
+                            dateSelect.dispatchEvent(new Event('change'));
+                        }
+                    } else {
+                        dateSelect.innerHTML = '<option value="">No available dates in the next 3 months</option>';
+                    }
+                } catch (error) {
+                    console.error('Error loading dates:', error);
+                    dateSelect.innerHTML = '<option value="">Error loading dates</option>';
+                }
+            });
+            
+            // Date change
+            dateSelect.addEventListener('change', async function() {
+                const lawyerId = lawyerSelect.value;
+                const selectedDate = this.value;
+                
+                timeSelect.innerHTML = '<option value="">Loading time slots...</option>';
+                timeSelect.disabled = true;
+                
+                if (!selectedDate) {
+                    timeSelect.innerHTML = '<option value="">Select date first</option>';
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`../api/get_time_slots.php?lawyer_id=${lawyerId}&date=${selectedDate}`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.time_slots && data.time_slots.length > 0) {
+                        timeSelect.innerHTML = '<option value="">Select a time</option>';
+                        data.time_slots.forEach(slot => {
+                            const option = document.createElement('option');
+                            option.value = slot.time_24h || slot.time;
+                            option.textContent = slot.display || slot.time_formatted || slot.time;
+                            
+                            if (!slot.available) {
+                                option.disabled = true;
+                                option.textContent += ' (Booked)';
+                            }
+                            
+                            // Select original time if it matches
+                            if (originalTime && (slot.time_24h === originalTime || slot.time === originalTime)) {
+                                option.selected = true;
+                                option.disabled = false; // Allow selecting current time even if booked
+                            }
+                            
+                            timeSelect.appendChild(option);
+                        });
+                        timeSelect.disabled = false;
+                    } else if (data.blocked) {
+                        timeSelect.innerHTML = '<option value="">Date is blocked</option>';
+                    } else {
+                        timeSelect.innerHTML = '<option value="">No time slots available</option>';
+                    }
+                } catch (error) {
+                    console.error('Error loading time slots:', error);
+                    timeSelect.innerHTML = '<option value="">Error loading time slots</option>';
+                }
+            });
+            
+            // Initialize on edit mode open
+            if (originalPracticeArea) {
+                practiceAreaSelect.dispatchEvent(new Event('change'));
+            }
+        }
     </script>
 </body>
 </html>
