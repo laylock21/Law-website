@@ -40,6 +40,29 @@ $schedule_offset = 0;
 $schedule_total = 0;
 $schedule_total_pages = 0;
 
+// Helper function to build redirect URL with filters
+function buildRedirectUrl($lawyer_id, $params = []) {
+    $url = "manage_lawyer_schedule.php?lawyer_id=" . $lawyer_id;
+    
+    // Preserve schedule filters
+    if (!empty($_GET['schedule_search'])) {
+        $url .= "&schedule_search=" . urlencode($_GET['schedule_search']);
+    }
+    if (!empty($_GET['schedule_type'])) {
+        $url .= "&schedule_type=" . urlencode($_GET['schedule_type']);
+    }
+    if (!empty($_GET['schedule_page']) && $_GET['schedule_page'] > 1) {
+        $url .= "&schedule_page=" . (int)$_GET['schedule_page'];
+    }
+    
+    // Add any additional parameters
+    foreach ($params as $key => $value) {
+        $url .= "&" . urlencode($key) . "=" . urlencode($value);
+    }
+    
+    return $url;
+}
+
 try {
     $pdo = getDBConnection();
     
@@ -63,6 +86,106 @@ try {
             $redirect_after_post = true; // Flag to redirect after successful POST
             
             switch ($_POST['action']) {
+                case 'add_weekly':
+                    $weekdays = $_POST['weekdays'] ?? [];
+                    $start_time = $_POST['start_time'] ?? '';
+                    $end_time = $_POST['end_time'] ?? '';
+                    $max_appointments = (int)($_POST['max_appointments'] ?? 5);
+                    $time_slot_duration = (int)($_POST['time_slot_duration'] ?? 60);
+                    
+                    // Validate
+                    if (empty($weekdays)) {
+                        throw new Exception('Please select at least one day');
+                    }
+                    
+                    if (empty($start_time) || empty($end_time)) {
+                        throw new Exception('Please provide start and end times');
+                    }
+                    
+                    if (strtotime($start_time) >= strtotime($end_time)) {
+                        throw new Exception('End time must be after start time');
+                    }
+                    
+                    // Insert weekly schedules
+                    $insert_stmt = $pdo->prepare("
+                        INSERT INTO lawyer_availability 
+                        (lawyer_id, schedule_type, weekday, start_time, end_time, max_appointments, time_slot_duration, la_is_active)
+                        VALUES (?, 'weekly', ?, ?, ?, ?, ?, 1)
+                    ");
+                    
+                    $added_count = 0;
+                    foreach ($weekdays as $weekday) {
+                        // Check if this weekday already has a schedule
+                        $check_stmt = $pdo->prepare("
+                            SELECT la_id FROM lawyer_availability 
+                            WHERE lawyer_id = ? AND schedule_type = 'weekly' AND weekday = ?
+                        ");
+                        $check_stmt->execute([$lawyer_id, $weekday]);
+                        
+                        if (!$check_stmt->fetch()) {
+                            $insert_stmt->execute([$lawyer_id, $weekday, $start_time, $end_time, $max_appointments, $time_slot_duration]);
+                            $added_count++;
+                        }
+                    }
+                    
+                    if ($added_count === 0) {
+                        throw new Exception('All selected days already have schedules');
+                    }
+                    
+                    $message = "Successfully added weekly schedule for $added_count day(s)";
+                    $_SESSION['schedule_message'] = $message;
+                    header('Location: ' . buildRedirectUrl($lawyer_id));
+                    exit;
+                    
+                case 'add_onetime':
+                    $specific_date = $_POST['specific_date'] ?? '';
+                    $start_time = $_POST['start_time_onetime'] ?? '';
+                    $end_time = $_POST['end_time_onetime'] ?? '';
+                    $max_appointments = (int)($_POST['max_appointments_onetime'] ?? 5);
+                    $time_slot_duration = (int)($_POST['time_slot_duration_onetime'] ?? 60);
+                    
+                    // Validate
+                    if (empty($specific_date)) {
+                        throw new Exception('Please select a date');
+                    }
+                    
+                    if (strtotime($specific_date) <= strtotime('today')) {
+                        throw new Exception('Cannot create schedule for today or past dates');
+                    }
+                    
+                    if (empty($start_time) || empty($end_time)) {
+                        throw new Exception('Please provide start and end times');
+                    }
+                    
+                    if (strtotime($start_time) >= strtotime($end_time)) {
+                        throw new Exception('End time must be after start time');
+                    }
+                    
+                    // Check if date already has a schedule
+                    $check_stmt = $pdo->prepare("
+                        SELECT la_id FROM lawyer_availability 
+                        WHERE lawyer_id = ? AND specific_date = ? AND schedule_type IN ('one_time', 'blocked')
+                    ");
+                    $check_stmt->execute([$lawyer_id, $specific_date]);
+                    
+                    if ($check_stmt->fetch()) {
+                        throw new Exception('This date already has a schedule or is blocked');
+                    }
+                    
+                    // Insert one-time schedule
+                    $insert_stmt = $pdo->prepare("
+                        INSERT INTO lawyer_availability 
+                        (lawyer_id, schedule_type, specific_date, start_time, end_time, max_appointments, time_slot_duration, la_is_active)
+                        VALUES (?, 'one_time', ?, ?, ?, ?, ?, 1)
+                    ");
+                    
+                    $insert_stmt->execute([$lawyer_id, $specific_date, $start_time, $end_time, $max_appointments, $time_slot_duration]);
+                    
+                    $message = "Successfully added one-time schedule for " . date('M d, Y', strtotime($specific_date));
+                    $_SESSION['schedule_message'] = $message;
+                    header('Location: ' . buildRedirectUrl($lawyer_id));
+                    exit;
+                    
                 case 'block_dates':
                     $block_date = $_POST['block_date'] ?? '';
                     $end_date = $_POST['end_date'] ?? '';
@@ -296,7 +419,7 @@ try {
                     }
                     
                     $_SESSION['schedule_message'] = $message;
-                    header('Location: manage_lawyer_schedule.php?lawyer_id=' . $lawyer_id);
+                    header('Location: ' . buildRedirectUrl($lawyer_id));
                     exit;
                     
                 case 'delete_blocked_date':
@@ -318,7 +441,7 @@ try {
                     }
                     
                     $_SESSION['schedule_message'] = "Blocked date deleted successfully";
-                    header('Location: manage_lawyer_schedule.php?lawyer_id=' . $lawyer_id);
+                    header('Location: ' . buildRedirectUrl($lawyer_id));
                     exit;
                     
                 case 'bulk_delete_blocked':
@@ -349,7 +472,7 @@ try {
                     $deleted_count = $delete_stmt->rowCount();
                     
                     $_SESSION['schedule_message'] = "Successfully deleted $deleted_count blocked date(s)";
-                    header('Location: manage_lawyer_schedule.php?lawyer_id=' . $lawyer_id);
+                    header('Location: ' . buildRedirectUrl($lawyer_id));
                     exit;
                     
                 case 'delete_schedule':
@@ -371,14 +494,14 @@ try {
                     }
                     
                     $_SESSION['schedule_message'] = "Schedule deleted successfully";
-                    header('Location: manage_lawyer_schedule.php?lawyer_id=' . $lawyer_id);
+                    header('Location: ' . buildRedirectUrl($lawyer_id));
                     exit;
             }
             
             // Redirect after successful POST to prevent form resubmission
             if (isset($redirect_after_post) && $redirect_after_post) {
                 $_SESSION['schedule_message'] = $message;
-                header("Location: manage_lawyer_schedule.php?lawyer_id=" . $lawyer_id);
+                header("Location: " . buildRedirectUrl($lawyer_id));
                 exit;
             }
         }
@@ -867,23 +990,14 @@ try {
     </script>
 </head>
 <body class="admin-page">
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+    
     <?php include 'partials/sidebar.php'; ?>
 
     <main class="admin-main-content">
         <div class="container">
-            <?php if ($message): ?>
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($message); ?>
-                </div>
-            <?php endif; ?>
-
-            <?php if ($error): ?>
-            <div class="alert alert-error">
-                <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?>
-            </div>
-        <?php endif; ?>
-
-        <?php if ($lawyer): ?>
+            <?php if ($lawyer): ?>
 
 
             <!-- Schedule Table -->
@@ -931,6 +1045,11 @@ try {
                                 <option value="blocked" <?php echo $schedule_type_filter === 'blocked' ? 'selected' : ''; ?>>Blocked</option>
                             </select>
                         </form>
+                        
+                        <!-- Create Schedule Button -->
+                        <button type="button" onclick="openScheduleModal()" class="btn btn-primary" style="background: #c5a253; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; width: auto;">
+                            <i class="fas fa-plus-circle"></i> Add New Schedule
+                        </button>
                     </div>
                 </div>
                 
@@ -1158,7 +1277,634 @@ try {
                 closeDeleteModal();
             }
         });
+        
+        // Schedule Modal Functions
+        function openScheduleModal() {
+            const modal = document.getElementById('scheduleModal');
+            if (!modal) return;
+            modal.style.display = 'block';
+            // Default to weekly tab
+            switchScheduleTab('weekly');
+        }
+
+        function closeScheduleModal() {
+            const modal = document.getElementById('scheduleModal');
+            if (!modal) return;
+            modal.style.display = 'none';
+        }
+        
+        function switchScheduleTab(tabName) {
+            // Hide all form contents
+            document.querySelectorAll('.schedule-form-content').forEach(form => {
+                form.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.schedule-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected form
+            const selectedForm = document.getElementById(tabName + 'Form');
+            if (selectedForm) {
+                selectedForm.classList.add('active');
+            }
+            
+            // Add active class to selected tab
+            const selectedTab = document.querySelector(`.schedule-tab[data-tab="${tabName}"]`);
+            if (selectedTab) {
+                selectedTab.classList.add('active');
+            }
+        }
+        
+        // Sync end date with block date
+        document.addEventListener('DOMContentLoaded', function() {
+            const blockDateInput = document.querySelector('input[name="block_date"]');
+            const endDateInput = document.querySelector('input[name="end_date"]');
+            
+            if (blockDateInput && endDateInput) {
+                blockDateInput.addEventListener('change', function() {
+                    // Set minimum date for end date to match block date
+                    endDateInput.min = this.value;
+                    
+                    // If end date is before block date, clear it
+                    if (endDateInput.value && endDateInput.value < this.value) {
+                        endDateInput.value = '';
+                    }
+                });
+            }
+        });
+        
+        // Toast Notification Function
+        function showToast(title, message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const iconMap = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                info: 'fa-info-circle'
+            };
+            
+            toast.innerHTML = `
+                <div class="toast-icon">
+                    <i class="fas ${iconMap[type] || iconMap.success}"></i>
+                </div>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <span class="toast-close" onclick="this.parentElement.remove()">×</span>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 5000);
+        }
+        
+        // Show toast if there's a message from PHP
+        <?php if ($message): ?>
+            showToast('Success', <?php echo json_encode($message); ?>, 'success');
+        <?php endif; ?>
+        
+        <?php if ($error): ?>
+            showToast('Error', <?php echo json_encode($error); ?>, 'error');
+        <?php endif; ?>
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('scheduleModal');
+            if (event.target === modal) {
+                closeScheduleModal();
+            }
+        });
     </script>
+    
+    <!-- Create Schedule Modal -->
+    <div id="scheduleModal" class="consultation-modal" style="display:none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 style=color:white;">Add New Schedule</h2>
+                <span class="modal-close" onclick="closeScheduleModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Tab Navigation -->
+                <div class="schedule-tabs" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; padding-bottom: 0;">
+                    <button type="button" class="schedule-tab active" data-tab="weekly" onclick="switchScheduleTab('weekly')">
+                        Weekly
+                    </button>
+                    <button type="button" class="schedule-tab" data-tab="onetime" onclick="switchScheduleTab('onetime')">
+                        One Time
+                    </button>
+                    <button type="button" class="schedule-tab" data-tab="blockdate" onclick="switchScheduleTab('blockdate')">
+                        Block Date(s)
+                    </button>
+                </div>
+
+                <!-- Weekly Schedule Form -->
+                <form method="POST" id="weeklyForm" class="schedule-form-content active">
+                    <input type="hidden" name="action" value="add_weekly">
+                    
+                    <div class="form-section">
+                        <label class="form-label-modern" style="font-weight: 600; margin-bottom: 15px; display: block;">Available Days</label>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px;">
+                            <label class="checkbox-label" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">
+                                <input type="checkbox" name="weekdays[]" value="Monday" style="margin-right: 10px;">
+                                <span>Monday</span>
+                            </label>
+                            <label class="checkbox-label" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">
+                                <input type="checkbox" name="weekdays[]" value="Tuesday" style="margin-right: 10px;">
+                                <span>Tuesday</span>
+                            </label>
+                            <label class="checkbox-label" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">
+                                <input type="checkbox" name="weekdays[]" value="Wednesday" style="margin-right: 10px;">
+                                <span>Wednesday</span>
+                            </label>
+                            <label class="checkbox-label" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">
+                                <input type="checkbox" name="weekdays[]" value="Thursday" style="margin-right: 10px;">
+                                <span>Thursday</span>
+                            </label>
+                            <label class="checkbox-label" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">
+                                <input type="checkbox" name="weekdays[]" value="Friday" style="margin-right: 10px;">
+                                <span>Friday</span>
+                            </label>
+                            <label class="checkbox-label" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">
+                                <input type="checkbox" name="weekdays[]" value="Saturday" style="margin-right: 10px;">
+                                <span>Saturday</span>
+                            </label>
+                            <label class="checkbox-label" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">
+                                <input type="checkbox" name="weekdays[]" value="Sunday" style="margin-right: 10px;">
+                                <span>Sunday</span>
+                            </label>
+                        </div>
+
+                        <div class="form-group-modern" style="margin-bottom: 15px;">
+                            <label class="form-label-modern">Start Time</label>
+                            <input type="time" name="start_time" value="09:00" class="form-input-modern time-input-clean" required>
+                        </div>
+
+                        <div class="form-group-modern" style="margin-bottom: 15px;">
+                            <label class="form-label-modern">End Time</label>
+                            <input type="time" name="end_time" value="17:00" class="form-input-modern time-input-clean" required>
+                        </div>
+
+                        <div class="form-group-modern" style="margin-bottom: 15px;">
+                            <label class="form-label-modern">Max Appointments/Day</label>
+                            <select name="max_appointments" class="form-select-modern" required>
+                                <?php for ($i = 1; $i <= 10; $i++): ?>
+                                    <option value="<?php echo $i; ?>" <?php echo $i === 5 ? 'selected' : ''; ?>><?php echo $i; ?></option>
+                                <?php endfor; ?>
+                            </select>
+                        </div>
+
+                        <div class="form-group-modern" style="margin-bottom: 15px;">
+                            <label class="form-label-modern">Time Slot Duration</label>
+                            <select name="time_slot_duration" class="form-select-modern" required>
+                                <option value="30">30 minutes</option>
+                                <option value="60" selected>1 hour</option>
+                                <option value="90">1.5 hours</option>
+                                <option value="120">2 hours</option>
+                                <option value="180">3 hours</option>
+                                <option value="240">4 hours</option>
+                                <option value="300">5 hours</option>
+                                <option value="360">6 hours</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-actions-modern" style="margin-top: 20px; display:flex; justify-content:flex-end; gap:10px;">
+                        <button type="button" class="btn-secondary-modern" onclick="closeScheduleModal()">Cancel</button>
+                        <button type="submit" class="btn-primary-modern">
+                            <i class="fas fa-save"></i> Add Weekly Schedule
+                        </button>
+                    </div>
+                </form>
+
+                <!-- One Time Schedule Form -->
+                <form method="POST" id="onetimeForm" class="schedule-form-content">
+                    <input type="hidden" name="action" value="add_onetime">
+                    
+                    <div class="form-section">
+                        <div class="form-group-modern" style="margin-bottom: 15px;">
+                            <label class="form-label-modern">Specific Date</label>
+                            <input type="date" name="specific_date" min="<?php echo date('Y-m-d', strtotime('+1 day')); ?>" class="form-input-modern" required>
+                        </div>
+
+                        <div class="form-group-modern" style="margin-bottom: 15px;">
+                            <label class="form-label-modern">Start Time</label>
+                            <input type="time" name="start_time_onetime" value="09:00" class="form-input-modern time-input-clean" required>
+                        </div>
+
+                        <div class="form-group-modern" style="margin-bottom: 15px;">
+                            <label class="form-label-modern">End Time</label>
+                            <input type="time" name="end_time_onetime" value="17:00" class="form-input-modern time-input-clean" required>
+                        </div>
+
+                        <div class="form-group-modern" style="margin-bottom: 15px;">
+                            <label class="form-label-modern">Max Appointments</label>
+                            <select name="max_appointments_onetime" class="form-select-modern" required>
+                                <?php for ($i = 1; $i <= 10; $i++): ?>
+                                    <option value="<?php echo $i; ?>" <?php echo $i === 5 ? 'selected' : ''; ?>><?php echo $i; ?></option>
+                                <?php endfor; ?>
+                            </select>
+                        </div>
+
+                        <div class="form-group-modern" style="margin-bottom: 15px;">
+                            <label class="form-label-modern">Time Slot Duration</label>
+                            <select name="time_slot_duration_onetime" class="form-select-modern" required>
+                                <option value="30">30 minutes</option>
+                                <option value="60" selected>1 hour</option>
+                                <option value="90">1.5 hours</option>
+                                <option value="120">2 hours</option>
+                                <option value="180">3 hours</option>
+                                <option value="240">4 hours</option>
+                                <option value="300">5 hours</option>
+                                <option value="360">6 hours</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-actions-modern" style="margin-top: 20px; display:flex; justify-content:flex-end; gap:10px;">
+                        <button type="button" class="btn-secondary-modern" onclick="closeScheduleModal()">Cancel</button>
+                        <button type="submit" class="btn-primary-modern">
+                            <i class="fas fa-save"></i> Add One-Time Schedule
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Block Date(s) Form -->
+                <form method="POST" id="blockdateForm" class="schedule-form-content">
+                    <input type="hidden" name="action" value="block_dates">
+                    
+                    <div class="form-section">
+                        <div class="form-group-modern" style="margin-bottom: 15px;">
+                            <label class="form-label-modern">Date to Block</label>
+                            <input type="date" name="block_date" min="<?php echo date('Y-m-d', strtotime('+1 day')); ?>" class="form-input-modern" required>
+                        </div>
+
+                        <div class="form-group-modern" style="margin-bottom: 15px;">
+                            <label class="form-label-modern">End Date (Optional)</label>
+                            <input type="date" name="end_date" min="<?php echo date('Y-m-d', strtotime('+1 day')); ?>" class="form-input-modern">
+                            <small style="color: #6c757d; display: block; margin-top: 8px; font-size: 0.85rem;">
+                                <i class="fas fa-info-circle" style="color: #c5a253;"></i>
+                                Only select when blocking multiple consecutive dates
+                            </small>
+                        </div>
+
+                        <div class="form-group-modern" style="margin-bottom: 15px;">
+                            <label class="form-label-modern">Reason</label>
+                            <select name="reason" class="form-select-modern" required>
+                                <option value="">Select a reason</option>
+                                <option value="Unavailable">Unavailable</option>
+                                <option value="Sick Leave">Sick Leave</option>
+                                <option value="Personal Leave">Personal Leave</option>
+                                <option value="Vacation">Vacation</option>
+                                <option value="Holiday">Holiday</option>
+                                <option value="Emergency">Emergency</option>
+                                <option value="Out of Office">Out of Office</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-actions-modern" style="margin-top: 20px; display:flex; justify-content:flex-end; gap:10px;">
+                        <button type="button" class="btn-secondary-modern" onclick="closeScheduleModal()">Cancel</button>
+                        <button type="submit" class="btn-primary-modern">
+                            <i class="fas fa-ban"></i> Block Date(s)
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        /* Schedule Modal Tab Styles */
+        .schedule-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 0;
+            overflow-x: auto;
+        }
+        
+        .schedule-tab {
+            flex: 1;
+            padding: 12px 20px;
+            background: #f5f5f5;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        
+        .schedule-tab:hover {
+            background: #e8e8e8;
+            color: #333;
+        }
+        
+        .schedule-tab.active {
+            background: #fff;
+            color: #c5a253;
+            border-bottom-color: #c5a253;
+            font-weight: 600;
+        }
+        
+        .schedule-form-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .schedule-form-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .checkbox-label:hover {
+            background: #f9f9f9;
+            border-color: #c5a253;
+        }
+        
+        .checkbox-label input[type="checkbox"]:checked + span {
+            font-weight: 600;
+            color: #c5a253;
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        
+        .form-label-modern {
+            display: block;
+            font-weight: 600;
+            color: #0b1d3a;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .form-input-modern,
+        .form-select-modern {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input-modern:focus,
+        .form-select-modern:focus {
+            outline: none;
+            border-color: #c5a253;
+            box-shadow: 0 0 0 3px rgba(197, 162, 83, 0.1);
+        }
+        
+        .btn-primary-modern {
+            background: #c5a253;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary-modern:hover {
+            background: #b08f42;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(197, 162, 83, 0.3);
+        }
+        
+        .btn-secondary-modern {
+            background: #f8f9fa;
+            color: #6c757d;
+            border: 2px solid #e9ecef;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary-modern:hover {
+            background: #e9ecef;
+            border-color: #dee2e6;
+        }
+        
+        .consultation-modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .consultation-modal .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 0;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .consultation-modal .modal-header {
+            padding: 24px 30px;
+            background: #C5A253;
+            color: white;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .consultation-modal .modal-header h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .consultation-modal .modal-close {
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            line-height: 1;
+        }
+        
+        .consultation-modal .modal-close:hover {
+            color: #c5a253;
+            transform: rotate(90deg);
+        }
+        
+        .consultation-modal .modal-body {
+            padding: 30px;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+        
+        /* Toast Notification Styles */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10001;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .toast {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 16px 20px;
+            min-width: 300px;
+            max-width: 400px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideInRight 0.3s ease;
+            border-left: 4px solid #28a745;
+        }
+        
+        .toast.success {
+            border-left-color: #28a745;
+        }
+        
+        .toast.error {
+            border-left-color: #dc3545;
+        }
+        
+        .toast.info {
+            border-left-color: #17a2b8;
+        }
+        
+        .toast-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .toast.success .toast-icon {
+            color: #28a745;
+        }
+        
+        .toast.error .toast-icon {
+            color: #dc3545;
+        }
+        
+        .toast.info .toast-icon {
+            color: #17a2b8;
+        }
+        
+        .toast-content {
+            flex: 1;
+        }
+        
+        .toast-title {
+            font-weight: 600;
+            color: #0b1d3a;
+            margin: 0 0 4px 0;
+            font-size: 14px;
+        }
+        
+        .toast-message {
+            color: #6c757d;
+            margin: 0;
+            font-size: 13px;
+        }
+        
+        .toast-close {
+            cursor: pointer;
+            color: #6c757d;
+            font-size: 20px;
+            line-height: 1;
+            transition: color 0.2s ease;
+            flex-shrink: 0;
+        }
+        
+        .toast-close:hover {
+            color: #0b1d3a;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+    </style>
     
     <?php 
     // Output async email script if present
