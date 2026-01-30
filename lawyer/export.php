@@ -585,8 +585,15 @@ $active_page = "export";
     <script>
     document.getElementById('exportForm').addEventListener('submit', function(e) {
         const btn = this.querySelector('.export-btn');
+        const originalHTML = btn.innerHTML;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...';
         btn.disabled = true;
+        
+        // Reset button after 3 seconds (export should complete by then)
+        setTimeout(function() {
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        }, 3000);
     });
     
     // Enable/disable date filters based on schedule type

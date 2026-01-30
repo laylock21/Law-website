@@ -1,4 +1,4 @@
-<?php
+    <?php
 /**
  * Admin - Manage Lawyer Schedule
  * Block/delete blocked schedules on behalf of lawyers
@@ -25,6 +25,20 @@ $blocked_dates = [];
 $blocked_total_pages = 0;
 $upcoming_consultations = [];
 $lawyer = null;
+$consult_total = 0;
+$consult_per_page = 10;
+$consult_page = 1;
+$consult_offset = 0;
+$consult_total_pages = 0;
+$status_filter = '';
+$search_query = '';
+$schedule_status_filter = isset($_GET['schedule_status']) ? $_GET['schedule_status'] : '';
+$schedule_type_filter = isset($_GET['schedule_type']) ? $_GET['schedule_type'] : '';
+$schedule_per_page = isset($_GET['schedule_per_page']) ? (int)$_GET['schedule_per_page'] : 10;
+$schedule_page = isset($_GET['schedule_page']) ? max(1, (int)$_GET['schedule_page']) : 1;
+$schedule_offset = 0;
+$schedule_total = 0;
+$schedule_total_pages = 0;
 
 try {
     $pdo = getDBConnection();
@@ -337,6 +351,28 @@ try {
                     $_SESSION['schedule_message'] = "Successfully deleted $deleted_count blocked date(s)";
                     header('Location: manage_lawyer_schedule.php?lawyer_id=' . $lawyer_id);
                     exit;
+                    
+                case 'delete_schedule':
+                    $schedule_id = (int)($_POST['schedule_id'] ?? 0);
+                    
+                    if ($schedule_id <= 0) {
+                        throw new Exception('Invalid schedule ID');
+                    }
+                    
+                    // Delete the schedule
+                    $delete_stmt = $pdo->prepare("
+                        DELETE FROM lawyer_availability 
+                        WHERE la_id = ? AND lawyer_id = ?
+                    ");
+                    $delete_stmt->execute([$schedule_id, $lawyer_id]);
+                    
+                    if ($delete_stmt->rowCount() === 0) {
+                        throw new Exception('Failed to delete schedule. It may have already been removed.');
+                    }
+                    
+                    $_SESSION['schedule_message'] = "Schedule deleted successfully";
+                    header('Location: manage_lawyer_schedule.php?lawyer_id=' . $lawyer_id);
+                    exit;
             }
             
             // Redirect after successful POST to prevent form resubmission
@@ -361,20 +397,38 @@ try {
         unset($_SESSION['async_email_script']);
     }
     
-    // Pagination for blocked dates
-    $blocked_per_page = 5;
+    // Pagination for blocked dates with search and filter
+    $blocked_per_page = isset($_GET['blocked_per_page']) ? (int)$_GET['blocked_per_page'] : 10;
     $blocked_page = isset($_GET['blocked_page']) ? max(1, (int)$_GET['blocked_page']) : 1;
     $blocked_offset = ($blocked_page - 1) * $blocked_per_page;
+    $blocked_search = isset($_GET['blocked_search']) ? trim($_GET['blocked_search']) : '';
+    $blocked_reason_filter = isset($_GET['reason_filter']) ? $_GET['reason_filter'] : '';
+    
+    // Build WHERE clause for blocked dates
+    $blocked_where = ["lawyer_id = ?", "schedule_type = 'blocked'", "specific_date >= CURDATE()"];
+    $blocked_params = [$lawyer_id];
+    
+    if (!empty($blocked_search)) {
+        $blocked_where[] = "(specific_date LIKE ? OR blocked_reason LIKE ?)";
+        $search_param = "%$blocked_search%";
+        $blocked_params[] = $search_param;
+        $blocked_params[] = $search_param;
+    }
+    
+    if (!empty($blocked_reason_filter)) {
+        $blocked_where[] = "blocked_reason LIKE ?";
+        $blocked_params[] = "%$blocked_reason_filter%";
+    }
+    
+    $blocked_where_clause = implode(' AND ', $blocked_where);
     
     // Get total count of blocked dates (schedule_type = 'blocked')
     $blocked_count_stmt = $pdo->prepare("
         SELECT COUNT(*) 
         FROM lawyer_availability
-        WHERE lawyer_id = ? 
-        AND schedule_type = 'blocked'
-        AND specific_date >= CURDATE()
+        WHERE $blocked_where_clause
     ");
-    $blocked_count_stmt->execute([$lawyer_id]);
+    $blocked_count_stmt->execute($blocked_params);
     $blocked_total = $blocked_count_stmt->fetchColumn();
     $blocked_total_pages = ceil($blocked_total / $blocked_per_page);
     
@@ -382,34 +436,163 @@ try {
     $blocked_stmt = $pdo->prepare("
         SELECT la_id, specific_date, blocked_reason, created_at
         FROM lawyer_availability
-        WHERE lawyer_id = ? 
-        AND schedule_type = 'blocked'
-        AND specific_date >= CURDATE()
+        WHERE $blocked_where_clause
         ORDER BY specific_date ASC
         LIMIT ? OFFSET ?
     ");
-    $blocked_stmt->execute([$lawyer_id, $blocked_per_page, $blocked_offset]);
+    $blocked_params[] = $blocked_per_page;
+    $blocked_params[] = $blocked_offset;
+    $blocked_stmt->execute($blocked_params);
     $blocked_dates = $blocked_stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Get upcoming consultations that might be affected
-    $consultations_stmt = $pdo->prepare("
-        SELECT c_id as id, c_consultation_date as consultation_date, c_consultation_time as consultation_time, c_status as status,
-               c_full_name as full_name, c_email as email, c_phone as phone
-        FROM consultations
-        WHERE lawyer_id = ? 
-        AND c_consultation_date >= CURDATE()
-        AND c_status IN ('pending', 'confirmed')
-        ORDER BY c_consultation_date ASC, c_consultation_time ASC
-        LIMIT 10
+    // Get lawyer's schedules (blocked, weekly, one-time)
+    // Pagination and filtering for schedules
+    $schedule_offset = ($schedule_page - 1) * $schedule_per_page;
+    $schedule_search = isset($_GET['schedule_search']) ? trim($_GET['schedule_search']) : '';
+    
+    // Build WHERE clause
+    $where_conditions = ["lawyer_id = ?"];
+    $params = [$lawyer_id];
+    
+    if (!empty($schedule_search)) {
+        $where_conditions[] = "(weekday LIKE ? OR specific_date LIKE ? OR blocked_reason LIKE ?)";
+        $search_param = "%$schedule_search%";
+        $params[] = $search_param;
+        $params[] = $search_param;
+        $params[] = $search_param;
+    }
+    
+    if (!empty($schedule_type_filter)) {
+        $where_conditions[] = "schedule_type = ?";
+        $params[] = $schedule_type_filter;
+    }
+    
+    $where_clause = implode(' AND ', $where_conditions);
+    
+    // Get total count
+    $count_stmt = $pdo->prepare("
+        SELECT COUNT(*) 
+        FROM lawyer_availability
+        WHERE $where_clause
     ");
-    $consultations_stmt->execute([$lawyer_id]);
-    $upcoming_consultations = $consultations_stmt->fetchAll(PDO::FETCH_ASSOC);
+    $count_stmt->execute($params);
+    $schedule_total = $count_stmt->fetchColumn();
+    $schedule_total_pages = ceil($schedule_total / $schedule_per_page);
+    
+    // Get paginated schedules
+    $schedules_stmt = $pdo->prepare("
+        SELECT la_id, schedule_type, weekday, specific_date, start_time, end_time, 
+               max_appointments, time_slot_duration, la_is_active, blocked_reason, created_at
+        FROM lawyer_availability
+        WHERE $where_clause
+        ORDER BY 
+            CASE 
+                WHEN schedule_type = 'blocked' AND specific_date >= CURDATE() THEN 1
+                WHEN schedule_type = 'one_time' AND specific_date >= CURDATE() THEN 2
+                WHEN schedule_type = 'weekly' THEN 3
+                ELSE 4
+            END,
+            specific_date ASC,
+            FIELD(weekday, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
+        LIMIT ? OFFSET ?
+    ");
+    $params[] = $schedule_per_page;
+    $params[] = $schedule_offset;
+    $schedules_stmt->execute($params);
+    $all_schedules = $schedules_stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Get weekly availability schedule
+    $weekly_schedule_stmt = $pdo->prepare("
+        SELECT la_id, weekday, start_time, end_time, max_appointments, time_slot_duration, la_is_active
+        FROM lawyer_availability
+        WHERE lawyer_id = ? AND schedule_type = 'weekly'
+        ORDER BY FIELD(weekday, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
+    ");
+    $weekly_schedule_stmt->execute([$lawyer_id]);
+    $weekly_schedule = $weekly_schedule_stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Organize by weekday
+    $schedule_by_day = [];
+    foreach ($weekly_schedule as $schedule) {
+        $schedule_by_day[$schedule['weekday']] = $schedule;
+    }
+    
+    // Get consultations for this lawyer
+    $consult_per_page = isset($_GET['consult_per_page']) ? (int)$_GET['consult_per_page'] : 10;
+    $consult_page = isset($_GET['consult_page']) ? max(1, (int)$_GET['consult_page']) : 1;
+    $consult_offset = ($consult_page - 1) * $consult_per_page;
+    $status_filter = isset($_GET['status']) ? $_GET['status'] : '';
+    
+    // Build WHERE clause for consultations
+    $consult_where = ["lawyer_id = ?"];
+    $consult_params = [$lawyer_id];
+    
+    if (!empty($search_query)) {
+        $consult_where[] = "(c_full_name LIKE ? OR c_email LIKE ? OR c_phone LIKE ?)";
+        $search_param = "%$search_query%";
+        $consult_params[] = $search_param;
+        $consult_params[] = $search_param;
+        $consult_params[] = $search_param;
+    }
+    
+    if (!empty($status_filter)) {
+        $consult_where[] = "c_status = ?";
+        $consult_params[] = $status_filter;
+    }
+    
+    $consult_where_clause = implode(' AND ', $consult_where);
+    
+    // Get total count of consultations
+    $consult_count_stmt = $pdo->prepare("
+        SELECT COUNT(*) 
+        FROM consultations
+        WHERE $consult_where_clause
+    ");
+    $consult_count_stmt->execute($consult_params);
+    $consult_total = $consult_count_stmt->fetchColumn();
+    $consult_total_pages = ceil($consult_total / $consult_per_page);
+    
+    // Get paginated consultations
+    $consult_stmt = $pdo->prepare("
+        SELECT c_id as id, c_full_name as full_name, c_email as email, c_phone as phone, 
+               c_consultation_date as consultation_date, c_consultation_time as consultation_time, c_status as status
+        FROM consultations
+        WHERE $consult_where_clause
+        ORDER BY c_consultation_date DESC, c_consultation_time DESC
+        LIMIT ? OFFSET ?
+    ");
+    $consult_params[] = $consult_per_page;
+    $consult_params[] = $consult_offset;
+    $consult_stmt->execute($consult_params);
+    $upcoming_consultations = $consult_stmt->fetchAll(PDO::FETCH_ASSOC);
     
 } catch (PDOException $e) {
     error_log("Database error in manage_lawyer_schedule.php: " . $e->getMessage());
+    
+    // Check if this is an AJAX request for update_schedule
+    if (isset($_POST['action']) && $_POST['action'] === 'update_schedule') {
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => false,
+            'message' => 'A database error occurred. Please try again.'
+        ]);
+        exit;
+    }
+    
     $error = 'A database error occurred. Please try again or contact support.';
 } catch (Exception $e) {
     error_log("Error in manage_lawyer_schedule.php: " . $e->getMessage());
+    
+    // Check if this is an AJAX request for update_schedule
+    if (isset($_POST['action']) && $_POST['action'] === 'update_schedule') {
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => false,
+            'message' => $e->getMessage()
+        ]);
+        exit;
+    }
+    
     $error = $e->getMessage();
 }
 ?>
@@ -701,260 +884,279 @@ try {
         <?php endif; ?>
 
         <?php if ($lawyer): ?>
-            <!-- Lawyer Info -->
-            <div class="lawyer-info-card">
-                <div>
-                    <?php 
-                    // Convert LONGBLOB to base64 for display
-                    $profile_picture_url = '';
-                    if (!empty($lawyer['profile'])) {
-                        $profile_picture_url = 'data:image/jpeg;base64,' . base64_encode($lawyer['profile']);
-                    } else {
-                        $profile_picture_url = '../src/img/default-avatar.png';
-                    }
-                    $lawyer_initials = strtoupper(substr($lawyer['lp_fullname'] ?? 'L', 0, 1) . substr($lawyer['lp_fullname'] ?? 'L', 1, 1));
-                    ?>
-                    <img src="<?php echo htmlspecialchars($profile_picture_url); ?>" 
-                         alt="<?php echo htmlspecialchars($lawyer['lp_fullname'] ?? 'Lawyer'); ?>"
-                         style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary-color); box-shadow: 0 4px 8px rgba(0,0,0,0.2);"
-                         onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); display: none; align-items: center; justify-content: center; color: white; font-size: 32px; font-weight: bold; border: 3px solid var(--primary-color); box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-                        <?php echo $lawyer_initials; ?>
-                    </div>
-                </div>
-                <div style="flex: 1;">
-                    <h2><?php echo htmlspecialchars($lawyer['lp_fullname'] ?? 'Lawyer'); ?></h2>
-                    <p><i class="fas fa-envelope"></i> <?php echo htmlspecialchars($lawyer['email']); ?></p>
-                    <p><i class="fas fa-phone"></i> <?php echo htmlspecialchars($lawyer['phone']); ?></p>
-                    <p><i class="fas fa-user"></i> Username: <?php echo htmlspecialchars($lawyer['username']); ?></p>
-                </div>
-            </div>
 
-            <!-- Warning Box -->
-            <?php if (!empty($upcoming_consultations)): ?>
-                <div class="warning-box">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <div>
-                        <p><strong>Important:</strong> This lawyer has <?php echo count($upcoming_consultations); ?> upcoming consultation(s). Blocking dates may affect these appointments. Please review them below before blocking.</p>
-                    </div>
-                </div>
-            <?php endif; ?>
 
-            <!-- Block Dates Card -->
-            <div class="action-card" style="max-width: 900px; margin: 0 auto;margin-bottom:32px;">
-                <h3 style="margin-bottom: 25px;"><i class="fas fa-ban"></i> Block Dates</h3>
-                
-                <form method="POST" id="block-dates-form">
-                    <input type="hidden" name="action" value="block_dates">
-                    
-                    <div class="form-group" style="margin-bottom: 20px;">
-                        <label for="block_date" style="display: block; margin-bottom: 8px; font-weight: 600; color: #0b1d3a;">Date to Block</label>
-                        <input type="date" id="block_date" name="block_date" 
-                               min="<?php echo date('Y-m-d'); ?>" 
-                               style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;"
-                               required>
-                    </div>
-                    
-                    <div class="form-group" style="margin-bottom: 20px;">
-                        <label for="end_date" style="display: block; margin-bottom: 8px; font-weight: 600; color: #0b1d3a;">End Date (Optional)</label>
-                        <input type="date" id="end_date" name="end_date" 
-                               min="<?php echo date('Y-m-d'); ?>" 
-                               style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
-                        <small style="display: flex; align-items: center; gap: 8px; margin-top: 8px; color: #856404; background: #fff3cd; padding: 10px; border-radius: 6px;">
-                            <i class="fas fa-info-circle" style="color: #daa520;"></i>
-                            <span>Only select when blocking multiple consecutive dates</span>
-                        </small>
-                    </div>
-                    
-                    <div class="form-group" style="margin-bottom: 25px;">
-                        <label for="reason" style="display: block; margin-bottom: 8px; font-weight: 600; color: #0b1d3a;">Reason</label>
-                        <select id="reason" name="reason" 
-                                style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; background: white;"
-                                required>
-                            <option value="Unavailable">Unavailable</option>
-                            <option value="Sick Leave">Sick Leave</option>
-                            <option value="Personal Leave">Personal Leave</option>
-                            <option value="Emergency">Emergency</option>
-                            <option value="Vacation">Vacation</option>
-                            <option value="Court Appearance">Court Appearance</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    
-                    <div style="display: flex; gap: 15px; justify-content: flex-end;">
-                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('block-dates-form').reset();" 
-                                style="padding: 12px 30px; background: #6c757d; color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer;">
-                            Cancel
-                        </button>
-                        <button type="submit" class="btn btn-primary" 
-                                style="padding: 12px 30px; background: linear-gradient(135deg, #daa520 0%, #b8860b 100%); color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                            <i class="fas fa-ban"></i> Block Date(s)
-                        </button>
-                    </div>
-                </form>
-            </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Blocked Dates List -->
-            <div class="blocked-dates-list">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <!-- Schedule Table -->
+            <div class="action-card" style="max-width: 100%; margin: 0 auto; margin-bottom: 32px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 16px;">
                     <h3 style="margin: 0;">
-                        <i class="fas fa-list"></i> Currently Blocked Dates
-                        <?php if ($blocked_total > 0): ?>
-                            <span style="font-size: 0.85rem; color: #6c757d; font-weight: normal;">(<?php echo $blocked_total; ?> total)</span>
-                        <?php endif; ?>
+                        <i class="fas fa-calendar-alt"></i> Schedule
                     </h3>
-                    <?php if ($blocked_total > 0): ?>
-                        <button type="button" id="toggle-bulk-mode" class="btn btn-secondary" onclick="toggleBulkMode()" style="padding: 10px 18px; font-size: 0.9rem;">
-                            <i class="fas fa-check-square"></i> Multiple Delete
-                        </button>
-                    <?php endif; ?>
-                </div>
-                
-                <div id="blocked-dates-container">
-                <?php if ($blocked_total === 0): ?>
-                    <p style="text-align: center; color: #6c757d; padding: 20px;">
-                        No blocked dates for this lawyer.
-                    </p>
-                <?php else: ?>
-                    <!-- Bulk Actions Bar -->
-                    <div id="bulk-actions-bar" style="display: none; background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #daa520;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                            <div>
-                                <strong style="color: #0b1d3a;">
-                                    <span id="selected-count">0</span> date(s) selected
-                                </strong>
-                            </div>
-                            <div style="display: flex; gap: 10px;">
-                                <button type="button" class="btn btn-secondary" onclick="selectAllBlocked()">Select All</button>
-                                <button type="button" class="btn btn-secondary" onclick="deselectAllBlocked()">Deselect All</button>
-                                <button type="button" class="btn btn-danger" onclick="bulkDeleteBlocked()">
-                                    <i class="fas fa-trash"></i> Delete Selected
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <!-- Search -->
+                        <form method="GET" style="display: flex; gap: 8px; align-items: center;">
+                            <input type="hidden" name="lawyer_id" value="<?php echo $lawyer_id; ?>">
+                            <?php if (!empty($schedule_type_filter)): ?>
+                                <input type="hidden" name="schedule_type" value="<?php echo htmlspecialchars($schedule_type_filter); ?>">
+                            <?php endif; ?>
+                            
+                            <div style="position: relative;">
+                                <input type="text" name="schedule_search" placeholder="Search by date..." 
+                                       value="<?php echo htmlspecialchars($schedule_search); ?>"
+                                       style="padding: 10px 90px 10px 16px; min-width: 280px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 14px;">
+                                <?php if (!empty($schedule_search)): ?>
+                                    <a href="?lawyer_id=<?php echo $lawyer_id; ?><?php echo !empty($schedule_type_filter) ? '&schedule_type=' . urlencode($schedule_type_filter) : ''; ?>" 
+                                       style="position: absolute; right: 48px; top: 50%; transform: translateY(-50%); padding: 0; width: 32px; height: 32px; border: none; background: transparent; color: #6c757d; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none;">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                <?php endif; ?>
+                                <button type="submit" style="position: absolute; right: 2px; top: 50%; transform: translateY(-50%); padding: 0 12px; height: 38px; border: none; border-radius: 6px; background: #c5a253; color: white; cursor: pointer;">
+                                    <i class="fas fa-search"></i>
                                 </button>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <form id="bulk-delete-form" method="POST">
-                        <input type="hidden" name="action" value="bulk_delete_blocked">
-                        <input type="hidden" name="blocked_ids" id="blocked-ids-input">
-                    </form>
-                    
-                    <?php foreach ($blocked_dates as $blocked): ?>
-                        <div class="blocked-date-item" style="position: relative;">
-                            <!-- Checkbox for multi-select -->
-                            <div class="bulk-checkbox-container" style="position: absolute; top: 50%; left: 15px; transform: translateY(-50%); display: none;">
-                                <input type="checkbox" class="blocked-checkbox" value="<?php echo $blocked['la_id']; ?>" 
-                                       onchange="updateBulkActions()" 
-                                       style="width: 20px; height: 20px; cursor: pointer;">
-                            </div>
-                            <div class="blocked-date-content" style="display: flex; justify-content: space-between; align-items: center; transition: margin-left 0.3s ease; margin-left: 0;">
-                                <div class="date-info">
-                                    <span style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; font-weight: 600; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; display: inline-block; margin-bottom: 8px;">
-                                        <i class="fas fa-ban"></i> BLOCKED DATE
-                                    </span>
-                                    <br>
-                                    <strong><?php echo date('l, F j, Y', strtotime($blocked['specific_date'])); ?></strong>
-                                    <small style="display: block; margin-top: 4px;">
-                                        <?php echo $blocked['blocked_reason'] ? htmlspecialchars($blocked['blocked_reason']) : 'Unavailable'; ?>
-                                    </small>
-                                    <small style="color: #999;">Blocked on: <?php echo date('M j, Y g:i A', strtotime($blocked['created_at'])); ?></small>
-                                </div>
-                                <form method="POST" style="display: inline;">
-                                    <input type="hidden" name="action" value="delete_blocked_date">
-                                    <input type="hidden" name="availability_id" value="<?php echo $blocked['la_id']; ?>">
-                                    <button type="submit" class="btn btn-danger">
-                                        <i class="fas fa-trash"></i> Delete
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                    
-                    <!-- Pagination Controls -->
-                    <?php if ($blocked_total_pages > 1): ?>
-                        <div class="pagination">
-                            <?php if ($blocked_page > 1): ?>
-                                <a href="javascript:void(0)" onclick="loadBlockedDates(<?php echo $blocked_page - 1; ?>)" title="Previous">
-                                    ← Previous
-                                </a>
-                            <?php else: ?>
-                                <span class="disabled">← Previous</span>
-                            <?php endif; ?>
-                            
-                            <?php
-                            $range = 2;
-                            for ($i = 1; $i <= $blocked_total_pages; $i++):
-                                if ($i == 1 || $i == $blocked_total_pages || abs($i - $blocked_page) <= $range):
-                            ?>
-                                <?php if ($i == $blocked_page): ?>
-                                    <span class="current"><?php echo $i; ?></span>
-                                <?php else: ?>
-                                    <a href="javascript:void(0)" onclick="loadBlockedDates(<?php echo $i; ?>)"><?php echo $i; ?></a>
-                                <?php endif; ?>
-                            <?php
-                                elseif (abs($i - $blocked_page) == $range + 1):
-                                    echo '<span class="disabled">...</span>';
-                                endif;
-                            endfor;
-                            ?>
-                            
-                            <?php if ($blocked_page < $blocked_total_pages): ?>
-                                <a href="javascript:void(0)" onclick="loadBlockedDates(<?php echo $blocked_page + 1; ?>)" title="Next">
-                                    Next →
-                                </a>
-                            <?php else: ?>
-                                <span class="disabled">Next →</span>
-                            <?php endif; ?>
-                        </div>
+                        </form>
                         
-                        <div class="pagination-info">
-                            Showing <?php echo $blocked_offset + 1; ?>-<?php echo min($blocked_offset + $blocked_per_page, $blocked_total); ?> of <?php echo $blocked_total; ?> blocked dates
-                        </div>
-                    <?php endif; ?>
-                <?php endif; ?>
-                </div>
-            </div>
-
-            <!-- Upcoming Consultations -->
-            <?php if (!empty($upcoming_consultations)): ?>
-                <div class="blocked-dates-list">
-                    <h3><i class="fas fa-calendar-check"></i> Upcoming Consultations</h3>
-                    <p style="color: #6c757d; margin-bottom: 15px;">
-                        Review these consultations before blocking dates:
-                    </p>
-                    <?php foreach ($upcoming_consultations as $consult): ?>
-                        <div class="consultation-item">
-                            <strong><?php echo date('l, F j, Y', strtotime($consult['consultation_date'])); ?></strong>
-                            <?php if (!empty($consult['consultation_time'])): ?>
-                                at <?php echo date('g:i A', strtotime($consult['consultation_time'])); ?>
+                        <!-- Type Filter -->
+                        <form method="GET" style="display: inline;">
+                            <input type="hidden" name="lawyer_id" value="<?php echo $lawyer_id; ?>">
+                            <?php if (!empty($schedule_search)): ?>
+                                <input type="hidden" name="schedule_search" value="<?php echo htmlspecialchars($schedule_search); ?>">
                             <?php endif; ?>
-                            <br>
-                            <small>
-                                Client: <?php echo htmlspecialchars($consult['full_name']); ?> 
-                                | <?php echo htmlspecialchars($consult['email']); ?>
-                                | Status: <span class="status-badge status-<?php echo $consult['status']; ?>">
-                                    <?php echo ucfirst($consult['status']); ?>
-                                </span>
-                            </small>
-                        </div>
-                    <?php endforeach; ?>
+                            
+                            <select name="schedule_type" onchange="this.form.submit()" 
+                                    style="padding: 10px 16px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 14px; background: white; cursor: pointer;">
+                                <option value="">All Types</option>
+                                <option value="weekly" <?php echo $schedule_type_filter === 'weekly' ? 'selected' : ''; ?>>Weekly</option>
+                                <option value="one_time" <?php echo $schedule_type_filter === 'one_time' ? 'selected' : ''; ?>>One-Time</option>
+                                <option value="blocked" <?php echo $schedule_type_filter === 'blocked' ? 'selected' : ''; ?>>Blocked</option>
+                            </select>
+                        </form>
+                    </div>
                 </div>
-            <?php endif; ?>
+                
+                <?php if (empty($all_schedules)): ?>
+                    <p style="text-align: center; color: #6c757d; padding: 40px; background: white; border-radius: 8px;">
+                        <i class="fas fa-inbox" style="font-size: 48px; display: block; margin-bottom: 16px; opacity: 0.3;"></i>
+                        No schedules found for this lawyer.
+                    </p>
+                <?php else: ?>
+                <div class="table-wrapper" style="overflow-x: auto;">
+                    <table class="schedule-table" style="width: 100%; border-collapse: collapse; background: white; table-layout: auto;">
+                        <thead>
+                            <tr style="background: #f8f9fa; border-bottom: 2px solid #e9ecef;">
+                                <th style="padding: 12px; text-align: left; font-weight: 600; color: #000;">Day / Date</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; color: #000;">Status</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; color: #000;">Type</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; color: #000;">Start Time</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; color: #000;">End Time</th>
+                                <th style="padding: 12px; text-align: center; font-weight: 600; color: #000; width: 120px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($all_schedules as $schedule): ?>
+                                <tr style="border-bottom: 1px solid #e9ecef;">
+                                    <!-- Day/Date -->
+                                    <td style="padding: 12px;">
+                                        <?php 
+                                        if ($schedule['schedule_type'] === 'weekly') {
+                                            echo htmlspecialchars($schedule['weekday']);
+                                        } else {
+                                            echo date('D, M d, Y', strtotime($schedule['specific_date']));
+                                        }
+                                        ?>
+                                    </td>
+                                    
+                                    <!-- Status -->
+                                    <td style="padding: 12px;">
+                                        <?php 
+                                        if ($schedule['schedule_type'] === 'blocked') {
+                                            echo 'Unavailable';
+                                        } else {
+                                            echo $schedule['la_is_active'] ? 'Active' : 'Inactive';
+                                        }
+                                        ?>
+                                    </td>
+                                    
+                                    <!-- Type -->
+                                    <td style="padding: 12px;">
+                                        <?php 
+                                        if ($schedule['schedule_type'] === 'blocked') {
+                                            echo 'Blocked date';
+                                        } else {
+                                            echo ucfirst(str_replace('_', '-', $schedule['schedule_type']));
+                                        }
+                                        ?>
+                                    </td>
+                                    
+                                    <!-- Start Time -->
+                                    <td style="padding: 12px;">
+                                        <?php 
+                                        if ($schedule['schedule_type'] === 'blocked') {
+                                            echo '—';
+                                        } else {
+                                            echo date('g:i A', strtotime($schedule['start_time']));
+                                        }
+                                        ?>
+                                    </td>
+                                    
+                                    <!-- End Time -->
+                                    <td style="padding: 12px;">
+                                        <?php 
+                                        if ($schedule['schedule_type'] === 'blocked') {
+                                            echo '—';
+                                        } else {
+                                            echo date('g:i A', strtotime($schedule['end_time']));
+                                        }
+                                        ?>
+                                    </td>
+                                    
+                                    <!-- Actions -->
+                                    <td style="padding: 12px; text-align: center;">
+                                        <button type="button" class="lawyer-btn btn-view-details" onclick="openDeleteModal(<?php echo $schedule['la_id']; ?>)"
+                                                style="background: var(--gold); color: white; width: 88px; height: 48px; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 4px;">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <?php if ($schedule_total_pages > 1): ?>
+                    <div class="pagination" style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 20px;">
+                        <?php
+                        $base_url = "?lawyer_id=$lawyer_id";
+                        if (!empty($schedule_search)) $base_url .= "&schedule_search=" . urlencode($schedule_search);
+                        if (!empty($schedule_type_filter)) $base_url .= "&schedule_type=" . urlencode($schedule_type_filter);
+                        ?>
+                        
+                        <!-- Previous Button -->
+                        <?php if ($schedule_page > 1): ?>
+                            <a href="<?php echo $base_url; ?>&schedule_page=<?php echo $schedule_page - 1; ?>" 
+                               style="padding: 8px 12px; background: white; border: 2px solid #e9ecef; border-radius: 6px; text-decoration: none; color: #0b1d3a; font-weight: 600; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        <?php else: ?>
+                            <span style="padding: 8px 12px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 6px; color: #ccc; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-chevron-left"></i>
+                            </span>
+                        <?php endif; ?>
+                        
+                        <!-- Page Number -->
+                        <span style="padding: 0 16px; color: #0b1d3a; font-weight: 600; font-size: 16px;">
+                            <?php echo $schedule_page; ?>
+                        </span>
+                        
+                        <!-- Next Button -->
+                        <?php if ($schedule_page < $schedule_total_pages): ?>
+                            <a href="<?php echo $base_url; ?>&schedule_page=<?php echo $schedule_page + 1; ?>" 
+                               style="padding: 8px 12px; background: white; border: 2px solid #e9ecef; border-radius: 6px; text-decoration: none; color: #0b1d3a; font-weight: 600; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        <?php else: ?>
+                            <span style="padding: 8px 12px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 6px; color: #ccc; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-chevron-right"></i>
+                            </span>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+                <?php endif; ?>
+            </div>
+            
         <?php endif; ?>
         </div>
     </main>
 
-    <script>
-        // Sync end date with start date
-        document.getElementById('block_date').addEventListener('change', function() {
-            const endDate = document.getElementById('end_date');
-            if (!endDate.value || new Date(endDate.value) < new Date(this.value)) {
-                endDate.value = '';
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 9999; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; padding: 32px; max-width: 450px; width: 90%; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); animation: slideIn 0.3s ease-out;">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="width: 64px; height: 64px; background: #fee; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                    <i class="fas fa-exclamation-triangle" style="color: #dc3545; font-size: 32px;"></i>
+                </div>
+                <h3 style="margin: 0 0 8px 0; color: #0b1d3a; font-size: 24px;">Delete Schedule?</h3>
+                <p style="margin: 0; color: #6c757d; font-size: 14px;">This action cannot be undone. The schedule will be permanently removed.</p>
+            </div>
+            
+            <form id="deleteForm" method="POST" style="display: flex; gap: 12px; justify-content: center;">
+                <input type="hidden" name="action" value="delete_schedule">
+                <input type="hidden" name="schedule_id" id="deleteScheduleId">
+                
+                <button type="button" onclick="closeDeleteModal()" 
+                        style="flex: 1; padding: 12px 24px; background: #f8f9fa; color: #6c757d; border: 2px solid #e9ecef; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        style="flex: 1; padding: 12px 24px; background: #dc3545; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
             }
-            endDate.min = this.value;
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Delete button hover effect */
+        .lawyer-btn.btn-view-details:hover {
+            background: #c82333 !important;
+            transform: translateY(-2px);
+            transition: all 0.2s ease;
+        }
+    </style>
+
+    <script>
+        // Sync end date with start date (if elements exist)
+        const blockDateEl = document.getElementById('block_date');
+        if (blockDateEl) {
+            blockDateEl.addEventListener('change', function() {
+                const endDate = document.getElementById('end_date');
+                if (endDate) {
+                    if (!endDate.value || new Date(endDate.value) < new Date(this.value)) {
+                        endDate.value = '';
+                    }
+                    endDate.min = this.value;
+                }
+            });
+        }
+        
+        // Delete modal functions
+        function openDeleteModal(scheduleId) {
+            document.getElementById('deleteScheduleId').value = scheduleId;
+            const modal = document.getElementById('deleteModal');
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeDeleteModal() {
+            const modal = document.getElementById('deleteModal');
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+        
+        // Close modal when clicking outside
+        document.getElementById('deleteModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDeleteModal();
+            }
+        });
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeDeleteModal();
+            }
         });
     </script>
     

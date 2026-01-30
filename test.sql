@@ -58,8 +58,8 @@ CREATE TABLE `lawyer_availability` (
   `blocked_reason` varchar(20) DEFAULT NULL,
   `weekday` enum('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday') DEFAULT NULL,
   `specific_date` date DEFAULT NULL,
-  `start_time` time NOT NULL,
-  `end_time` time NOT NULL,
+  `start_time` time NULL,
+  `end_time` time NULL,
   `max_appointments` int(11) DEFAULT 1,
   `time_slot_duration` int(11) NOT NULL COMMENT 'minutes',
   `la_is_active` tinyint(1) DEFAULT 1,
@@ -309,6 +309,14 @@ ALTER TABLE `notification_queue`
 --
 ALTER TABLE `user_sessions`
   ADD CONSTRAINT `user_sessions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Change start time to null for table `lawyer_availability`
+--
+ALTER TABLE lawyer_availability
+  MODIFY start_time TIME NULL,
+  MODIFY end_time TIME NULL;
+
 
 -- --------------------------------------------------------
 

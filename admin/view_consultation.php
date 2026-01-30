@@ -884,11 +884,16 @@ $active_page = "consultations";
                 }
                 
                 try {
+                    // Calculate 3 months from tomorrow (exclude today)
                     const today = new Date();
-                    const endDate = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    
+                    const endDate = new Date(tomorrow);
                     endDate.setMonth(endDate.getMonth() + 3);
                     
-                    const startDateStr = today.toISOString().split('T')[0];
+                    const startDateStr = tomorrow.toISOString().split('T')[0];
                     const endDateStr = endDate.toISOString().split('T')[0];
                     
                     const response = await fetch(`../api/get_lawyer_availability.php?lawyer_id=${lawyerId}&start_date=${startDateStr}&end_date=${endDateStr}`);
@@ -902,6 +907,12 @@ $active_page = "consultations";
                         dates.forEach(dateInfo => {
                             const dateValue = typeof dateInfo === 'string' ? dateInfo : dateInfo.date;
                             const dateObj = new Date(dateValue + 'T00:00:00');
+                            
+                            // Skip today and past dates (but allow if it's the original date)
+                            if (dateObj <= today && dateValue !== originalDate) {
+                                return;
+                            }
+                            
                             const formattedDate = dateObj.toLocaleDateString('en-US', { 
                                 weekday: 'short', 
                                 year: 'numeric', 

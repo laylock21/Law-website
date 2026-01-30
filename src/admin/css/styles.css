@@ -3367,6 +3367,19 @@ input[type="radio"]:focus {
         flex-direction: column;
     }
     
+    /* Ensure actions column is always visible on mobile */
+    .lawyers-table td:nth-child(9) {
+        opacity: 1 !important;
+        visibility: visible !important;
+        display: grid !important;
+    }
+    
+    .lawyers-table td:nth-child(9) .btn {
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+    }
+    
     .admin-stats-grid {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -3418,14 +3431,6 @@ input[type="radio"]:focus {
     .lawyers-table td {
         padding: 12px 8px;
         min-width: auto;
-    }
-    
-    /* Hide less critical columns on mobile */
-    .lawyers-table th:nth-child(3), /* Username */
-    .lawyers-table td:nth-child(3),
-    .lawyers-table th:nth-child(8), /* Created */
-    .lawyers-table td:nth-child(8) {
-        display: none;
     }
     
     /* Adjust remaining column widths for mobile */

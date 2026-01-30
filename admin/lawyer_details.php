@@ -225,7 +225,7 @@ $active_page = "lawyer";
             background: white;
             border-radius: 12px;
             padding: 24px;
-            margin-bottom: 24px;
+            margin-bottom: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
         
@@ -394,41 +394,11 @@ $active_page = "lawyer";
                             </span>
                         </div>
                         
-                        <div style="display: grid; grid-template-columns: auto 1fr; gap: 12px 20px; margin-top: 20px;">
-                            <div style="font-weight: 600;"><i class="fas fa-user"></i> Username:</div>
-                            <div><?php echo htmlspecialchars($lawyer['username']); ?></div>
-                            
-                            <div style="font-weight: 600;"><i class="fas fa-envelope"></i> Email:</div>
-                            <div><?php echo htmlspecialchars($lawyer['email']); ?></div>
-                            
-                            <div style="font-weight: 600;"><i class="fas fa-phone"></i> Phone:</div>
-                            <div><?php echo htmlspecialchars($lawyer['phone'] ?: 'Not set'); ?></div>
-                            
-                            <div style="font-weight: 600;"><i class="fas fa-calendar"></i> Member Since:</div>
-                            <div><?php echo date('F j, Y', strtotime($lawyer['created_at'])); ?></div>
-                        </div>
                     </div>
                 </div>
             </div>
             
-            <div class="stats-grid">
-                <div class="stat-box">
-                    <div class="number"><?php echo $lawyer['consultation_count']; ?></div>
-                    <div class="label">Total Consultations</div>
-                </div>
-                <div class="stat-box">
-                    <div class="number"><?php echo $lawyer['pending_count']; ?></div>
-                    <div class="label">Pending</div>
-                </div>
-                <div class="stat-box">
-                    <div class="number"><?php echo $lawyer['confirmed_count']; ?></div>
-                    <div class="label">Confirmed</div>
-                </div>
-                <div class="stat-box">
-                    <div class="number"><?php echo $lawyer['completed_count']; ?></div>
-                    <div class="label">Completed</div>
-                </div>
-            </div>
+            
             
             <div class="info-card">
                 <h2><i class="fas fa-user"></i> Basic Information</h2>
@@ -453,6 +423,7 @@ $active_page = "lawyer";
                     <div class="info-value"><?php echo htmlspecialchars($lawyer['lp_description'] ?: 'No description'); ?></div>
                 </div>
             </div>
+
             
             <div class="info-card">
                 <h2><i class="fas fa-briefcase"></i> Specializations</h2>
@@ -475,6 +446,10 @@ $active_page = "lawyer";
             <div class="info-card">
                 <h2><i class="fas fa-cog"></i> Actions</h2>
                 <div class="action-buttons">
+                    <a href="manage_lawyer_schedule.php?lawyer_id=<?php echo $lawyer_id; ?>" class="btn btn-primary" style="text-decoration: none;">
+                        <i class="fas fa-calendar-alt"></i> Manage Schedule
+                    </a>
+                    
                     <button type="button" class="btn btn-primary" onclick="openPasswordResetModal()">
                         <i class="fas fa-key"></i> Reset Password
                     </button>

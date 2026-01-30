@@ -1726,7 +1726,13 @@ window.renderCalendar = function() {
 			let dateStatus = 'unavailable'; // Default status
 			let isClickable = false;
 			
-			const isPast = new Date(dateStr) < new Date().setHours(0,0,0,0);
+			// Get today's date at midnight for comparison
+			const today = new Date();
+			today.setHours(0, 0, 0, 0);
+			const dateToCheck = new Date(dateStr + 'T00:00:00');
+			
+			// Disable today and past dates
+			const isPast = dateToCheck <= today;
 			
 			if (isPast) {
 				dateStatus = 'past';
