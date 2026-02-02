@@ -20,63 +20,98 @@ $lawyer_name = $_SESSION['lawyer_name'] ?? 'Lawyer';
 // Handle export request
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_format'])) {
     $format = $_POST['export_format'];
+    $export_type = $_POST['export_type'] ?? 'availability';
     $schedule_type = $_POST['schedule_type'] ?? 'all';
-    $status_filter = $_POST['status_filter'] ?? 'all';
     $date_from = $_POST['date_from'] ?? null;
     $date_to = $_POST['date_to'] ?? null;
     
     try {
         $pdo = getDBConnection();
         
-        // Build query with filters
-        $sql = "SELECT 
-                    la_id,
-                    lawyer_id,
-                    schedule_type,
-                    weekday,
-                    specific_date,
-                    start_time,
-                    end_time,
-                    max_appointments,
-                    la_is_active,
-                    created_at,
-                    updated_at
-                FROM lawyer_availability
-                WHERE lawyer_id = ?";
-        
-        $params = [$lawyer_id];
-        
-        if ($schedule_type !== 'all') {
-            $sql .= " AND schedule_type = ?";
-            $params[] = $schedule_type;
+        if ($export_type === 'availability') {
+            // Build query with filters for availability
+            $sql = "SELECT 
+                        la_id,
+                        lawyer_id,
+                        schedule_type,
+                        weekday,
+                        specific_date,
+                        start_time,
+                        end_time,
+                        max_appointments,
+                        la_is_active,
+                        created_at,
+                        updated_at
+                    FROM lawyer_availability
+                    WHERE lawyer_id = ?";
+            
+            $params = [$lawyer_id];
+            
+            if ($schedule_type !== 'all') {
+                $sql .= " AND schedule_type = ?";
+                $params[] = $schedule_type;
+            }
+            
+            if ($date_from && $schedule_type === 'one_time') {
+                $sql .= " AND specific_date >= ?";
+                $params[] = $date_from;
+            }
+            
+            if ($date_to && $schedule_type === 'one_time') {
+                $sql .= " AND specific_date <= ?";
+                $params[] = $date_to;
+            }
+            
+            $sql .= " ORDER BY schedule_type, specific_date, weekday, start_time";
+            
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            $availability = $stmt->fetchAll();
+        } else {
+            $availability = [];
         }
         
-        if ($status_filter !== 'all') {
-            $sql .= " AND la_is_active = ?";
-            $params[] = ($status_filter === 'active') ? 1 : 0;
+        if ($export_type === 'consultation') {
+            // Get consultations for this lawyer
+            $consultations_columns_stmt = $pdo->query("DESCRIBE consultations");
+            $consultations_columns_rows = $consultations_columns_stmt ? $consultations_columns_stmt->fetchAll() : [];
+            $consultations_columns = array_map(function($r) { return $r['Field']; }, $consultations_columns_rows);
+            
+            $id_column = in_array('c_id', $consultations_columns, true) ? 'c_id' : 'id';
+            $full_name_column = in_array('c_full_name', $consultations_columns, true) ? 'c_full_name' : 'full_name';
+            $email_column = in_array('c_email', $consultations_columns, true) ? 'c_email' : 'email';
+            $phone_column = in_array('c_phone', $consultations_columns, true) ? 'c_phone' : 'phone';
+            $practice_area_column = in_array('c_practice_area', $consultations_columns, true) ? 'c_practice_area' : 'practice_area';
+            $date_column = in_array('consultation_date', $consultations_columns, true) ? 'consultation_date' : 'c_consultation_date';
+            $time_column = in_array('consultation_time', $consultations_columns, true) ? 'consultation_time' : 'c_consultation_time';
+            $status_column = in_array('c_status', $consultations_columns, true) ? 'c_status' : 'status';
+            
+            $consult_sql = "SELECT 
+                                {$id_column} as c_id,
+                                {$full_name_column} as c_full_name,
+                                {$email_column} as c_email,
+                                " . ($phone_column ? "{$phone_column} as c_phone," : "NULL as c_phone,") . "
+                                " . ($practice_area_column ? "{$practice_area_column} as c_practice_area," : "NULL as c_practice_area,") . "
+                                {$date_column} as consultation_date,
+                                " . ($time_column ? "{$time_column} as consultation_time," : "NULL as consultation_time,") . "
+                                {$status_column} as c_status,
+                                created_at
+                            FROM consultations
+                            WHERE lawyer_id = ? OR lawyer_id IS NULL
+                            ORDER BY created_at DESC";
+            
+            $consult_stmt = $pdo->prepare($consult_sql);
+            $consult_stmt->execute([$lawyer_id]);
+            $consultations = $consult_stmt->fetchAll();
+        } else {
+            $consultations = [];
         }
-        
-        if ($date_from && $schedule_type === 'one_time') {
-            $sql .= " AND specific_date >= ?";
-            $params[] = $date_from;
-        }
-        
-        if ($date_to && $schedule_type === 'one_time') {
-            $sql .= " AND specific_date <= ?";
-            $params[] = $date_to;
-        }
-        
-        $sql .= " ORDER BY schedule_type, specific_date, weekday, start_time";
-        
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        $availability = $stmt->fetchAll();
         
         // Export based on format
-        if ($format === 'csv') {
-            exportCSV($availability, $lawyer_name);
+        if ($format === 'excel') {
+            exportExcel($availability, $consultations, $lawyer_name, $export_type);
         } elseif ($format === 'pdf') {
-            exportPDF($availability, $lawyer_name);
+            exportPDF($availability, $consultations, $lawyer_name, $export_type);
         }
         
     } catch (Exception $e) {
@@ -85,57 +120,111 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_format'])) {
     }
 }
 
-function exportCSV($data, $lawyer_name) {
-    $filename = 'availability_' . date('Y-m-d_His') . '.csv';
+function exportExcel($availability, $consultations, $lawyer_name, $export_type) {
+    require_once '../vendor/autoload.php';
     
-    header('Content-Type: text/csv; charset=utf-8');
+    $filename = $export_type . '_export_' . date('Y-m-d_His') . '.xlsx';
+    
+    // Create new Spreadsheet
+    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    
+    $currentRow = 1;
+    
+    // Export Availability
+    if ($export_type === 'availability') {
+        // Add header information
+        $sheet->setCellValue('A' . $currentRow, 'AVAILABILITY SCHEDULE');
+        $sheet->mergeCells('A' . $currentRow . ':J' . $currentRow);
+        $sheet->getStyle('A' . $currentRow)->getFont()->setBold(true)->setSize(14);
+        $sheet->getStyle('A' . $currentRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $currentRow += 2;
+        
+        // Headers
+        $headers = ['ID', 'Schedule Type', 'Weekday', 'Specific Date', 'Start Time', 'End Time', 'Max Appointments', 'Status', 'Created At', 'Updated At'];
+        $column = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($column . $currentRow, $header);
+            $sheet->getStyle($column . $currentRow)->getFont()->setBold(true);
+            $sheet->getStyle($column . $currentRow)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('C5A253');
+            $sheet->getStyle($column . $currentRow)->getFont()->getColor()->setRGB('FFFFFF');
+            $column++;
+        }
+        $currentRow++;
+        
+        // Data rows
+        foreach ($availability as $row) {
+            $sheet->setCellValue('A' . $currentRow, $row['la_id']);
+            $sheet->setCellValue('B' . $currentRow, ucfirst(str_replace('_', ' ', $row['schedule_type'])));
+            $sheet->setCellValue('C' . $currentRow, $row['weekday'] ?? 'N/A');
+            $sheet->setCellValue('D' . $currentRow, $row['specific_date'] ?? 'N/A');
+            $sheet->setCellValue('E' . $currentRow, date('g:i A', strtotime($row['start_time'])));
+            $sheet->setCellValue('F' . $currentRow, date('g:i A', strtotime($row['end_time'])));
+            $sheet->setCellValue('G' . $currentRow, $row['max_appointments']);
+            $sheet->setCellValue('H' . $currentRow, $row['la_is_active'] ? 'Active' : 'Inactive');
+            $sheet->setCellValue('I' . $currentRow, $row['created_at']);
+            $sheet->setCellValue('J' . $currentRow, $row['updated_at'] ?? '');
+            $currentRow++;
+        }
+    }
+    
+    // Export Consultations
+    if ($export_type === 'consultation') {
+        // Add header information
+        $sheet->setCellValue('A' . $currentRow, 'CONSULTATIONS');
+        $sheet->mergeCells('A' . $currentRow . ':I' . $currentRow);
+        $sheet->getStyle('A' . $currentRow)->getFont()->setBold(true)->setSize(14);
+        $sheet->getStyle('A' . $currentRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $currentRow += 2;
+        
+        // Headers
+        $headers = ['ID', 'Client Name', 'Email', 'Phone', 'Practice Area', 'Consultation Date', 'Consultation Time', 'Status', 'Created At'];
+        $column = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($column . $currentRow, $header);
+            $sheet->getStyle($column . $currentRow)->getFont()->setBold(true);
+            $sheet->getStyle($column . $currentRow)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('C5A253');
+            $sheet->getStyle($column . $currentRow)->getFont()->getColor()->setRGB('FFFFFF');
+            $column++;
+        }
+        $currentRow++;
+        
+        // Data rows
+        foreach ($consultations as $row) {
+            $sheet->setCellValue('A' . $currentRow, $row['c_id']);
+            $sheet->setCellValue('B' . $currentRow, $row['c_full_name']);
+            $sheet->setCellValue('C' . $currentRow, $row['c_email']);
+            $sheet->setCellValue('D' . $currentRow, $row['c_phone'] ?? 'N/A');
+            $sheet->setCellValue('E' . $currentRow, $row['c_practice_area'] ?? 'N/A');
+            $sheet->setCellValue('F' . $currentRow, $row['consultation_date'] ? date('M d, Y', strtotime($row['consultation_date'])) : 'N/A');
+            $sheet->setCellValue('G' . $currentRow, $row['consultation_time'] ? date('g:i A', strtotime($row['consultation_time'])) : 'N/A');
+            $sheet->setCellValue('H' . $currentRow, ucfirst($row['c_status']));
+            $sheet->setCellValue('I' . $currentRow, $row['created_at']);
+            $currentRow++;
+        }
+    }
+    
+    // Auto-size all columns
+    foreach (range('A', 'J') as $col) {
+        $sheet->getColumnDimension($col)->setAutoSize(true);
+    }
+    
+    // Generate Excel file
+    $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+    
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
     header('Pragma: no-cache');
     header('Expires: 0');
     
-    $output = fopen('php://output', 'w');
-    
-    // Add BOM for Excel UTF-8 support
-    fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
-    
-    // Headers
-    fputcsv($output, [
-        'ID',
-        'Schedule Type',
-        'Weekday',
-        'Specific Date',
-        'Start Time',
-        'End Time',
-        'Max Appointments',
-        'Status',
-        'Created At',
-        'Updated At'
-    ]);
-    
-    // Data rows
-    foreach ($data as $row) {
-        fputcsv($output, [
-            $row['la_id'],
-            ucfirst(str_replace('_', ' ', $row['schedule_type'])),
-            $row['weekday'] ?? 'N/A',
-            $row['specific_date'] ?? 'N/A',
-            date('g:i A', strtotime($row['start_time'])),
-            date('g:i A', strtotime($row['end_time'])),
-            $row['max_appointments'],
-            $row['la_is_active'] ? 'Active' : 'Inactive',
-            $row['created_at'],
-            $row['updated_at'] ?? ''
-        ]);
-    }
-    
-    fclose($output);
+    $writer->save('php://output');
     exit;
 }
 
-function exportPDF($data, $lawyer_name) {
+function exportPDF($availability, $consultations, $lawyer_name, $export_type) {
     require_once '../vendor/autoload.php';
     
-    $filename = 'availability_' . date('Y-m-d_His') . '.pdf';
+    $filename = $export_type . '_export_' . date('Y-m-d_His') . '.pdf';
     
     // Create new Spreadsheet
     $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
@@ -144,83 +233,170 @@ function exportPDF($data, $lawyer_name) {
     // Set document properties
     $spreadsheet->getProperties()
         ->setCreator('MD Law Firm')
-        ->setTitle('Availability Schedule Report')
-        ->setSubject('Lawyer Availability')
-        ->setDescription('Availability schedule export for ' . $lawyer_name);
+        ->setTitle(ucfirst($export_type) . ' Report')
+        ->setSubject('Lawyer ' . ucfirst($export_type))
+        ->setDescription(ucfirst($export_type) . ' export for ' . $lawyer_name);
     
-    // Add header information
-    $sheet->setCellValue('A1', 'Availability Schedule Report');
-    $sheet->mergeCells('A1:E1');
-    $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
-    $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $currentRow = 1;
     
-    $sheet->setCellValue('A2', 'Lawyer: ' . $lawyer_name);
-    $sheet->mergeCells('A2:E2');
-    $sheet->getStyle('A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-    
-    $sheet->setCellValue('A3', 'Generated: ' . date('F d, Y g:i A'));
-    $sheet->mergeCells('A3:E3');
-    $sheet->getStyle('A3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-    
-    $sheet->setCellValue('A4', 'Total Records: ' . count($data));
-    $sheet->mergeCells('A4:E4');
-    $sheet->getStyle('A4')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-    
-    // Add column headers
-    $headerRow = 6;
-    $headers = ['Schedule Type', 'Day/Date', 'Time', 'Max Appointments', 'Status'];
-    $column = 'A';
-    foreach ($headers as $header) {
-        $sheet->setCellValue($column . $headerRow, $header);
-        $column++;
-    }
-    
-    // Style header row
-    $sheet->getStyle('A' . $headerRow . ':E' . $headerRow)->applyFromArray([
-        'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-        'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'C5A253']],
-        'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
-        'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]]
-    ]);
-    
-    // Add data rows
-    $row = $headerRow + 1;
-    foreach ($data as $item) {
-        $dayDate = $item['specific_date'] ?? ($item['weekday'] ?? 'N/A');
-        $timeRange = date('g:i A', strtotime($item['start_time'])) . ' - ' . date('g:i A', strtotime($item['end_time']));
-        $status = $item['la_is_active'] ? 'Active' : 'Inactive';
-        $scheduleType = ucfirst(str_replace('_', ' ', $item['schedule_type']));
+    // Export Availability
+    if ($export_type === 'availability' || $export_type === 'both') {
+        // Add header information
+        $sheet->setCellValue('A' . $currentRow, 'Availability Schedule Report');
+        $sheet->mergeCells('A' . $currentRow . ':E' . $currentRow);
+        $sheet->getStyle('A' . $currentRow)->getFont()->setBold(true)->setSize(16);
+        $sheet->getStyle('A' . $currentRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $currentRow++;
         
-        $sheet->setCellValue('A' . $row, $scheduleType);
-        $sheet->setCellValue('B' . $row, $dayDate);
-        $sheet->setCellValue('C' . $row, $timeRange);
-        $sheet->setCellValue('D' . $row, $item['max_appointments']);
-        $sheet->setCellValue('E' . $row, $status);
+        $sheet->setCellValue('A' . $currentRow, 'Lawyer: ' . $lawyer_name);
+        $sheet->mergeCells('A' . $currentRow . ':E' . $currentRow);
+        $sheet->getStyle('A' . $currentRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $currentRow++;
         
-        // Alternate row colors
-        if ($row % 2 == 0) {
-            $sheet->getStyle('A' . $row . ':E' . $row)->applyFromArray([
-                'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F9F9F9']]
-            ]);
+        $sheet->setCellValue('A' . $currentRow, 'Generated: ' . date('F d, Y g:i A'));
+        $sheet->mergeCells('A' . $currentRow . ':E' . $currentRow);
+        $sheet->getStyle('A' . $currentRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $currentRow++;
+        
+        $sheet->setCellValue('A' . $currentRow, 'Total Records: ' . count($availability));
+        $sheet->mergeCells('A' . $currentRow . ':E' . $currentRow);
+        $sheet->getStyle('A' . $currentRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $currentRow += 2;
+        
+        // Add column headers
+        $headerRow = $currentRow;
+        $headers = ['Schedule Type', 'Day/Date', 'Time', 'Max Appointments', 'Status'];
+        $column = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($column . $headerRow, $header);
+            $column++;
         }
         
-        $row++;
+        // Style header row
+        $sheet->getStyle('A' . $headerRow . ':E' . $headerRow)->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'C5A253']],
+            'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]]
+        ]);
+        
+        // Add data rows
+        $currentRow++;
+        foreach ($availability as $item) {
+            $dayDate = $item['specific_date'] ?? ($item['weekday'] ?? 'N/A');
+            $timeRange = date('g:i A', strtotime($item['start_time'])) . ' - ' . date('g:i A', strtotime($item['end_time']));
+            $status = $item['la_is_active'] ? 'Active' : 'Inactive';
+            $scheduleType = ucfirst(str_replace('_', ' ', $item['schedule_type']));
+            
+            $sheet->setCellValue('A' . $currentRow, $scheduleType);
+            $sheet->setCellValue('B' . $currentRow, $dayDate);
+            $sheet->setCellValue('C' . $currentRow, $timeRange);
+            $sheet->setCellValue('D' . $currentRow, $item['max_appointments']);
+            $sheet->setCellValue('E' . $currentRow, $status);
+            
+            // Alternate row colors
+            if ($currentRow % 2 == 0) {
+                $sheet->getStyle('A' . $currentRow . ':E' . $currentRow)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F9F9F9']]
+                ]);
+            }
+            
+            $currentRow++;
+        }
+        
+        // Add borders to all data
+        $sheet->getStyle('A' . $headerRow . ':E' . ($currentRow - 1))->applyFromArray([
+            'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['rgb' => 'DDDDDD']]]
+        ]);
+        
+        // Auto-size columns
+        foreach (range('A', 'E') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+        
+        if ($export_type === 'both') {
+            $currentRow += 3;
+        }
     }
     
-    // Add borders to all data
-    $sheet->getStyle('A' . $headerRow . ':E' . ($row - 1))->applyFromArray([
-        'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['rgb' => 'DDDDDD']]]
-    ]);
-    
-    // Auto-size columns
-    foreach (range('A', 'E') as $col) {
-        $sheet->getColumnDimension($col)->setAutoSize(true);
+    // Export Consultations
+    if ($export_type === 'consultation' || $export_type === 'both') {
+        // Add header information
+        $sheet->setCellValue('A' . $currentRow, 'Consultations Report');
+        $sheet->mergeCells('A' . $currentRow . ':G' . $currentRow);
+        $sheet->getStyle('A' . $currentRow)->getFont()->setBold(true)->setSize(16);
+        $sheet->getStyle('A' . $currentRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $currentRow++;
+        
+        $sheet->setCellValue('A' . $currentRow, 'Lawyer: ' . $lawyer_name);
+        $sheet->mergeCells('A' . $currentRow . ':G' . $currentRow);
+        $sheet->getStyle('A' . $currentRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $currentRow++;
+        
+        $sheet->setCellValue('A' . $currentRow, 'Generated: ' . date('F d, Y g:i A'));
+        $sheet->mergeCells('A' . $currentRow . ':G' . $currentRow);
+        $sheet->getStyle('A' . $currentRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $currentRow++;
+        
+        $sheet->setCellValue('A' . $currentRow, 'Total Records: ' . count($consultations));
+        $sheet->mergeCells('A' . $currentRow . ':G' . $currentRow);
+        $sheet->getStyle('A' . $currentRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $currentRow += 2;
+        
+        // Add column headers
+        $headerRow = $currentRow;
+        $headers = ['ID', 'Client Name', 'Email', 'Practice Area', 'Date', 'Time', 'Status'];
+        $column = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($column . $headerRow, $header);
+            $column++;
+        }
+        
+        // Style header row
+        $sheet->getStyle('A' . $headerRow . ':G' . $headerRow)->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'C5A253']],
+            'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]]
+        ]);
+        
+        // Add data rows
+        $currentRow++;
+        foreach ($consultations as $item) {
+            $sheet->setCellValue('A' . $currentRow, '#' . $item['c_id']);
+            $sheet->setCellValue('B' . $currentRow, $item['c_full_name']);
+            $sheet->setCellValue('C' . $currentRow, $item['c_email']);
+            $sheet->setCellValue('D' . $currentRow, $item['c_practice_area'] ?? 'N/A');
+            $sheet->setCellValue('E' . $currentRow, $item['consultation_date'] ? date('M d, Y', strtotime($item['consultation_date'])) : 'N/A');
+            $sheet->setCellValue('F' . $currentRow, $item['consultation_time'] ? date('g:i A', strtotime($item['consultation_time'])) : 'N/A');
+            $sheet->setCellValue('G' . $currentRow, ucfirst($item['c_status']));
+            
+            // Alternate row colors
+            if ($currentRow % 2 == 0) {
+                $sheet->getStyle('A' . $currentRow . ':G' . $currentRow)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F9F9F9']]
+                ]);
+            }
+            
+            $currentRow++;
+        }
+        
+        // Add borders to all data
+        $sheet->getStyle('A' . $headerRow . ':G' . ($currentRow - 1))->applyFromArray([
+            'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['rgb' => 'DDDDDD']]]
+        ]);
+        
+        // Auto-size columns
+        foreach (range('A', 'G') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
     }
     
     // Add footer
-    $footerRow = $row + 2;
+    $footerRow = $currentRow + 2;
+    $maxCol = ($export_type === 'consultation' || $export_type === 'both') ? 'G' : 'E';
     $sheet->setCellValue('A' . $footerRow, 'MD Law Firm - Confidential Document');
-    $sheet->mergeCells('A' . $footerRow . ':E' . $footerRow);
+    $sheet->mergeCells('A' . $footerRow . ':' . $maxCol . $footerRow);
     $sheet->getStyle('A' . $footerRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
     $sheet->getStyle('A' . $footerRow)->getFont()->setSize(9)->setItalic(true);
     
@@ -512,17 +688,44 @@ $active_page = "export";
                 <h2><i class="fas fa-file-export"></i> Export Availability Schedule</h2>
                 
                 <form method="POST" id="exportForm">
+                    <!-- Export Type Selection -->
+                    <div class="form-group">
+                        <label>What to Export</label>
+                        <div class="export-format-grid">
+                            <div class="format-option">
+                                <input type="radio" name="export_type" id="type_availability" value="availability" checked>
+                                <label for="type_availability" class="format-label">
+                                    <div class="format-icon"><i class="fas fa-calendar-alt"></i></div>
+                                    <div class="format-info">
+                                        <h4>Availability</h4>
+                                        <p>Schedule only</p>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="format-option">
+                                <input type="radio" name="export_type" id="type_consultation" value="consultation">
+                                <label for="type_consultation" class="format-label">
+                                    <div class="format-icon"><i class="fas fa-users"></i></div>
+                                    <div class="format-info">
+                                        <h4>Consultations</h4>
+                                        <p>Client requests</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- Export Format -->
                     <div class="form-group">
                         <label>Export Format</label>
                         <div class="export-format-grid">
                             <div class="format-option">
-                                <input type="radio" name="export_format" id="format_csv" value="csv" checked>
-                                <label for="format_csv" class="format-label">
-                                    <div class="format-icon"><i class="fas fa-file-csv"></i></div>
+                                <input type="radio" name="export_format" id="format_excel" value="excel" checked>
+                                <label for="format_excel" class="format-label">
+                                    <div class="format-icon"><i class="fas fa-file-excel"></i></div>
                                     <div class="format-info">
-                                        <h4>CSV</h4>
-                                        <p>Excel compatible</p>
+                                        <h4>Excel</h4>
+                                        <p>Spreadsheet format</p>
                                     </div>
                                 </label>
                             </div>
@@ -539,33 +742,26 @@ $active_page = "export";
                         </div>
                     </div>
                     
-                    <!-- Filters -->
-                    <div class="form-group">
-                        <label for="schedule_type">Filter by Schedule Type</label>
-                        <select name="schedule_type" id="schedule_type">
-                            <option value="all">All Types</option>
-                            <option value="weekly">Weekly Recurring</option>
-                            <option value="one_time">One-Time</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="status_filter">Filter by Status</label>
-                        <select name="status_filter" id="status_filter">
-                            <option value="all">All Statuses</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-row">
+                    <!-- Filters (Only for Availability) -->
+                    <div id="availability-filters">
                         <div class="form-group">
-                            <label for="date_from">From Date (One-Time only)</label>
-                            <input type="date" name="date_from" id="date_from">
+                            <label for="schedule_type">Filter by Schedule Type</label>
+                            <select name="schedule_type" id="schedule_type">
+                                <option value="all">All Types</option>
+                                <option value="weekly">Weekly Recurring</option>
+                                <option value="one_time">One-Time</option>
+                            </select>
                         </div>
-                        <div class="form-group">
-                            <label for="date_to">To Date (One-Time only)</label>
-                            <input type="date" name="date_to" id="date_to">
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="date_from">From Date (One-Time only)</label>
+                                <input type="date" name="date_from" id="date_from">
+                            </div>
+                            <div class="form-group">
+                                <label for="date_to">To Date (One-Time only)</label>
+                                <input type="date" name="date_to" id="date_to">
+                            </div>
                         </div>
                     </div>
                     
@@ -576,7 +772,7 @@ $active_page = "export";
                 </form>
                 
                 <div class="info-box">
-                    <p><i class="fas fa-info-circle"></i> <strong>Note:</strong> The export will include all your availability schedules (weekly recurring and one-time). Use filters to narrow down your export. Date filters only apply to one-time schedules.</p>
+                    <p><i class="fas fa-info-circle"></i> <strong>Note:</strong> Choose what data to export. Availability filters only apply when exporting availability schedules. Consultations include all your assigned consultation requests.</p>
                 </div>
             </div>
         </div>
@@ -610,6 +806,52 @@ $active_page = "export";
             dateFrom.disabled = false;
             dateTo.disabled = false;
         }
+    });
+    
+    // Show/hide availability filters based on export type checkboxes
+    const availabilityCheckbox = document.getElementById('type_availability');
+    const consultationCheckbox = document.getElementById('type_consultation');
+    const availabilityFilters = document.getElementById('availability-filters');
+    
+    function updateFiltersVisibility() {
+        if (availabilityCheckbox.checked) {
+            availabilityFilters.style.display = 'block';
+        } else {
+            availabilityFilters.style.display = 'none';
+        }
+    }
+    
+    availabilityCheckbox.addEventListener('change', updateFiltersVisibility);
+    consultationCheckbox.addEventListener('change', updateFiltersVisibility);
+    
+    // Style checkbox options on change
+    const checkboxOptions = document.querySelectorAll('.checkbox-option');
+    checkboxOptions.forEach(option => {
+        const checkbox = option.querySelector('input[type="checkbox"]');
+        
+        function updateStyle() {
+            if (checkbox.checked) {
+                option.style.borderColor = 'var(--gold)';
+                option.style.background = 'linear-gradient(135deg, #fff9e6, #fffbf0)';
+                option.style.boxShadow = '0 4px 12px rgba(197, 162, 83, 0.2)';
+            } else {
+                option.style.borderColor = '#e9ecef';
+                option.style.background = 'white';
+                option.style.boxShadow = 'none';
+            }
+        }
+        
+        checkbox.addEventListener('change', updateStyle);
+        updateStyle(); // Initialize
+        
+        // Make the whole div clickable
+        option.addEventListener('click', function(e) {
+            if (e.target !== checkbox) {
+                checkbox.checked = !checkbox.checked;
+                updateStyle();
+                updateFiltersVisibility();
+            }
+        });
     });
     </script>
 </body>
