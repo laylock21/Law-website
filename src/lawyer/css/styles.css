@@ -860,6 +860,11 @@ label {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     text-align: center;
     transition: transform 0.3s ease;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .lawyer-stat-card:hover {
@@ -871,6 +876,7 @@ label {
     font-weight: 700;
     color: var(--navy);
     margin-bottom: 10px;
+    line-height: 1;
 }
 
 .lawyer-stat-label {
@@ -878,6 +884,8 @@ label {
     font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    line-height: 1.2;
+    margin: 0;
 }
 
 /* Updated Lawyer Dashboard Grid - Now Responsive */

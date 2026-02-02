@@ -76,15 +76,29 @@ try {
         $params[] = $schedule_type;
     }
     
-    // Filter by date range (only for one_time and blocked schedules)
-    if ($date_from && ($schedule_type === 'one_time' || $schedule_type === 'blocked')) {
-        $sql .= " AND specific_date >= ?";
-        $params[] = $date_from;
+    // Filter by date range (for all schedule types except weekly)
+    if ($date_from && $schedule_type !== 'weekly') {
+        if ($schedule_type === 'one_time' || $schedule_type === 'blocked') {
+            $sql .= " AND specific_date >= ?";
+            $params[] = $date_from;
+        } elseif ($schedule_type === 'all') {
+            // For "all" types, filter by specific_date for one_time and blocked, and created_at for weekly
+            $sql .= " AND ((schedule_type IN ('one_time', 'blocked') AND specific_date >= ?) OR (schedule_type = 'weekly' AND created_at >= ?))";
+            $params[] = $date_from;
+            $params[] = $date_from . ' 00:00:00';
+        }
     }
     
-    if ($date_to && ($schedule_type === 'one_time' || $schedule_type === 'blocked')) {
-        $sql .= " AND specific_date <= ?";
-        $params[] = $date_to;
+    if ($date_to && $schedule_type !== 'weekly') {
+        if ($schedule_type === 'one_time' || $schedule_type === 'blocked') {
+            $sql .= " AND specific_date <= ?";
+            $params[] = $date_to;
+        } elseif ($schedule_type === 'all') {
+            // For "all" types, filter by specific_date for one_time and blocked, and created_at for weekly
+            $sql .= " AND ((schedule_type IN ('one_time', 'blocked') AND specific_date <= ?) OR (schedule_type = 'weekly' AND created_at <= ?))";
+            $params[] = $date_to;
+            $params[] = $date_to . ' 23:59:59';
+        }
     }
     
     $sql .= " ORDER BY 

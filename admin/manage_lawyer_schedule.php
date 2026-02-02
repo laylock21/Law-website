@@ -1740,14 +1740,14 @@ try {
             const scheduleType = document.getElementById('export_schedule_type').value;
             const dateFiltersContainer = document.getElementById('dateFiltersContainer');
             
-            // Show date filters only for one_time and blocked
-            if (scheduleType === 'one_time' || scheduleType === 'blocked') {
-                dateFiltersContainer.style.display = 'block';
-            } else {
+            // Show date filters for all types except weekly
+            if (scheduleType === 'weekly') {
                 dateFiltersContainer.style.display = 'none';
                 // Clear date values when hidden
                 document.getElementById('export_date_from').value = '';
                 document.getElementById('export_date_to').value = '';
+            } else {
+                dateFiltersContainer.style.display = 'block';
             }
         }
         
@@ -2389,7 +2389,7 @@ try {
                         </select>
                     </div>
 
-                    <!-- Date Filters (shown only for one_time and blocked) -->
+                    <!-- Date Filters (shown for all types except weekly) -->
                     <div id="dateFiltersContainer" style="display: none;">
                         <div class="form-group-modern" style="margin-bottom: 15px;">
                             <label class="form-label-modern" for="export_date_from">From Date</label>

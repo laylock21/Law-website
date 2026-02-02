@@ -39,7 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_format'])) {
                         start_time,
                         end_time,
                         max_appointments,
+                        time_slot_duration,
                         la_is_active,
+                        blocked_reason,
                         created_at,
                         updated_at
                     FROM lawyer_availability
@@ -52,14 +54,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_format'])) {
                 $params[] = $schedule_type;
             }
             
-            if ($date_from && $schedule_type === 'one_time') {
-                $sql .= " AND specific_date >= ?";
-                $params[] = $date_from;
+            // Apply date filters for all types except weekly
+            if ($date_from && $schedule_type !== 'weekly') {
+                if ($schedule_type === 'one_time' || $schedule_type === 'blocked') {
+                    $sql .= " AND specific_date >= ?";
+                    $params[] = $date_from;
+                } elseif ($schedule_type === 'all') {
+                    // For "all" types, filter by specific_date for one_time and blocked, and created_at for weekly
+                    $sql .= " AND ((schedule_type IN ('one_time', 'blocked') AND specific_date >= ?) OR (schedule_type = 'weekly' AND created_at >= ?))";
+                    $params[] = $date_from;
+                    $params[] = $date_from . ' 00:00:00';
+                }
             }
             
-            if ($date_to && $schedule_type === 'one_time') {
-                $sql .= " AND specific_date <= ?";
-                $params[] = $date_to;
+            if ($date_to && $schedule_type !== 'weekly') {
+                if ($schedule_type === 'one_time' || $schedule_type === 'blocked') {
+                    $sql .= " AND specific_date <= ?";
+                    $params[] = $date_to;
+                } elseif ($schedule_type === 'all') {
+                    // For "all" types, filter by specific_date for one_time and blocked, and created_at for weekly
+                    $sql .= " AND ((schedule_type IN ('one_time', 'blocked') AND specific_date <= ?) OR (schedule_type = 'weekly' AND created_at <= ?))";
+                    $params[] = $date_to;
+                    $params[] = $date_to . ' 23:59:59';
+                }
             }
             
             $sql .= " ORDER BY schedule_type, specific_date, weekday, start_time";
@@ -165,7 +182,7 @@ function exportExcel($availability, $consultations, $lawyer_name, $export_type) 
         $currentRow += 2;
         
         // Headers
-        $headers = ['ID', 'Schedule Type', 'Weekday', 'Specific Date', 'Start Time', 'End Time', 'Max Appointments', 'Status', 'Created At', 'Updated At'];
+        $headers = ['ID', 'Schedule Type', 'Weekday', 'Specific Date', 'Start Time', 'End Time', 'Max Appointments', 'Duration', 'Status', 'Blocked Reason', 'Created At'];
         $column = 'A';
         foreach ($headers as $header) {
             $sheet->setCellValue($column . $currentRow, $header);
@@ -182,12 +199,24 @@ function exportExcel($availability, $consultations, $lawyer_name, $export_type) 
             $sheet->setCellValue('B' . $currentRow, ucfirst(str_replace('_', ' ', $row['schedule_type'])));
             $sheet->setCellValue('C' . $currentRow, $row['weekday'] ?? 'N/A');
             $sheet->setCellValue('D' . $currentRow, $row['specific_date'] ?? 'N/A');
-            $sheet->setCellValue('E' . $currentRow, date('g:i A', strtotime($row['start_time'])));
-            $sheet->setCellValue('F' . $currentRow, date('g:i A', strtotime($row['end_time'])));
-            $sheet->setCellValue('G' . $currentRow, $row['max_appointments']);
-            $sheet->setCellValue('H' . $currentRow, $row['la_is_active'] ? 'Active' : 'Inactive');
-            $sheet->setCellValue('I' . $currentRow, $row['created_at']);
-            $sheet->setCellValue('J' . $currentRow, $row['updated_at'] ?? '');
+            
+            if ($row['schedule_type'] === 'blocked') {
+                $sheet->setCellValue('E' . $currentRow, '—');
+                $sheet->setCellValue('F' . $currentRow, '—');
+                $sheet->setCellValue('G' . $currentRow, '—');
+                $sheet->setCellValue('H' . $currentRow, '—');
+                $sheet->setCellValue('I' . $currentRow, 'Unavailable');
+                $sheet->setCellValue('J' . $currentRow, $row['blocked_reason'] ?? '');
+            } else {
+                $sheet->setCellValue('E' . $currentRow, date('g:i A', strtotime($row['start_time'])));
+                $sheet->setCellValue('F' . $currentRow, date('g:i A', strtotime($row['end_time'])));
+                $sheet->setCellValue('G' . $currentRow, $row['max_appointments']);
+                $sheet->setCellValue('H' . $currentRow, ($row['time_slot_duration'] ?? 60) . ' min');
+                $sheet->setCellValue('I' . $currentRow, $row['la_is_active'] ? 'Active' : 'Inactive');
+                $sheet->setCellValue('J' . $currentRow, '');
+            }
+            
+            $sheet->setCellValue('K' . $currentRow, $row['created_at']);
             $currentRow++;
         }
     }
@@ -445,6 +474,7 @@ try {
             COUNT(*) as total,
             SUM(CASE WHEN schedule_type = 'weekly' THEN 1 ELSE 0 END) as weekly,
             SUM(CASE WHEN schedule_type = 'one_time' THEN 1 ELSE 0 END) as one_time,
+            SUM(CASE WHEN schedule_type = 'blocked' THEN 1 ELSE 0 END) as blocked,
             SUM(CASE WHEN la_is_active = 1 THEN 1 ELSE 0 END) as active,
             SUM(CASE WHEN la_is_active = 0 THEN 1 ELSE 0 END) as inactive
         FROM lawyer_availability
@@ -453,7 +483,7 @@ try {
     $stats_stmt->execute([$lawyer_id]);
     $stats = $stats_stmt->fetch();
 } catch (Exception $e) {
-    $stats = ['total' => 0, 'weekly' => 0, 'one_time' => 0, 'active' => 0, 'inactive' => 0];
+    $stats = ['total' => 0, 'weekly' => 0, 'one_time' => 0, 'blocked' => 0, 'active' => 0, 'inactive' => 0];
 }
 
 $page_title = "Export Availability";
@@ -504,6 +534,11 @@ $active_page = "export";
             padding: 20px;
             text-align: center;
             border: 2px solid #dee2e6;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
         
         .stat-box.highlight {
@@ -512,17 +547,20 @@ $active_page = "export";
         }
         
         .stat-number {
-            font-size: 32px;
+            font-size: 2.5rem;
             font-weight: 700;
             color: var(--navy);
             margin-bottom: 8px;
+            line-height: 1;
         }
         
         .stat-label {
-            font-size: 14px;
+            font-size: 0.9rem;
             color: var(--text-light);
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            line-height: 1.2;
+            margin: 0;
         }
         
         .form-group {
@@ -664,21 +702,62 @@ $active_page = "export";
             }
             
             .stats-grid {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(2, 1fr);
             }
 
-            .stat-box{
+            .stat-box {
                 padding: 16px;
+                min-height: 100px;
+            }
+            
+            .stat-number {
+                font-size: 1.8rem;
+                margin-bottom: 6px;
+            }
+            
+            .stat-label {
+                font-size: 0.75rem;
+                line-height: 1.3;
+                letter-spacing: 0.3px;
             }
         }
         
-        @media (max-width: 425px) {
+        @media (min-width: 425px) and (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .stat-box {
+                padding: 14px;
+                min-height: 90px;
+            }
+            
+            .stat-number {
+                font-size: 1.6rem;
+            }
+            
+            .stat-label {
+                font-size: 0.7rem;
+            }
+        }
+        
+        @media (max-width: 424px) {
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
 
-            .stat-box{
-                padding: 4px;
+            .stat-box {
+                padding: 12px;
+                min-height: 85px;
+            }
+            
+            .stat-number {
+                font-size: 1.4rem;
+            }
+            
+            .stat-label {
+                font-size: 0.65rem;
+                letter-spacing: 0.2px;
             }
         }
 
@@ -710,6 +789,10 @@ $active_page = "export";
                     <div class="stat-box">
                         <div class="stat-number"><?php echo $stats['one_time']; ?></div>
                         <div class="stat-label">One-Time</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number"><?php echo $stats['blocked']; ?></div>
+                        <div class="stat-label">Blocked</div>
                     </div>
                     <div class="stat-box">
                         <div class="stat-number"><?php echo $stats['active']; ?></div>
@@ -785,21 +868,24 @@ $active_page = "export";
                     <div id="availability-filters">
                         <div class="form-group">
                             <label for="schedule_type">Filter by Schedule Type</label>
-                            <select name="schedule_type" id="schedule_type">
+                            <select name="schedule_type" id="schedule_type" onchange="toggleDateFilters()">
                                 <option value="all">All Types</option>
                                 <option value="weekly">Weekly Recurring</option>
                                 <option value="one_time">One-Time</option>
+                                <option value="blocked">Blocked Dates</option>
                             </select>
                         </div>
                         
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="date_from">From Date (One-Time only)</label>
-                                <input type="date" name="date_from" id="date_from">
-                            </div>
-                            <div class="form-group">
-                                <label for="date_to">To Date (One-Time only)</label>
-                                <input type="date" name="date_to" id="date_to">
+                        <div id="dateFiltersContainer">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="date_from">From Date</label>
+                                    <input type="date" name="date_from" id="date_from">
+                                </div>
+                                <div class="form-group">
+                                    <label for="date_to">To Date</label>
+                                    <input type="date" name="date_to" id="date_to">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -843,6 +929,22 @@ $active_page = "export";
     </main>
     
     <script>
+    // Toggle date filters based on schedule type
+    function toggleDateFilters() {
+        const scheduleType = document.getElementById('schedule_type').value;
+        const dateFiltersContainer = document.getElementById('dateFiltersContainer');
+        const dateFrom = document.getElementById('date_from');
+        const dateTo = document.getElementById('date_to');
+        
+        if (scheduleType === 'weekly') {
+            dateFiltersContainer.style.display = 'none';
+            dateFrom.value = '';
+            dateTo.value = '';
+        } else {
+            dateFiltersContainer.style.display = 'block';
+        }
+    }
+    
     document.getElementById('exportForm').addEventListener('submit', function(e) {
         const btn = this.querySelector('.export-btn');
         const originalHTML = btn.innerHTML;
@@ -856,21 +958,8 @@ $active_page = "export";
         }, 3000);
     });
     
-    // Enable/disable date filters based on schedule type
-    document.getElementById('schedule_type').addEventListener('change', function() {
-        const dateFrom = document.getElementById('date_from');
-        const dateTo = document.getElementById('date_to');
-        
-        if (this.value === 'weekly') {
-            dateFrom.disabled = true;
-            dateTo.disabled = true;
-            dateFrom.value = '';
-            dateTo.value = '';
-        } else {
-            dateFrom.disabled = false;
-            dateTo.disabled = false;
-        }
-    });
+    // Initialize date filter visibility
+    toggleDateFilters();
     
     // Show/hide availability filters based on export type checkboxes
     const availabilityCheckbox = document.getElementById('type_availability');

@@ -362,7 +362,7 @@ $active_page = "consultations";
 			<div class="lawyer-availability-section">
 				<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
 					<h3>Consultation Requests</h3>
-					<div style="display: flex; gap: 10px; align-items: center;">
+					<div style="display: flex; gap: 10px; align-items: flex-start;">
 						<!-- Status Filter -->
 						<select id="status_filter" 
 							name="status_filter" 
