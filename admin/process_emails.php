@@ -166,41 +166,19 @@ $active_page = "emails";
     <?php include 'partials/sidebar.php'; ?>
 
     <main class="admin-main-content">
-        <div class="container">
-            <div class="page-header ep-mobile-header">
-                <h1>📧 Email Processor</h1>
-                <p>Manually trigger email sending for pending notifications</p>
-                <div style="margin-top: 12px;">
-                    <a href="notification_queue.php" class="btn btn-secondary ep-mobile-btn" style="
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 8px;
-                        padding: 8px 16px;
-                        font-size: 14px;
-                        text-decoration: none;
-                        background: #6c757d;
-                        color: white;
-                    border-radius: 6px;
-                    transition: background-color 0.2s ease;
-                " onmouseover="this.style.background='#5a6268'" onmouseout="this.style.background='#6c757d'">
-                    <i class="fas fa-list"></i> View Queue
-                </a>
-            </div>
-        </div>
-
         <!-- Statistics Cards -->
-        <div class="stats-grid ep-mobile-stats-grid" style=gap:16px;margin-bottom:32px;>
-            <div class="stat-card ep-mobile-stat-card">
-                <div class="stat-number"><?php echo $stats['pending'] ?? 0; ?></div>
-                <div>Pending Emails</div>
+        <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 32px;">
+            <div class="stat-card" style="background: white; padding: 24px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e9ecef;">
+                <div class="stat-number" style="font-size: 48px; font-weight: 700; color: #3a3a3a; margin-bottom: 8px;"><?php echo $stats['pending'] ?? 0; ?></div>
+                <div style="color: #666; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">PENDING EMAILS</div>
             </div>
-            <div class="stat-card ep-mobile-stat-card">
-                <div class="stat-number"><?php echo $stats['sent'] ?? 0; ?></div>
-                <div>Sent Today</div>
+            <div class="stat-card" style="background: white; padding: 24px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e9ecef;">
+                <div class="stat-number" style="font-size: 48px; font-weight: 700; color: #3a3a3a; margin-bottom: 8px;"><?php echo $stats['sent'] ?? 0; ?></div>
+                <div style="color: #666; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">SENT TODAY</div>
             </div>
-            <div class="stat-card ep-mobile-stat-card">
-                <div class="stat-number"><?php echo $stats['failed'] ?? 0; ?></div>
-                <div>Failed</div>
+            <div class="stat-card" style="background: white; padding: 24px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e9ecef;">
+                <div class="stat-number" style="font-size: 48px; font-weight: 700; color: #3a3a3a; margin-bottom: 8px;"><?php echo $stats['failed'] ?? 0; ?></div>
+                <div style="color: #666; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">FAILED</div>
             </div>
         </div>
 
@@ -209,13 +187,16 @@ $active_page = "emails";
             <h3><i class="fas fa-paper-plane"></i> Manual Email Processing</h3>
             
             <?php if (($stats['pending'] ?? 0) > 0): ?>
-                <div class="alert alert-info ep-mobile-alert">
-                    <div class="ep-mobile-alert-content">
-                        <div>
-                            <strong>📧 Ready to Send:</strong> There are <?php echo $stats['pending']; ?> pending email(s) in the queue.
-                        </div>
-                        <a href="#SendAllPendingEmails" class="btn btn-primary ep-mobile-btn">
-                            <i class="fas fa-paper-plane"></i> Send Now
+                <div class="alert alert-info ep-mobile-alert" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <strong>📧 Ready to Send:</strong> There are <?php echo $stats['pending']; ?> pending email(s) in the queue.
+                    </div>
+                    <div style="display: flex; gap: 12px; flex-shrink: 0;">
+                        <a href="#SendAllPendingEmails" class="btn btn-primary" style="padding: 12px 24px; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; border-radius: 6px; border: none;">
+                            <i class="fas fa-paper-plane"></i> SEND NOW
+                        </a>
+                        <a href="notification_queue.php" class="btn btn-secondary" style="padding: 12px 24px; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; background: #0c5460; color: white; border-radius: 6px; border: none; transition: all 0.2s ease;" onmouseover="this.style.background='#085964'" onmouseout="this.style.background='#0c5460'">
+                            <i class="fas fa-list"></i> VIEW QUEUE
                         </a>
                     </div>
                 </div>

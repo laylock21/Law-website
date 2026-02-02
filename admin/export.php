@@ -310,26 +310,26 @@ $active_page = "export";
             <!-- Statistics Card -->
             <div class="export-card">
                 <h2><i class="fas fa-chart-bar"></i> Consultation Statistics</h2>
-                <div class="stats-grid">
-                    <div class="stat-box highlight">
-                        <div class="stat-number"><?php echo $stats['total']; ?></div>
-                        <div class="stat-label">Total</div>
+                <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                    <div class="stat-box" style="background: white; border-radius: 12px; padding: 24px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e9ecef;">
+                        <div class="stat-number" style="font-size: 48px; font-weight: 700; color: #3a3a3a; margin-bottom: 8px;"><?php echo $stats['total']; ?></div>
+                        <div class="stat-label" style="color: #666; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">TOTAL</div>
                     </div>
-                    <div class="stat-box">
-                        <div class="stat-number"><?php echo $stats['pending']; ?></div>
-                        <div class="stat-label">Pending</div>
+                    <div class="stat-box" style="background: white; border-radius: 12px; padding: 24px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e9ecef;">
+                        <div class="stat-number" style="font-size: 48px; font-weight: 700; color: #3a3a3a; margin-bottom: 8px;"><?php echo $stats['pending']; ?></div>
+                        <div class="stat-label" style="color: #666; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">PENDING</div>
                     </div>
-                    <div class="stat-box">
-                        <div class="stat-number"><?php echo $stats['confirmed']; ?></div>
-                        <div class="stat-label">Confirmed</div>
+                    <div class="stat-box" style="background: white; border-radius: 12px; padding: 24px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e9ecef;">
+                        <div class="stat-number" style="font-size: 48px; font-weight: 700; color: #3a3a3a; margin-bottom: 8px;"><?php echo $stats['confirmed']; ?></div>
+                        <div class="stat-label" style="color: #666; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">CONFIRMED</div>
                     </div>
-                    <div class="stat-box">
-                        <div class="stat-number"><?php echo $stats['completed']; ?></div>
-                        <div class="stat-label">Completed</div>
+                    <div class="stat-box" style="background: white; border-radius: 12px; padding: 24px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e9ecef;">
+                        <div class="stat-number" style="font-size: 48px; font-weight: 700; color: #3a3a3a; margin-bottom: 8px;"><?php echo $stats['completed']; ?></div>
+                        <div class="stat-label" style="color: #666; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">COMPLETED</div>
                     </div>
-                    <div class="stat-box">
-                        <div class="stat-number"><?php echo $stats['cancelled']; ?></div>
-                        <div class="stat-label">Cancelled</div>
+                    <div class="stat-box" style="background: white; border-radius: 12px; padding: 24px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e9ecef;">
+                        <div class="stat-number" style="font-size: 48px; font-weight: 700; color: #3a3a3a; margin-bottom: 8px;"><?php echo $stats['cancelled']; ?></div>
+                        <div class="stat-label" style="color: #666; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">CANCELLED</div>
                     </div>
                 </div>
             </div>
