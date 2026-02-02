@@ -311,7 +311,7 @@ $active_page = "consultations";
         /* Mobile responsive styles for consultations page */
         @media (max-width: 768px) {
             .consultations-stats {
-                grid-template-columns: repeat(2, 1fr) !important;
+                grid-template-columns: repeat(3, 1fr) !important;
                 gap: 0.75rem;
             }
             
@@ -384,9 +384,14 @@ $active_page = "consultations";
             }
         }
         
+        /* Mobile card view - hidden by default */
+        .mobile-consultations-cards {
+            display: none;
+        }
+        
         @media (max-width: 480px) {
             .consultations-stats {
-                grid-template-columns: 1fr !important;
+                grid-template-columns: repeat(2, 1fr) !important;
             }
             
             .admin-stat-card {
@@ -395,6 +400,148 @@ $active_page = "consultations";
             
             .admin-stat-number {
                 font-size: 1.75rem;
+            }
+            
+            /* Hide desktop table on mobile */
+            .desktop-table {
+                display: none !important;
+            }
+            
+            /* Show mobile cards */
+            .mobile-consultations-cards {
+                display: block !important;
+            }
+            
+            /* Mobile consultation card styles */
+            .consultation-card {
+                background: white;
+                border-radius: 8px;
+                padding: 16px;
+                margin-bottom: 12px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                border-left: 4px solid #c5a253;
+            }
+            
+            .consultation-card-header {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 12px;
+                padding-bottom: 12px;
+                border-bottom: 1px solid #e9ecef;
+            }
+            
+            .consultation-card-checkbox {
+                flex-shrink: 0;
+                padding-top: 2px;
+            }
+            
+            .consultation-card-checkbox input[type="checkbox"] {
+                width: 18px;
+                height: 18px;
+                cursor: pointer;
+            }
+            
+            .consultation-card-title-section {
+                flex: 1;
+            }
+            
+            .consultation-card-id {
+                font-size: 12px;
+                color: #6c757d;
+                font-weight: 600;
+                margin-bottom: 4px;
+            }
+            
+            .consultation-card-name {
+                font-size: 16px;
+                font-weight: 600;
+                color: #0b1d3a;
+            }
+            
+            .consultation-card-body {
+                margin-bottom: 12px;
+            }
+            
+            .consultation-card-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: start;
+                padding: 8px 0;
+                border-bottom: 1px solid #f8f9fa;
+                gap: 12px;
+            }
+            
+            .consultation-card-row:last-child {
+                border-bottom: none;
+            }
+            
+            .consultation-card-label {
+                font-size: 12px;
+                color: #6c757d;
+                font-weight: 600;
+                flex-shrink: 0;
+                min-width: 80px;
+            }
+            
+            .consultation-card-label i {
+                margin-right: 4px;
+                width: 14px;
+            }
+            
+            .consultation-card-value {
+                font-size: 13px;
+                color: #0b1d3a;
+                text-align: right;
+                word-break: break-word;
+            }
+            
+            .consultation-card-footer {
+                display: flex;
+                gap: 8px;
+            }
+            
+            .consultation-card-btn {
+                flex: 1;
+                padding: 10px;
+                border-radius: 6px;
+                font-weight: 600;
+                font-size: 13px;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                background: #c5a253;
+                color: white;
+                text-decoration: none;
+                transition: all 0.2s ease;
+            }
+            
+            .consultation-card-btn:hover {
+                background: #b08f42;
+                transform: translateY(-1px);
+            }
+        }
+        
+        /* Extra small screens */
+        @media (max-width: 375px) {
+            .consultation-card {
+                padding: 12px;
+            }
+            
+            .consultation-card-name {
+                font-size: 14px;
+            }
+            
+            .consultation-card-label {
+                font-size: 11px;
+                min-width: 70px;
+            }
+            
+            .consultation-card-value {
+                font-size: 12px;
             }
         }
     </style>
@@ -522,7 +669,8 @@ $active_page = "consultations";
                 
                 <div class="table-responsive consult-mobile-table-wrapper">
                     <form method="POST" id="consultations-form">
-                    <table>
+                    <!-- Desktop Table View -->
+                    <table class="desktop-table">
                         <thead>
                             <tr>
                                 <th><input type="checkbox" id="select-all" onchange="toggleSelectAll()"></th>
@@ -588,6 +736,79 @@ $active_page = "consultations";
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                    
+                    <!-- Mobile Card View -->
+                    <div class="mobile-consultations-cards">
+                        <?php foreach ($consultations as $consultation): ?>
+                            <div class="consultation-card">
+                                <div class="consultation-card-header">
+                                    <div class="consultation-card-checkbox">
+                                        <input type="checkbox" name="selected_consultations[]" value="<?php echo $consultation['c_id']; ?>" class="consultation-checkbox" onchange="updateBulkActionsVisibility()">
+                                    </div>
+                                    <div class="consultation-card-title-section">
+                                        <div class="consultation-card-id">#<?php echo htmlspecialchars($consultation['c_id']); ?></div>
+                                        <div class="consultation-card-name"><?php echo htmlspecialchars($consultation['c_full_name']); ?></div>
+                                    </div>
+                                    <div>
+                                        <span class="admin-status-badge admin-status-<?php echo $consultation['c_status']; ?>">
+                                            <?php echo ucfirst($consultation['c_status']); ?>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="consultation-card-body">
+                                    <div class="consultation-card-row">
+                                        <div class="consultation-card-label"><i class="fas fa-envelope"></i> Email</div>
+                                        <div class="consultation-card-value"><?php echo htmlspecialchars($consultation['c_email']); ?></div>
+                                    </div>
+                                    <div class="consultation-card-row">
+                                        <div class="consultation-card-label"><i class="fas fa-phone"></i> Phone</div>
+                                        <div class="consultation-card-value"><?php echo htmlspecialchars($consultation['c_phone']); ?></div>
+                                    </div>
+                                    <div class="consultation-card-row">
+                                        <div class="consultation-card-label"><i class="fas fa-user-tie"></i> Lawyer</div>
+                                        <div class="consultation-card-value">
+                                            <?php 
+                                            if ($consultation['lawyer_id']) {
+                                                $lawyer_stmt = $pdo->prepare("SELECT lp_fullname FROM lawyer_profile WHERE lawyer_id = ?");
+                                                $lawyer_stmt->execute([$consultation['lawyer_id']]);
+                                                $lawyer = $lawyer_stmt->fetch();
+                                                echo $lawyer ? htmlspecialchars($lawyer['lp_fullname']) : 'Unknown';
+                                            } else {
+                                                echo 'Not assigned';
+                                            }
+                                            ?>
+                                        </div>
+                                    </div>
+                                    <div class="consultation-card-row">
+                                        <div class="consultation-card-label"><i class="fas fa-calendar"></i> Date</div>
+                                        <div class="consultation-card-value">
+                                            <?php 
+                                            if ($consultation['c_consultation_date']) {
+                                                echo date('M d, Y', strtotime($consultation['c_consultation_date']));
+                                                if (!empty($consultation['c_consultation_time'])) {
+                                                    echo ' at ' . date('g:i A', strtotime($consultation['c_consultation_time']));
+                                                }
+                                            } else {
+                                                echo 'No date';
+                                            }
+                                            ?>
+                                        </div>
+                                    </div>
+                                    <div class="consultation-card-row">
+                                        <div class="consultation-card-label"><i class="fas fa-clock"></i> Created</div>
+                                        <div class="consultation-card-value"><?php echo date('M d, Y H:i', strtotime($consultation['created_at'])); ?></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="consultation-card-footer">
+                                    <a href="view_consultation.php?id=<?php echo $consultation['c_id']; ?>" class="consultation-card-btn">
+                                        <i class="fas fa-eye"></i> View Details
+                                    </a>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
                     </form>
                     
                     <?php if (!empty($search_query)): ?>

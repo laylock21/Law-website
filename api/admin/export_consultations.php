@@ -87,8 +87,8 @@ try {
     }
     
     // Export based on format
-    if ($format === 'csv') {
-        exportCSV($consultations);
+    if ($format === 'xlsx') {
+        exportExcel($consultations);
     } elseif ($format === 'pdf') {
         exportPDF($consultations);
     } else {
@@ -102,21 +102,44 @@ try {
     echo json_encode(['success' => false, 'message' => 'Export failed: ' . $e->getMessage()]);
 }
 
-function exportCSV($data) {
-    $filename = 'consultations_export_' . date('Y-m-d_His') . '.csv';
+function exportExcel($data) {
+    require_once '../../vendor/autoload.php';
     
-    header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename="' . $filename . '"');
-    header('Pragma: no-cache');
-    header('Expires: 0');
+    $filename = 'consultations_export_' . date('Y-m-d_His') . '.xlsx';
     
-    $output = fopen('php://output', 'w');
+    // Create new Spreadsheet
+    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
     
-    // Add BOM for Excel UTF-8 support
-    fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+    // Set document properties
+    $spreadsheet->getProperties()
+        ->setCreator('MD Law Firm')
+        ->setTitle('Consultations Report')
+        ->setSubject('Consultation Records')
+        ->setDescription('Consultation records export');
     
-    // Headers
-    fputcsv($output, [
+    // Add header information
+    $sheet->setCellValue('A1', 'Consultations Report');
+    $sheet->mergeCells('A1:L1');
+    $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(18)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFF'));
+    $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $sheet->getStyle('A1')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('C5A253');
+    $sheet->getRowDimension(1)->setRowHeight(30);
+    
+    $sheet->setCellValue('A2', 'Generated: ' . date('F d, Y g:i A'));
+    $sheet->mergeCells('A2:L2');
+    $sheet->getStyle('A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $sheet->getStyle('A2')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('F8F9FA');
+    
+    $sheet->setCellValue('A3', 'Total Records: ' . count($data));
+    $sheet->mergeCells('A3:L3');
+    $sheet->getStyle('A3')->getFont()->setBold(true);
+    $sheet->getStyle('A3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $sheet->getStyle('A3')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('E9ECEF');
+    
+    // Add column headers
+    $headerRow = 5;
+    $headers = [
         'ID',
         'Client Name',
         'Email',
@@ -129,27 +152,95 @@ function exportCSV($data) {
         'Cancellation Reason',
         'Assigned Lawyer',
         'Created At'
-    ]);
-    
-    // Data rows
-    foreach ($data as $row) {
-        fputcsv($output, [
-            $row['c_id'],
-            $row['c_full_name'],
-            $row['c_email'],
-            $row['c_phone'] ?? '',
-            $row['c_practice_area'] ?? '',
-            $row['c_case_description'] ?? '',
-            $row['c_consultation_date'] ?? '',
-            $row['c_consultation_time'] ?? '',
-            ucfirst($row['c_status']),
-            $row['c_cancellation_reason'] ?? '',
-            $row['lawyer_name'] ?? 'Not assigned',
-            $row['created_at']
-        ]);
+    ];
+    $column = 'A';
+    foreach ($headers as $header) {
+        $sheet->setCellValue($column . $headerRow, $header);
+        $column++;
     }
     
-    fclose($output);
+    // Style header row
+    $sheet->getStyle('A' . $headerRow . ':L' . $headerRow)->applyFromArray([
+        'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],
+        'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '0B1D3A']],
+        'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER, 'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER],
+        'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['rgb' => '000000']]]
+    ]);
+    $sheet->getRowDimension($headerRow)->setRowHeight(25);
+    
+    // Data rows
+    $row = $headerRow + 1;
+    foreach ($data as $item) {
+        $sheet->setCellValue('A' . $row, $item['c_id']);
+        $sheet->setCellValue('B' . $row, $item['c_full_name']);
+        $sheet->setCellValue('C' . $row, $item['c_email']);
+        $sheet->setCellValue('D' . $row, $item['c_phone'] ?? '');
+        $sheet->setCellValue('E' . $row, $item['c_practice_area'] ?? '');
+        $sheet->setCellValue('F' . $row, $item['c_case_description'] ?? '');
+        $sheet->setCellValue('G' . $row, $item['c_consultation_date'] ?? '');
+        $sheet->setCellValue('H' . $row, $item['c_consultation_time'] ?? '');
+        $sheet->setCellValue('I' . $row, ucfirst($item['c_status']));
+        $sheet->setCellValue('J' . $row, $item['c_cancellation_reason'] ?? '');
+        $sheet->setCellValue('K' . $row, $item['lawyer_name'] ?? 'Not assigned');
+        $sheet->setCellValue('L' . $row, $item['created_at']);
+        
+        // Color code status
+        $statusColors = [
+            'pending' => 'FFF3CD',
+            'confirmed' => 'D1ECF1',
+            'completed' => 'D4EDDA',
+            'cancelled' => 'F8D7DA'
+        ];
+        $statusColor = $statusColors[strtolower($item['c_status'])] ?? 'FFFFFF';
+        $sheet->getStyle('I' . $row)->applyFromArray([
+            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => $statusColor]],
+            'font' => ['bold' => true]
+        ]);
+        
+        // Alternate row colors
+        if ($row % 2 == 0) {
+            $sheet->getStyle('A' . $row . ':H' . $row)->applyFromArray([
+                'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F9F9F9']]
+            ]);
+            $sheet->getStyle('J' . $row . ':L' . $row)->applyFromArray([
+                'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F9F9F9']]
+            ]);
+        }
+        
+        // Center align specific columns
+        $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('G' . $row . ':I' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        
+        $row++;
+    }
+    
+    // Add borders to all data
+    $sheet->getStyle('A' . $headerRow . ':L' . ($row - 1))->applyFromArray([
+        'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['rgb' => 'DDDDDD']]]
+    ]);
+    
+    // Auto-size columns
+    foreach (range('A', 'L') as $col) {
+        $sheet->getColumnDimension($col)->setAutoSize(true);
+    }
+    
+    // Add footer
+    $footerRow = $row + 2;
+    $sheet->setCellValue('A' . $footerRow, 'MD Law Firm - Confidential Document');
+    $sheet->mergeCells('A' . $footerRow . ':L' . $footerRow);
+    $sheet->getStyle('A' . $footerRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $sheet->getStyle('A' . $footerRow)->getFont()->setSize(9)->setItalic(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('6C757D'));
+    
+    // Generate Excel file
+    $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+    
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+    
+    $writer->save('php://output');
     exit;
 }
 

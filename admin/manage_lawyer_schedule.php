@@ -32,7 +32,6 @@ $consult_offset = 0;
 $consult_total_pages = 0;
 $status_filter = '';
 $search_query = '';
-$schedule_status_filter = isset($_GET['schedule_status']) ? $_GET['schedule_status'] : '';
 $schedule_type_filter = isset($_GET['schedule_type']) ? $_GET['schedule_type'] : '';
 $schedule_per_page = isset($_GET['schedule_per_page']) ? (int)$_GET['schedule_per_page'] : 10;
 $schedule_page = isset($_GET['schedule_page']) ? max(1, (int)$_GET['schedule_page']) : 1;
@@ -45,9 +44,6 @@ function buildRedirectUrl($lawyer_id, $params = []) {
     $url = "manage_lawyer_schedule.php?lawyer_id=" . $lawyer_id;
     
     // Preserve schedule filters
-    if (!empty($_GET['schedule_search'])) {
-        $url .= "&schedule_search=" . urlencode($_GET['schedule_search']);
-    }
     if (!empty($_GET['schedule_type'])) {
         $url .= "&schedule_type=" . urlencode($_GET['schedule_type']);
     }
@@ -85,7 +81,8 @@ try {
         if (isset($_POST['action'])) {
             $redirect_after_post = true; // Flag to redirect after successful POST
             
-            switch ($_POST['action']) {
+            try {
+                switch ($_POST['action']) {
                 case 'add_weekly':
                     $weekdays = $_POST['weekdays'] ?? [];
                     $start_time = $_POST['start_time'] ?? '';
@@ -504,6 +501,13 @@ try {
                 header("Location: " . buildRedirectUrl($lawyer_id));
                 exit;
             }
+            
+            } catch (Exception $e) {
+                // Handle POST errors without breaking the page
+                error_log("Error in POST action: " . $e->getMessage());
+                $error = $e->getMessage();
+                // Don't exit - continue to display the page with error message
+            }
         }
     }
     
@@ -571,19 +575,10 @@ try {
     // Get lawyer's schedules (blocked, weekly, one-time)
     // Pagination and filtering for schedules
     $schedule_offset = ($schedule_page - 1) * $schedule_per_page;
-    $schedule_search = isset($_GET['schedule_search']) ? trim($_GET['schedule_search']) : '';
     
     // Build WHERE clause
     $where_conditions = ["lawyer_id = ?"];
     $params = [$lawyer_id];
-    
-    if (!empty($schedule_search)) {
-        $where_conditions[] = "(weekday LIKE ? OR specific_date LIKE ? OR blocked_reason LIKE ?)";
-        $search_param = "%$schedule_search%";
-        $params[] = $search_param;
-        $params[] = $search_param;
-        $params[] = $search_param;
-    }
     
     if (!empty($schedule_type_filter)) {
         $where_conditions[] = "schedule_type = ?";
@@ -703,6 +698,7 @@ try {
     }
     
     $error = 'A database error occurred. Please try again or contact support.';
+    // Don't exit - let the page continue to load with available data
 } catch (Exception $e) {
     error_log("Error in manage_lawyer_schedule.php: " . $e->getMessage());
     
@@ -716,7 +712,11 @@ try {
         exit;
     }
     
-    $error = $e->getMessage();
+    // Only set error if lawyer not found (critical error)
+    if (strpos($e->getMessage(), 'Lawyer not found') !== false) {
+        $error = $e->getMessage();
+    }
+    // For other errors, they're already handled in the POST try-catch
 }
 ?>
 <!DOCTYPE html>
@@ -1002,43 +1002,17 @@ try {
 
             <!-- Schedule Table -->
             <div class="action-card" style="max-width: 100%; margin: 0 auto; margin-bottom: 32px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 16px;">
+                <div class="schedule-header-wrapper" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 16px;">
                     <h3 style="margin: 0;">
                         <i class="fas fa-calendar-alt"></i> Schedule
                     </h3>
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <!-- Search -->
-                        <form method="GET" style="display: flex; gap: 8px; align-items: center;">
-                            <input type="hidden" name="lawyer_id" value="<?php echo $lawyer_id; ?>">
-                            <?php if (!empty($schedule_type_filter)): ?>
-                                <input type="hidden" name="schedule_type" value="<?php echo htmlspecialchars($schedule_type_filter); ?>">
-                            <?php endif; ?>
-                            
-                            <div style="position: relative;">
-                                <input type="text" name="schedule_search" placeholder="Search by date..." 
-                                       value="<?php echo htmlspecialchars($schedule_search); ?>"
-                                       style="padding: 10px 90px 10px 16px; min-width: 280px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 14px;">
-                                <?php if (!empty($schedule_search)): ?>
-                                    <a href="?lawyer_id=<?php echo $lawyer_id; ?><?php echo !empty($schedule_type_filter) ? '&schedule_type=' . urlencode($schedule_type_filter) : ''; ?>" 
-                                       style="position: absolute; right: 48px; top: 50%; transform: translateY(-50%); padding: 0; width: 32px; height: 32px; border: none; background: transparent; color: #6c757d; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none;">
-                                        <i class="fas fa-times"></i>
-                                    </a>
-                                <?php endif; ?>
-                                <button type="submit" style="position: absolute; right: 2px; top: 50%; transform: translateY(-50%); padding: 0 12px; height: 38px; border: none; border-radius: 6px; background: #c5a253; color: white; cursor: pointer;">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </div>
-                        </form>
-                        
+                    <div class="schedule-actions-wrapper" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                         <!-- Type Filter -->
-                        <form method="GET" style="display: inline;">
+                        <form method="GET" class="schedule-filter-form" style="display: inline;">
                             <input type="hidden" name="lawyer_id" value="<?php echo $lawyer_id; ?>">
-                            <?php if (!empty($schedule_search)): ?>
-                                <input type="hidden" name="schedule_search" value="<?php echo htmlspecialchars($schedule_search); ?>">
-                            <?php endif; ?>
                             
                             <select name="schedule_type" onchange="this.form.submit()" 
-                                    style="padding: 10px 16px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 14px; background: white; cursor: pointer;">
+                                    class="schedule-select" style="padding: 10px 16px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 14px; background: white; cursor: pointer;">
                                 <option value="">All Types</option>
                                 <option value="weekly" <?php echo $schedule_type_filter === 'weekly' ? 'selected' : ''; ?>>Weekly</option>
                                 <option value="one_time" <?php echo $schedule_type_filter === 'one_time' ? 'selected' : ''; ?>>One-Time</option>
@@ -1046,9 +1020,14 @@ try {
                             </select>
                         </form>
                         
+                        <!-- Export Button -->
+                        <button type="button" onclick="openExportModal()" class="btn btn-export" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; width: auto;">
+                            <i class="fas fa-file-export"></i> <span>Export</span>
+                        </button>
+                        
                         <!-- Create Schedule Button -->
-                        <button type="button" onclick="openScheduleModal()" class="btn btn-primary" style="background: #c5a253; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; width: auto;">
-                            <i class="fas fa-plus-circle"></i> Add New Schedule
+                        <button type="button" onclick="openScheduleModal()" class="btn btn-add-schedule" style="background: #c5a253; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; width: auto;">
+                            <i class="fas fa-plus-circle"></i> <span>Add New Schedule</span>
                         </button>
                     </div>
                 </div>
@@ -1059,7 +1038,9 @@ try {
                         No schedules found for this lawyer.
                     </p>
                 <?php else: ?>
-                <div class="table-wrapper" style="overflow-x: auto;">
+                
+                <!-- Desktop Table View -->
+                <div class="table-wrapper" style="overflow-x: auto;width:100%;">
                     <table class="schedule-table" style="width: 100%; border-collapse: collapse; background: white; table-layout: auto;">
                         <thead>
                             <tr style="background: #f8f9fa; border-bottom: 2px solid #e9ecef;">
@@ -1068,6 +1049,8 @@ try {
                                 <th style="padding: 12px; text-align: left; font-weight: 600; color: #000;">Type</th>
                                 <th style="padding: 12px; text-align: left; font-weight: 600; color: #000;">Start Time</th>
                                 <th style="padding: 12px; text-align: left; font-weight: 600; color: #000;">End Time</th>
+                                <th style="padding: 12px; text-align: center; font-weight: 600; color: #000; width: 80px;">Max Appts</th>
+                                <th style="padding: 12px; text-align: center; font-weight: 600; color: #000; width: 100px;">Duration</th>
                                 <th style="padding: 12px; text-align: center; font-weight: 600; color: #000; width: 120px;">Actions</th>
                             </tr>
                         </thead>
@@ -1129,6 +1112,28 @@ try {
                                         ?>
                                     </td>
                                     
+                                    <!-- Max Appointments -->
+                                    <td style="padding: 12px; text-align: center;">
+                                        <?php 
+                                        if ($schedule['schedule_type'] === 'blocked') {
+                                            echo '—';
+                                        } else {
+                                            echo $schedule['max_appointments'];
+                                        }
+                                        ?>
+                                    </td>
+                                    
+                                    <!-- Duration -->
+                                    <td style="padding: 12px; text-align: center;">
+                                        <?php 
+                                        if ($schedule['schedule_type'] === 'blocked') {
+                                            echo '—';
+                                        } else {
+                                            echo $schedule['time_slot_duration'] . ' min';
+                                        }
+                                        ?>
+                                    </td>
+                                    
                                     <!-- Actions -->
                                     <td style="padding: 12px; text-align: center;">
                                         <button type="button" class="lawyer-btn btn-view-details" onclick="openDeleteModal(<?php echo $schedule['la_id']; ?>)"
@@ -1142,12 +1147,77 @@ try {
                     </table>
                 </div>
                 
+                <!-- Mobile Card View -->
+                <div class="mobile-schedule-cards">
+                    <?php foreach ($all_schedules as $schedule): ?>
+                        <div class="schedule-card">
+                            <div class="schedule-card-header">
+                                <div>
+                                    <div class="schedule-card-title">
+                                        <?php 
+                                        if ($schedule['schedule_type'] === 'weekly') {
+                                            echo htmlspecialchars($schedule['weekday']);
+                                        } else {
+                                            echo date('D, M d, Y', strtotime($schedule['specific_date']));
+                                        }
+                                        ?>
+                                    </div>
+                                    <div class="schedule-card-subtitle">
+                                        <?php 
+                                        if ($schedule['schedule_type'] === 'blocked') {
+                                            echo 'Blocked date';
+                                        } else {
+                                            echo ucfirst(str_replace('_', '-', $schedule['schedule_type']));
+                                        }
+                                        ?>
+                                    </div>
+                                </div>
+                                <div>
+                                    <?php 
+                                    if ($schedule['schedule_type'] === 'blocked') {
+                                        echo '<span class="schedule-card-badge badge-unavailable">Unavailable</span>';
+                                    } else {
+                                        echo $schedule['la_is_active'] ? '<span class="schedule-card-badge badge-active">Active</span>' : '<span class="schedule-card-badge badge-inactive">Inactive</span>';
+                                    }
+                                    ?>
+                                </div>
+                            </div>
+                            
+                            <?php if ($schedule['schedule_type'] !== 'blocked'): ?>
+                            <div class="schedule-card-details">
+                                <div class="schedule-card-detail">
+                                    <div class="schedule-card-detail-label">Start Time</div>
+                                    <div class="schedule-card-detail-value"><?php echo date('g:i A', strtotime($schedule['start_time'])); ?></div>
+                                </div>
+                                <div class="schedule-card-detail">
+                                    <div class="schedule-card-detail-label">End Time</div>
+                                    <div class="schedule-card-detail-value"><?php echo date('g:i A', strtotime($schedule['end_time'])); ?></div>
+                                </div>
+                                <div class="schedule-card-detail">
+                                    <div class="schedule-card-detail-label">Max Appts</div>
+                                    <div class="schedule-card-detail-value"><?php echo $schedule['max_appointments']; ?></div>
+                                </div>
+                                <div class="schedule-card-detail">
+                                    <div class="schedule-card-detail-label">Duration</div>
+                                    <div class="schedule-card-detail-value"><?php echo $schedule['time_slot_duration']; ?> min</div>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+                            
+                            <div class="schedule-card-actions">
+                                <button type="button" class="schedule-card-btn btn-delete-card" onclick="openDeleteModal(<?php echo $schedule['la_id']; ?>)">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                
                 <!-- Pagination -->
                 <?php if ($schedule_total_pages > 1): ?>
                     <div class="pagination" style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 20px;">
                         <?php
                         $base_url = "?lawyer_id=$lawyer_id";
-                        if (!empty($schedule_search)) $base_url .= "&schedule_search=" . urlencode($schedule_search);
                         if (!empty($schedule_type_filter)) $base_url .= "&schedule_type=" . urlencode($schedule_type_filter);
                         ?>
                         
@@ -1232,6 +1302,260 @@ try {
             background: #c82333 !important;
             transform: translateY(-2px);
             transition: all 0.2s ease;
+        }
+        
+        /* Mobile card view - hidden by default */
+        .mobile-schedule-cards {
+            display: none;
+        }
+        
+        /* Mobile responsive styles */
+        @media (max-width: 768px) {
+            /* Header adjustments */
+            .schedule-header-wrapper {
+                flex-direction: column !important;
+                align-items: stretch !important;
+            }
+            
+            .schedule-header-wrapper h3 {
+                margin-bottom: 12px !important;
+            }
+            
+            /* Actions wrapper - full width */
+            .schedule-actions-wrapper {
+                width: 100% !important;
+                flex-direction: column !important;
+            }
+            
+            /* Filter form - full width */
+            .schedule-filter-form {
+                width: 100% !important;
+                display: block !important;
+            }
+            
+            .schedule-select {
+                width: 100% !important;
+            }
+            
+            /* Buttons - full width */
+            .btn-export,
+            .btn-add-schedule {
+                width: 100% !important;
+            }
+            
+            /* Hide table on mobile */
+            .table-wrapper {
+                display: none !important;
+            }
+            
+            /* Show mobile cards */
+            .mobile-schedule-cards {
+                display: block !important;
+            }
+        }
+        
+        /* Extra small screens (320px) */
+        @media (max-width: 425px) {
+            /* Reduce container padding */
+            .container {
+                padding-left: 12px !important;
+                padding-right: 12px !important;
+            }
+            
+            .action-card {
+                padding: 12px !important;
+            }
+            
+            /* Smaller header */
+            .schedule-header-wrapper h3 {
+                font-size: 18px !important;
+            }
+            
+            /* Compact buttons */
+            .btn-export,
+            .btn-add-schedule {
+                padding: 8px 16px !important;
+                font-size: 13px !important;
+            }
+            
+            .schedule-select {
+                padding: 8px 12px !important;
+                font-size: 13px !important;
+            }
+            
+            /* Compact cards */
+            .schedule-card {
+                padding: 12px !important;
+                margin-bottom: 10px !important;
+            }
+            
+            .schedule-card-title {
+                font-size: 14px !important;
+            }
+            
+            .schedule-card-subtitle {
+                font-size: 12px !important;
+            }
+            
+            .schedule-card-badge {
+                padding: 3px 8px !important;
+                font-size: 11px !important;
+            }
+            
+            .schedule-card-detail-label {
+                font-size: 10px !important;
+            }
+            
+            .schedule-card-detail-value {
+                font-size: 13px !important;
+            }
+            
+            .schedule-card-btn {
+                padding: 8px !important;
+                font-size: 12px !important;
+            }
+        }
+        
+        /* Ultra small screens (320px) */
+        @media (max-width: 375px) {
+            /* Even more compact */
+            .action-card {
+                padding: 10px !important;
+            }
+            
+            .schedule-header-wrapper h3 {
+                font-size: 16px !important;
+            }
+            
+            .schedule-card {
+                padding: 10px !important;
+            }
+            
+            .schedule-card-header {
+                margin-bottom: 10px !important;
+                padding-bottom: 10px !important;
+            }
+            
+            .schedule-card-title {
+                font-size: 13px !important;
+            }
+            
+            .schedule-card-details {
+                gap: 10px !important;
+            }
+            
+            /* Stack pagination on very small screens */
+            .pagination {
+                gap: 6px !important;
+            }
+            
+            .pagination a,
+            .pagination span {
+                padding: 6px 10px !important;
+                font-size: 14px !important;
+            }
+        }
+        
+        /* Mobile card styles */
+        .schedule-card {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #c5a253;
+        }
+        
+        .schedule-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .schedule-card-title {
+            font-weight: 600;
+            font-size: 16px;
+            color: #0b1d3a;
+            margin-bottom: 4px;
+        }
+        
+        .schedule-card-subtitle {
+            font-size: 13px;
+            color: #6c757d;
+        }
+        
+        .schedule-card-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .badge-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .badge-unavailable {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .schedule-card-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .schedule-card-detail {
+            font-size: 13px;
+        }
+        
+        .schedule-card-detail-label {
+            color: #6c757d;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        
+        .schedule-card-detail-value {
+            color: #0b1d3a;
+            font-weight: 600;
+        }
+        
+        .schedule-card-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .schedule-card-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        .btn-delete-card {
+            background: #dc3545;
+            color: white;
         }
     </style>
 
@@ -1386,7 +1710,119 @@ try {
             if (event.target === modal) {
                 closeScheduleModal();
             }
+            
+            const exportModal = document.getElementById('exportModal');
+            if (event.target === exportModal) {
+                closeExportModal();
+            }
         });
+        
+        // Export Modal Functions
+        function openExportModal() {
+            const modal = document.getElementById('exportModal');
+            if (!modal) return;
+            modal.style.display = 'block';
+            toggleDateFilters(); // Check initial state
+        }
+
+        function closeExportModal() {
+            const modal = document.getElementById('exportModal');
+            if (!modal) return;
+            modal.style.display = 'none';
+            // Reset form
+            document.getElementById('export_schedule_type').value = 'all';
+            document.getElementById('export_date_from').value = '';
+            document.getElementById('export_date_to').value = '';
+            toggleDateFilters();
+        }
+        
+        function toggleDateFilters() {
+            const scheduleType = document.getElementById('export_schedule_type').value;
+            const dateFiltersContainer = document.getElementById('dateFiltersContainer');
+            
+            // Show date filters only for one_time and blocked
+            if (scheduleType === 'one_time' || scheduleType === 'blocked') {
+                dateFiltersContainer.style.display = 'block';
+            } else {
+                dateFiltersContainer.style.display = 'none';
+                // Clear date values when hidden
+                document.getElementById('export_date_from').value = '';
+                document.getElementById('export_date_to').value = '';
+            }
+        }
+        
+        function handleExport(event) {
+            event.preventDefault();
+            
+            const format = document.querySelector('input[name="export_format"]:checked').value;
+            const scheduleType = document.getElementById('export_schedule_type').value;
+            const dateFrom = document.getElementById('export_date_from').value;
+            const dateTo = document.getElementById('export_date_to').value;
+            
+            // Validate date range if provided
+            if (dateFrom && dateTo && dateFrom > dateTo) {
+                showToast('Invalid date range: "From" date must be before "To" date', 'error');
+                return;
+            }
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('format', format);
+            formData.append('lawyer_id', <?php echo $lawyer_id; ?>);
+            
+            if (scheduleType !== 'all') {
+                formData.append('schedule_type', scheduleType);
+            }
+            
+            if (dateFrom) {
+                formData.append('date_from', dateFrom);
+            }
+            
+            if (dateTo) {
+                formData.append('date_to', dateTo);
+            }
+            
+            // Show loading state
+            const exportBtn = document.getElementById('exportBtn');
+            const originalText = exportBtn.innerHTML;
+            exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...';
+            exportBtn.disabled = true;
+            
+            // Submit export request
+            fetch('../api/admin/export_lawyer_availability.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Export failed');
+                    });
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // Create download link
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `lawyer_availability_<?php echo $lawyer_id; ?>_${new Date().getTime()}.${format}`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                showToast('Export completed successfully!', 'success');
+                closeExportModal();
+            })
+            .catch(error => {
+                showToast(error.message || 'Export failed', 'error');
+            })
+            .finally(() => {
+                exportBtn.innerHTML = originalText;
+                exportBtn.disabled = false;
+            });
+        }
     </script>
     
     <!-- Create Schedule Modal -->
@@ -1903,6 +2339,89 @@ try {
                 transform: translateX(400px);
                 opacity: 0;
             }
+        }
+    </style>
+    
+    <!-- Export Modal -->
+    <div id="exportModal" class="consultation-modal" style="display:none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 style="color:white;">Export Lawyer Availability</h2>
+                <span class="modal-close" onclick="closeExportModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="exportForm" onsubmit="handleExport(event)">
+                    <!-- Export Format -->
+                    <div class="form-group-modern" style="margin-bottom: 20px;">
+                        <label class="form-label-modern">Export Format</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div class="format-option">
+                                <input type="radio" name="export_format" id="export_format_xlsx" value="xlsx" checked style="display: none;">
+                                <label for="export_format_xlsx" class="format-label" style="display: flex; align-items: center; gap: 12px; padding: 15px; border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;">
+                                    <div style="font-size: 24px; color: #217346;"><i class="fas fa-file-excel"></i></div>
+                                    <div>
+                                        <h4 style="margin: 0 0 4px 0; font-size: 14px;">Excel</h4>
+                                        <p style="margin: 0; font-size: 12px; color: #6c757d;">Styled spreadsheet</p>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="format-option">
+                                <input type="radio" name="export_format" id="export_format_pdf" value="pdf" style="display: none;">
+                                <label for="export_format_pdf" class="format-label" style="display: flex; align-items: center; gap: 12px; padding: 15px; border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;">
+                                    <div style="font-size: 24px; color: #dc3545;"><i class="fas fa-file-pdf"></i></div>
+                                    <div>
+                                        <h4 style="margin: 0 0 4px 0; font-size: 14px;">PDF</h4>
+                                        <p style="margin: 0; font-size: 12px; color: #6c757d;">Professional report</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Schedule Type Filter -->
+                    <div class="form-group-modern" style="margin-bottom: 20px;">
+                        <label class="form-label-modern" for="export_schedule_type">Schedule Type</label>
+                        <select name="schedule_type" id="export_schedule_type" class="form-select-modern" onchange="toggleDateFilters()">
+                            <option value="all">All Types</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="one_time">One-Time</option>
+                            <option value="blocked">Blocked</option>
+                        </select>
+                    </div>
+
+                    <!-- Date Filters (shown only for one_time and blocked) -->
+                    <div id="dateFiltersContainer" style="display: none;">
+                        <div class="form-group-modern" style="margin-bottom: 15px;">
+                            <label class="form-label-modern" for="export_date_from">From Date</label>
+                            <input type="date" name="date_from" id="export_date_from" class="form-input-modern">
+                        </div>
+                        <div class="form-group-modern" style="margin-bottom: 20px;">
+                            <label class="form-label-modern" for="export_date_to">To Date</label>
+                            <input type="date" name="date_to" id="export_date_to" class="form-input-modern">
+                        </div>
+                    </div>
+
+                    <div class="form-actions-modern" style="margin-top: 20px; display:flex; justify-content:flex-end; gap:10px;">
+                        <button type="button" class="btn-secondary-modern" onclick="closeExportModal()">Cancel</button>
+                        <button type="submit" class="btn-primary-modern" id="exportBtn" style="background: #28a745;">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        .format-option input[type="radio"]:checked + .format-label {
+            border-color: #28a745;
+            background: linear-gradient(135deg, #e8f5e9, #f1f8f4);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+        }
+        
+        .format-label:hover {
+            border-color: #28a745;
+            transform: translateY(-2px);
         }
     </style>
     

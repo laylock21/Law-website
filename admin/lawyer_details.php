@@ -47,6 +47,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ]);
                     
                     $status_text = $new_status ? 'activated' : 'deactivated';
+                    
+                    // Check if this is an AJAX request
+                    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                        // Return JSON for AJAX
+                        header('Content-Type: application/json');
+                        echo json_encode([
+                            'success' => true,
+                            'message' => "Lawyer $status_text successfully",
+                            'new_status' => $new_status
+                        ]);
+                        exit;
+                    }
+                    
+                    // Regular form submission - redirect
                     $_SESSION['lawyer_message'] = "Lawyer $status_text successfully";
                     header("Location: lawyer_details.php?id=$lawyer_id");
                     exit;
@@ -196,7 +210,7 @@ $active_page = "lawyer";
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .details-container {
-            max-width: 1200px;
+            max-width: calc(95vw - 70px);
             margin: 0 auto;
             padding: 24px;
         }
@@ -351,9 +365,254 @@ $active_page = "lawyer";
             background: #f8d7da;
             color: #721c24;
         }
+        
+        /* Mobile responsive styles */
+        @media (max-width: 550px) {
+            .details-container {
+                max-width: calc(95vw - 16px) !important;
+                padding: 16px !important;
+            }
+            
+            /* Header adjustments */
+            .details-header {
+                padding: 20px !important;
+                margin-bottom: 16px !important;
+            }
+            
+            .details-header > div {
+                flex-direction: column !important;
+                gap: 16px !important;
+                align-items: center !important;
+                text-align: center !important;
+            }
+            
+            .details-header h1 {
+                font-size: 24px !important;
+            }
+            
+            .details-header .subtitle {
+                font-size: 14px !important;
+            }
+            
+            /* Profile picture */
+            .details-header img,
+            .details-header > div > div:first-child {
+                width: 100px !important;
+                height: 100px !important;
+            }
+            
+            /* Info cards */
+            .info-card {
+                padding: 16px !important;
+                margin-bottom: 12px !important;
+            }
+            
+            .info-card h2 {
+                font-size: 18px !important;
+                margin-bottom: 16px !important;
+            }
+            
+            /* Info rows - stack on mobile */
+            .info-row {
+                flex-direction: column !important;
+                padding: 10px 0 !important;
+                gap: 4px !important;
+            }
+            
+            .info-label {
+                width: 100% !important;
+                font-size: 12px !important;
+                color: #6c757d !important;
+            }
+            
+            .info-value {
+                font-size: 14px !important;
+                font-weight: 500 !important;
+            }
+            
+            /* Stats grid - 2 columns on mobile */
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 12px !important;
+                margin-bottom: 16px !important;
+            }
+            
+            .stat-box {
+                padding: 16px !important;
+            }
+            
+            .stat-box .number {
+                font-size: 28px !important;
+            }
+            
+            .stat-box .label {
+                font-size: 12px !important;
+            }
+            
+            /* Action buttons - stack vertically */
+            .action-buttons {
+                flex-direction: column !important;
+                gap: 10px !important;
+            }
+            
+            .btn {
+                width: 100% !important;
+                justify-content: center !important;
+                padding: 12px 16px !important;
+                font-size: 14px !important;
+            }
+            
+            /* Specializations - stack on mobile */
+            .info-card span[style*="background: #f0f0f0"] {
+                display: block !important;
+                margin-bottom: 8px !important;
+            }
+            
+            /* Back button */
+            .btn.btn-secondary[style*="margin-bottom"] {
+                width: 100% !important;
+                margin-bottom: 12px !important;
+            }
+        }
+        
+        /* Extra small screens */
+        @media (max-width: 375px) {
+            .details-container {
+                padding: 12px !important;
+            }
+            
+            .details-header {
+                padding: 16px !important;
+            }
+            
+            .details-header h1 {
+                font-size: 20px !important;
+            }
+            
+            .info-card {
+                padding: 12px !important;
+            }
+            
+            .info-card h2 {
+                font-size: 16px !important;
+            }
+            
+            .stat-box .number {
+                font-size: 24px !important;
+            }
+        }
+        
+        /* Toast Notification Styles */
+        .custom-toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10001;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .custom-toast {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 16px 20px;
+            min-width: 300px;
+            max-width: 400px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideInRight 0.3s ease;
+            border-left: 4px solid #28a745;
+        }
+        
+        .custom-toast.success {
+            border-left-color: #28a745;
+        }
+        
+        .custom-toast.error {
+            border-left-color: #dc3545;
+        }
+        
+        .custom-toast.info {
+            border-left-color: #17a2b8;
+        }
+        
+        .custom-toast-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .custom-toast.success .custom-toast-icon {
+            color: #28a745;
+        }
+        
+        .custom-toast.error .custom-toast-icon {
+            color: #dc3545;
+        }
+        
+        .custom-toast.info .custom-toast-icon {
+            color: #17a2b8;
+        }
+        
+        .custom-toast-content {
+            flex: 1;
+        }
+        
+        .custom-toast-title {
+            font-weight: 600;
+            color: #0b1d3a;
+            margin: 0 0 4px 0;
+            font-size: 14px;
+        }
+        
+        .custom-toast-message {
+            color: #6c757d;
+            margin: 0;
+            font-size: 13px;
+        }
+        
+        .custom-toast-close {
+            cursor: pointer;
+            color: #6c757d;
+            font-size: 20px;
+            line-height: 1;
+            transition: color 0.2s ease;
+            flex-shrink: 0;
+        }
+        
+        .custom-toast-close:hover {
+            color: #0b1d3a;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body class="admin-page">
+    <!-- Toast Container -->
+    <div class="custom-toast-container" id="customToastContainer"></div>
+    
     <?php include 'partials/sidebar.php'; ?>
 
     <main class="admin-main-content">
@@ -361,14 +620,6 @@ $active_page = "lawyer";
             <a href="manage_lawyers.php" class="btn btn-secondary" style="margin-bottom: 16px;">
                 <i class="fas fa-arrow-left"></i> Back to Lawyers
             </a>
-            
-            <?php if ($message): ?>
-                <div class="alert alert-success"><?php echo $message; ?></div>
-            <?php endif; ?>
-
-            <?php if ($error): ?>
-                <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
-            <?php endif; ?>
             
             <div class="details-header">
                 <div style="display: flex; gap: 32px; align-items: flex-start;">
@@ -389,8 +640,8 @@ $active_page = "lawyer";
                     <div style="flex: 1;">
                         <h1 style="margin: 0 0 12px 0;"><?php echo htmlspecialchars($lawyer['lp_fullname'] ?? 'Unknown'); ?></h1>
                         <div style="margin-bottom: 16px;">
-                            <span class="status-badge <?php echo $lawyer['is_active'] ? 'status-active' : 'status-inactive'; ?>">
-                                <?php echo $lawyer['is_active'] ? 'Active' : 'Inactive'; ?>
+                            <span class="status-badge <?php echo $lawyer['is_active'] ? 'status-active' : 'status-inactive'; ?>" id="statusBadge">
+                                <span id="statusText"><?php echo $lawyer['is_active'] ? 'Active' : 'Inactive'; ?></span>
                             </span>
                         </div>
                         
@@ -454,14 +705,10 @@ $active_page = "lawyer";
                         <i class="fas fa-key"></i> Reset Password
                     </button>
                     
-                    <form method="POST" style="display: inline;">
-                        <input type="hidden" name="action" value="toggle_status">
-                        <input type="hidden" name="current_status" value="<?php echo $lawyer['is_active']; ?>">
-                        <button type="submit" class="btn btn-secondary">
-                            <i class="fas fa-toggle-<?php echo $lawyer['is_active'] ? 'on' : 'off'; ?>"></i>
-                            <?php echo $lawyer['is_active'] ? 'Deactivate' : 'Activate'; ?> Account
-                        </button>
-                    </form>
+                    <button type="button" class="btn btn-secondary" id="toggleStatusBtn" onclick="toggleAccountStatus()">
+                        <i class="fas fa-toggle-<?php echo $lawyer['is_active'] ? 'on' : 'off'; ?>" id="toggleIcon"></i>
+                        <span id="toggleText"><?php echo $lawyer['is_active'] ? 'Deactivate' : 'Activate'; ?> Account</span>
+                    </button>
                     
                     <button type="button" class="btn btn-danger" onclick="confirmDelete()">
                         <i class="fas fa-trash"></i> Delete Lawyer
@@ -527,6 +774,114 @@ $active_page = "lawyer";
     <script src="../includes/confirmation-modal.js"></script>
     
     <script>
+        // Toast Notification Function
+        function showToast(title, message, type = 'success') {
+            console.log('showToast called:', title, message, type);
+            const container = document.getElementById('customToastContainer');
+            console.log('Toast container:', container);
+            if (!container) return;
+            
+            const toast = document.createElement('div');
+            toast.className = `custom-toast ${type}`;
+            
+            const iconMap = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                info: 'fa-info-circle'
+            };
+            
+            toast.innerHTML = `
+                <div class="custom-toast-icon">
+                    <i class="fas ${iconMap[type] || iconMap.success}"></i>
+                </div>
+                <div class="custom-toast-content">
+                    <div class="custom-toast-title">${title}</div>
+                    <div class="custom-toast-message">${message}</div>
+                </div>
+                <span class="custom-toast-close" onclick="this.parentElement.remove()">×</span>
+            `;
+            
+            container.appendChild(toast);
+            console.log('Toast appended to container');
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 5000);
+        }
+        
+        // Show toast if there's a message from PHP
+        <?php if ($message): ?>
+            showToast('Success', <?php echo json_encode($message); ?>, 'success');
+        <?php endif; ?>
+        
+        <?php if ($error): ?>
+            showToast('Error', <?php echo json_encode($error); ?>, 'error');
+        <?php endif; ?>
+        
+        // Toggle Account Status with AJAX
+        let currentStatus = <?php echo $lawyer['is_active'] ? 'true' : 'false'; ?>;
+        
+        async function toggleAccountStatus() {
+            const btn = document.getElementById('toggleStatusBtn');
+            const icon = document.getElementById('toggleIcon');
+            const text = document.getElementById('toggleText');
+            const badge = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+            
+            // Disable button during request
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'toggle_status');
+                formData.append('current_status', currentStatus ? '1' : '0');
+                
+                const response = await fetch('lawyer_details.php?id=<?php echo $lawyer_id; ?>', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Toggle the status
+                    currentStatus = !currentStatus;
+                    
+                    // Update button
+                    if (currentStatus) {
+                        icon.className = 'fas fa-toggle-on';
+                        text.textContent = 'Deactivate Account';
+                        badge.className = 'status-badge status-active';
+                        statusText.textContent = 'Active';
+                    } else {
+                        icon.className = 'fas fa-toggle-off';
+                        text.textContent = 'Activate Account';
+                        badge.className = 'status-badge status-inactive';
+                        statusText.textContent = 'Inactive';
+                    }
+                    
+                    showToast('Success', data.message, 'success');
+                } else {
+                    showToast('Error', data.message || 'Failed to update status', 'error');
+                }
+            } catch (error) {
+                console.error('Toggle error:', error);
+                showToast('Error', 'An error occurred while updating status', 'error');
+            } finally {
+                // Re-enable button
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
+        }
+        
         function openPasswordResetModal() {
             const modal = new bootstrap.Modal(document.getElementById('passwordResetModal'));
             modal.show();
