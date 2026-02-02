@@ -72,7 +72,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_format'])) {
         }
         
         if ($export_type === 'consultation') {
-            // Get consultations for this lawyer
+            // Get consultations for this lawyer with filters
+            $status_filter = $_POST['consultation_status'] ?? 'all';
+            $consult_date_from = $_POST['consult_date_from'] ?? null;
+            $consult_date_to = $_POST['consult_date_to'] ?? null;
+            
             $consultations_columns_stmt = $pdo->query("DESCRIBE consultations");
             $consultations_columns_rows = $consultations_columns_stmt ? $consultations_columns_stmt->fetchAll() : [];
             $consultations_columns = array_map(function($r) { return $r['Field']; }, $consultations_columns_rows);
@@ -97,11 +101,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_format'])) {
                                 {$status_column} as c_status,
                                 created_at
                             FROM consultations
-                            WHERE lawyer_id = ? OR lawyer_id IS NULL
-                            ORDER BY created_at DESC";
+                            WHERE lawyer_id = ?";
+            
+            $consult_params = [$lawyer_id];
+            
+            // Add status filter
+            if ($status_filter !== 'all') {
+                $consult_sql .= " AND {$status_column} = ?";
+                $consult_params[] = $status_filter;
+            }
+            
+            // Add date range filter
+            if ($consult_date_from) {
+                $consult_sql .= " AND {$date_column} >= ?";
+                $consult_params[] = $consult_date_from;
+            }
+            
+            if ($consult_date_to) {
+                $consult_sql .= " AND {$date_column} <= ?";
+                $consult_params[] = $consult_date_to;
+            }
+            
+            $consult_sql .= " ORDER BY created_at DESC";
             
             $consult_stmt = $pdo->prepare($consult_sql);
-            $consult_stmt->execute([$lawyer_id]);
+            $consult_stmt->execute($consult_params);
             $consultations = $consult_stmt->fetchAll();
         } else {
             $consultations = [];
@@ -640,9 +664,24 @@ $active_page = "export";
             }
             
             .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .stat-box{
+                padding: 16px;
             }
         }
+        
+        @media (max-width: 425px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .stat-box{
+                padding: 4px;
+            }
+        }
+
     </style>
 </head>
 <body class="lawyer-page">
@@ -765,6 +804,31 @@ $active_page = "export";
                         </div>
                     </div>
                     
+                    <!-- Filters (Only for Consultations) -->
+                    <div id="consultation-filters" style="display: none;">
+                        <div class="form-group">
+                            <label for="consultation_status">Filter by Status</label>
+                            <select name="consultation_status" id="consultation_status">
+                                <option value="all">All Statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="confirmed">Confirmed</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="consult_date_from">From Date</label>
+                                <input type="date" name="consult_date_from" id="consult_date_from">
+                            </div>
+                            <div class="form-group">
+                                <label for="consult_date_to">To Date</label>
+                                <input type="date" name="consult_date_to" id="consult_date_to">
+                            </div>
+                        </div>
+                    </div>
+                    
                     <button type="submit" class="export-btn">
                         <i class="fas fa-download"></i>
                         Export Data
@@ -812,12 +876,15 @@ $active_page = "export";
     const availabilityCheckbox = document.getElementById('type_availability');
     const consultationCheckbox = document.getElementById('type_consultation');
     const availabilityFilters = document.getElementById('availability-filters');
+    const consultationFilters = document.getElementById('consultation-filters');
     
     function updateFiltersVisibility() {
         if (availabilityCheckbox.checked) {
             availabilityFilters.style.display = 'block';
-        } else {
+            consultationFilters.style.display = 'none';
+        } else if (consultationCheckbox.checked) {
             availabilityFilters.style.display = 'none';
+            consultationFilters.style.display = 'block';
         }
     }
     

@@ -721,7 +721,7 @@ body.lawyer-page {
     .lawyer-stats-grid,
     .stats-grid {
         display: grid !important;
-        grid-template-columns: 1fr !important;
+        grid-template-columns: repeat(3, 1fr) !important;
         gap: 12px !important;
         margin-bottom: 20px;
     }
