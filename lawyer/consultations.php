@@ -19,10 +19,12 @@ $lawyer_name = $_SESSION['lawyer_name'] ?? 'Lawyer';
 
 // No more server-side bulk action handling - moved to JavaScript/API
 
-// Pagination
+// Pagination and filters
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $limit = 10;
 $offset = ($page - 1) * $limit;
+$status_filter = isset($_GET['status']) ? $_GET['status'] : '';
+$date_filter = isset($_GET['date']) ? $_GET['date'] : '';
 
 try {
 	$pdo = getDBConnection();
@@ -46,8 +48,21 @@ try {
 	}
 
 	// Count - Include consultations assigned to this lawyer OR designated as 'Any' (lawyer_id IS NULL)
-	$count_stmt = $pdo->prepare('SELECT COUNT(*) FROM consultations WHERE lawyer_id = ? OR lawyer_id IS NULL');
-	$count_stmt->execute([$lawyer_id]);
+	$count_where = 'lawyer_id = ? OR lawyer_id IS NULL';
+	$count_params = [$lawyer_id];
+	
+	if (!empty($status_filter)) {
+		$count_where .= " AND {$status_column} = ?";
+		$count_params[] = $status_filter;
+	}
+	
+	if (!empty($date_filter)) {
+		$count_where .= " AND {$date_column} = ?";
+		$count_params[] = $date_filter;
+	}
+	
+	$count_stmt = $pdo->prepare("SELECT COUNT(*) FROM consultations WHERE $count_where");
+	$count_stmt->execute($count_params);
 	$total_consultations = (int)$count_stmt->fetchColumn();
 	$total_pages = (int)ceil($total_consultations / $limit);
 
@@ -56,6 +71,19 @@ try {
 	$select_phone = $phone_column !== null ? "c.{$phone_column} as c_phone," : "NULL as c_phone,";
 	$select_practice_area = $practice_area_column !== null ? "c.{$practice_area_column} as c_practice_area," : "NULL as c_practice_area,";
 	$select_case_desc = $case_description_column !== null ? "c.{$case_description_column} as case_description," : "NULL as case_description,";
+	
+	$list_where = 'c.lawyer_id = ? OR c.lawyer_id IS NULL';
+	$list_params = [$lawyer_id];
+	
+	if (!empty($status_filter)) {
+		$list_where .= " AND c.{$status_column} = ?";
+		$list_params[] = $status_filter;
+	}
+	
+	if (!empty($date_filter)) {
+		$list_where .= " AND c.{$date_column} = ?";
+		$list_params[] = $date_filter;
+	}
 
 	$list_sql = "
 		SELECT
@@ -71,12 +99,14 @@ try {
 			c.created_at,
 			c.lawyer_id
 		FROM consultations c
-		WHERE c.lawyer_id = ? OR c.lawyer_id IS NULL
+		WHERE $list_where
 		ORDER BY c.created_at DESC
 		LIMIT ? OFFSET ?
 	";
+	$list_params[] = $limit;
+	$list_params[] = $offset;
 	$list_stmt = $pdo->prepare($list_sql);
-	$list_stmt->execute([$lawyer_id, $limit, $offset]);
+	$list_stmt->execute($list_params);
 	$consultations = $list_stmt->fetchAll();
 } catch (Exception $e) {
 	$error_message = 'Database error: ' . $e->getMessage();
@@ -158,20 +188,7 @@ $active_page = "consultations";
 			box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.1);
 		}
 		
-		/* Bulk actions container animation */
-		#bulk-actions-container {
-			opacity: 0;
-			transform: translateY(-10px);
-			transition: all 0.3s ease;
-			max-height: 0;
-			overflow: hidden;
-		}
-		
-		#bulk-actions-container.show {
-			opacity: 1;
-			transform: translateY(0);
-			max-height: 100px;
-		}
+
 		
 		/* Toast Notification Styles */
 		#toast-container {
@@ -345,15 +362,30 @@ $active_page = "consultations";
 			<div class="lawyer-availability-section">
 				<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
 					<h3>Consultation Requests</h3>
-					<div class="bulk-actions" id="bulk-actions-container" style="margin: 10px 0; display: none;">
-						<form method="POST" id="bulk-form" style="display: flex; gap: 10px; align-items: center;">
-							<select name="bulk_action" id="bulk_action">
-								<option value="confirm">Confirm</option>
-								<option value="complete">Complete</option>
-								<option value="cancel">Cancel</option>
-							</select>
-							<button type="submit" class="lawyer-btn btn-apply-selected">Apply to Selected</button>
-						</form>
+					<div style="display: flex; gap: 10px; align-items: center;">
+						<!-- Status Filter -->
+						<select id="status_filter" 
+							name="status_filter" 
+							onchange="applyFilters()"
+							style="padding: 10px 16px; border: 2px solid #e9ecef; border-radius: 6px; font-size: 14px; font-weight: 500; height: 42px; min-width: 150px; appearance: none; -webkit-appearance: none; -moz-appearance: none; background-image: url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 16 16\'%3E%3Cpath fill=\'none\' stroke=\'%23343a40\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M2 5l6 6 6-6\'/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px 12px; padding-right: 40px; background-color: white; cursor: pointer;">
+							<option value="">All Statuses</option>
+							<option value="pending" <?php echo $status_filter === 'pending' ? 'selected' : ''; ?>>Pending</option>
+							<option value="confirmed" <?php echo $status_filter === 'confirmed' ? 'selected' : ''; ?>>Confirmed</option>
+							<option value="completed" <?php echo $status_filter === 'completed' ? 'selected' : ''; ?>>Completed</option>
+							<option value="cancelled" <?php echo $status_filter === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+						</select>
+						
+						<!-- Bulk Actions -->
+						<div class="bulk-actions" id="bulk-actions-container" style="display: flex; gap: 10px; align-items: center;">
+							<form method="POST" id="bulk-form" style="display: flex; gap: 10px; align-items: center;">
+								<select name="bulk_action" id="bulk_action">
+									<option value="confirm">Confirm</option>
+									<option value="complete">Complete</option>
+									<option value="cancel">Cancel</option>
+								</select>
+								<button type="submit" class="lawyer-btn btn-apply-selected">Apply to Selected</button>
+							</form>
+						</div>
 					</div>
 				</div>
 				<div style="overflow-x: auto;">
@@ -407,8 +439,14 @@ $active_page = "consultations";
 				</div>
 				<?php if (($total_pages ?? 1) > 1): ?>
 					<div style="display:flex; gap:8px; justify-content:center; align-items:center; margin-top:16px;">
+						<?php 
+						$filter_params = '';
+						if (!empty($status_filter)) {
+							$filter_params .= '&status=' . urlencode($status_filter);
+						}
+						?>
 						<?php if ($page > 1): ?>
-							<a href="?page=<?php echo $page - 1; ?>" class="pagination-btn pagination-prev"><i class="fas fa-chevron-left"></i></a>
+							<a href="?page=<?php echo $page - 1; ?><?php echo $filter_params; ?>" class="pagination-btn pagination-prev"><i class="fas fa-chevron-left"></i></a>
 						<?php else: ?>
 							<span class="pagination-btn pagination-prev pagination-disabled"><i class="fas fa-chevron-left"></i></span>
 						<?php endif; ?>
@@ -418,7 +456,7 @@ $active_page = "consultations";
 						</span>
 
 						<?php if ($page < $total_pages): ?>
-							<a href="?page=<?php echo $page + 1; ?>" class="pagination-btn pagination-next"><i class="fas fa-chevron-right"></i></a>
+							<a href="?page=<?php echo $page + 1; ?><?php echo $filter_params; ?>" class="pagination-btn pagination-next"><i class="fas fa-chevron-right"></i></a>
 						<?php else: ?>
 							<span class="pagination-btn pagination-next pagination-disabled"><i class="fas fa-chevron-right"></i></span>
 						<?php endif; ?>
@@ -445,6 +483,18 @@ $active_page = "consultations";
 		document.getElementById('panel-description').textContent = description;
 	}
 	
+	function applyFilters() {
+		const statusFilter = document.getElementById('status_filter').value;
+		
+		// Build URL with filters
+		let url = '?page=1';
+		if (statusFilter) {
+			url += '&status=' + encodeURIComponent(statusFilter);
+		}
+		
+		window.location.href = url;
+	}
+	
 	function toggleSelectAll() {
 		const selectAllCheckbox = document.getElementById('select-all');
 		const consultationCheckboxes = document.querySelectorAll('.consultation-checkbox');
@@ -452,39 +502,10 @@ $active_page = "consultations";
 		consultationCheckboxes.forEach(checkbox => {
 			checkbox.checked = selectAllCheckbox.checked;
 		});
-		
-		// Update bulk actions visibility
-		updateBulkActionsVisibility();
-	}
-	
-	function updateBulkActionsVisibility() {
-		const checkedBoxes = document.querySelectorAll('.consultation-checkbox:checked');
-		const bulkActionsContainer = document.getElementById('bulk-actions-container');
-		
-		if (checkedBoxes.length > 0) {
-			bulkActionsContainer.style.display = 'block';
-			// Trigger reflow to ensure transition works
-			bulkActionsContainer.offsetHeight;
-			bulkActionsContainer.classList.add('show');
-		} else {
-			bulkActionsContainer.classList.remove('show');
-			// Hide after animation completes
-			setTimeout(() => {
-				if (!bulkActionsContainer.classList.contains('show')) {
-					bulkActionsContainer.style.display = 'none';
-				}
-			}, 300);
-		}
 	}
 	
 	// Wrap event listeners in DOMContentLoaded to ensure elements exist
 	document.addEventListener('DOMContentLoaded', function() {
-		// Add change event listeners to all consultation checkboxes
-		const consultationCheckboxes = document.querySelectorAll('.consultation-checkbox');
-		consultationCheckboxes.forEach(checkbox => {
-			checkbox.addEventListener('change', updateBulkActionsVisibility);
-		});
-		
 		// Bulk action confirmation using unified modal system
 		const bulkForm = document.getElementById('bulk-form');
 		if (bulkForm) {

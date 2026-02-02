@@ -32,7 +32,6 @@ $consult_offset = 0;
 $consult_total_pages = 0;
 $status_filter = '';
 $search_query = '';
-$schedule_status_filter = isset($_GET['schedule_status']) ? $_GET['schedule_status'] : '';
 $schedule_type_filter = isset($_GET['schedule_type']) ? $_GET['schedule_type'] : '';
 $schedule_per_page = isset($_GET['schedule_per_page']) ? (int)$_GET['schedule_per_page'] : 10;
 $schedule_page = isset($_GET['schedule_page']) ? max(1, (int)$_GET['schedule_page']) : 1;
