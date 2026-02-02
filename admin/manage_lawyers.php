@@ -451,6 +451,183 @@ $active_page = "lawyer";
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Table wrapper with horizontal scroll and grab cursor */
+        .table-wrapper {
+            overflow-x: auto;
+            overflow-y: visible;
+            cursor: grab;
+            user-select: none;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: #c5a253 #f1f1f1;
+        }
+        
+        .table-wrapper:active {
+            cursor: grabbing;
+        }
+        
+        /* Custom scrollbar for webkit browsers */
+        .table-wrapper::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: #c5a253;
+            border-radius: 4px;
+        }
+        
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #b08f42;
+        }
+        
+        /* Mobile responsive styles */
+        @media (max-width: 768px) {
+            /* Make buttons full width on mobile */
+            .action-card > div:first-child {
+                flex-direction: column !important;
+                align-items: stretch !important;
+            }
+            
+            .action-card > div:first-child > div:last-child {
+                width: 100% !important;
+            }
+            
+            .action-card > div:first-child > div:last-child > form,
+            .action-card > div:first-child > div:last-child > button {
+                width: 100% !important;
+            }
+            
+            .action-card > div:first-child > div:last-child > form select {
+                width: 100% !important;
+            }
+            
+            /* Hide table on mobile */
+            .table-wrapper {
+                display: none !important;
+            }
+            
+            /* Show mobile card view */
+            .mobile-schedule-cards {
+                display: block !important;
+            }
+        }
+        
+        @media (min-width: 769px) {
+            /* Hide mobile cards on desktop */
+            .mobile-schedule-cards {
+                display: none !important;
+            }
+        }
+        
+        /* Mobile card styles */
+        .schedule-card {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #c5a253;
+        }
+        
+        .schedule-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .schedule-card-title {
+            font-weight: 600;
+            font-size: 16px;
+            color: #0b1d3a;
+            margin-bottom: 4px;
+        }
+        
+        .schedule-card-subtitle {
+            font-size: 13px;
+            color: #6c757d;
+        }
+        
+        .schedule-card-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .badge-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .badge-unavailable {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .schedule-card-details {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .schedule-card-detail {
+            font-size: 13px;
+        }
+        
+        .schedule-card-detail-label {
+            color: #6c757d;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        
+        .schedule-card-detail-value {
+            color: #0b1d3a;
+            font-weight: 600;
+        }
+        
+        .schedule-card-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .schedule-card-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        .btn-delete-card {
+            background: #dc3545;
+            color: white;
+        }
+    </style>
 </head>
 <body class="admin-page">
     <?php include 'partials/sidebar.php'; ?>
@@ -524,6 +701,54 @@ $active_page = "lawyer";
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- Mobile Card View (visible only on mobile) -->
+                <div class="mobile-schedule-cards">
+                    <?php foreach ($lawyers as $lawyer): ?>
+                        <div class="schedule-card">
+                            <div class="schedule-card-header">
+                                <div>
+                                    <div class="schedule-card-title"><?php echo htmlspecialchars($lawyer['lp_fullname'] ?? 'N/A'); ?></div>
+                                    <div class="schedule-card-subtitle"><?php echo htmlspecialchars($lawyer['username']); ?></div>
+                                </div>
+                                <span class="schedule-card-badge <?php echo $lawyer['is_active'] ? 'badge-active' : 'badge-inactive'; ?>">
+                                    <?php echo $lawyer['is_active'] ? 'Active' : 'Inactive'; ?>
+                                </span>
+                            </div>
+                            
+                            <div class="schedule-card-details">
+                                <div class="schedule-card-detail">
+                                    <div class="schedule-card-detail-label">Email</div>
+                                    <div class="schedule-card-detail-value"><?php echo htmlspecialchars($lawyer['email']); ?></div>
+                                </div>
+                                <div class="schedule-card-detail">
+                                    <div class="schedule-card-detail-label">Phone</div>
+                                    <div class="schedule-card-detail-value"><?php echo htmlspecialchars($lawyer['phone'] ?: 'Not set'); ?></div>
+                                </div>
+                                <div class="schedule-card-detail" style="grid-column: 1 / -1;">
+                                    <div class="schedule-card-detail-label">Specializations</div>
+                                    <div class="schedule-card-detail-value">
+                                        <?php if ($lawyer['specializations']): ?>
+                                            <?php echo htmlspecialchars($lawyer['specializations']); ?>
+                                        <?php else: ?>
+                                            <span style="color: #999;">No specializations</span>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <div class="schedule-card-detail">
+                                    <div class="schedule-card-detail-label">Created</div>
+                                    <div class="schedule-card-detail-value"><?php echo date('M j, Y', strtotime($lawyer['created_at'])); ?></div>
+                                </div>
+                            </div>
+                            
+                            <div class="schedule-card-actions">
+                                <a href="lawyer_details.php?id=<?php echo $lawyer['user_id']; ?>" class="schedule-card-btn" style="background: #c5a253; color: white; text-decoration: none;">
+                                    <i class="fas fa-eye"></i> View Details
+                                </a>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
             <?php endif; ?>
         </div>
     </div>
@@ -532,6 +757,43 @@ $active_page = "lawyer";
     <script>
         // Enhanced page interactions
         document.addEventListener('DOMContentLoaded', function() {
+            // Drag to scroll functionality for table wrapper
+            const tableWrapper = document.querySelector('.table-wrapper');
+            if (tableWrapper) {
+                let isDown = false;
+                let startX;
+                let scrollLeft;
+                
+                tableWrapper.addEventListener('mousedown', (e) => {
+                    // Only enable drag if not clicking on a button or link
+                    if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON' || e.target.closest('a') || e.target.closest('button')) {
+                        return;
+                    }
+                    isDown = true;
+                    tableWrapper.style.cursor = 'grabbing';
+                    startX = e.pageX - tableWrapper.offsetLeft;
+                    scrollLeft = tableWrapper.scrollLeft;
+                });
+                
+                tableWrapper.addEventListener('mouseleave', () => {
+                    isDown = false;
+                    tableWrapper.style.cursor = 'grab';
+                });
+                
+                tableWrapper.addEventListener('mouseup', () => {
+                    isDown = false;
+                    tableWrapper.style.cursor = 'grab';
+                });
+                
+                tableWrapper.addEventListener('mousemove', (e) => {
+                    if (!isDown) return;
+                    e.preventDefault();
+                    const x = e.pageX - tableWrapper.offsetLeft;
+                    const walk = (x - startX) * 2; // Scroll speed multiplier
+                    tableWrapper.scrollLeft = scrollLeft - walk;
+                });
+            }
+            
             // Add loading animation to buttons
             const buttons = document.querySelectorAll('.btn');
             buttons.forEach(button => {

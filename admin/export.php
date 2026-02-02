@@ -80,6 +80,7 @@ $active_page = "export";
             text-align: center;
             border: 2px solid #dee2e6;
         }
+
         
         .stat-box.highlight {
             background: linear-gradient(135deg, #fff3cd, #ffeaa7);
@@ -291,13 +292,61 @@ $active_page = "export";
         }
         
         @media (max-width: 768px) {
+            .stat-box {
+                padding: 8px !important;
+            }
+            
+            .stat-number {
+                font-size: 24px;
+            }
+            
+            .stat-label {
+                font-size: 12px;
+            }
+            
             .form-row {
                 grid-template-columns: 1fr;
             }
             
             .stats-grid {
-                grid-template-columns: repeat(1, 1fr);
+                grid-template-columns: repeat(2, 1fr);
                 justify-content: center;
+            }
+            
+            .export-card {
+                padding: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .stat-box {
+                padding: 6px !important;
+            }
+            
+            .stat-number {
+                font-size: 20px;
+            }
+            
+            .stat-label {
+                font-size: 11px;
+            }
+        }
+        
+        @media (max-width: 320px) {
+            .stat-box {
+                padding: 4px !important;
+            }
+            
+            .stat-number {
+                font-size: 18px;
+            }
+            
+            .stat-label {
+                font-size: 10px;
+            }
+            
+            .export-card {
+                padding: 16px;
             }
         }
     </style>
@@ -344,12 +393,12 @@ $active_page = "export";
                         <label>Export Format</label>
                         <div class="export-format-grid">
                             <div class="format-option">
-                                <input type="radio" name="export_format" id="format_csv" value="csv" checked>
-                                <label for="format_csv" class="format-label">
-                                    <div class="format-icon"><i class="fas fa-file-csv"></i></div>
+                                <input type="radio" name="export_format" id="format_xlsx" value="xlsx" checked>
+                                <label for="format_xlsx" class="format-label">
+                                    <div class="format-icon"><i class="fas fa-file-excel"></i></div>
                                     <div class="format-info">
-                                        <h4>CSV</h4>
-                                        <p>Excel compatible</p>
+                                        <h4>Excel</h4>
+                                        <p>Styled spreadsheet</p>
                                     </div>
                                 </label>
                             </div>

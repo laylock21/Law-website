@@ -104,6 +104,13 @@ p, span, div, label {
     margin: 0 auto !important;
 }
 
+/* Mobile: reduce margin for more space */
+@media (max-width: 768px) {
+    .admin-main-content .container {
+        width: calc(95vw - 16px) !important;
+    }
+}
+
 .container-fluid {
     width: 100%;
     padding: 0 var(--container-padding);
@@ -1805,8 +1812,6 @@ p, span, div, label {
 /* Tablet adjustments */
 @media (max-width: 1024px) and (min-width: 769px) {
     .header-controls {
-        flex-direction: column;
-        align-items: flex-end;
         gap: 10px;
     }
     

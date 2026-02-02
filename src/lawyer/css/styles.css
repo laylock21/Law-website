@@ -101,8 +101,7 @@ label {
 
 /* Bootstrap-inspired Container System */
 .container {
-    width: 100%;
-    max-width: 1200px;
+    width: calc(95vw - 70px);
     margin: 0 auto;
     padding: 0 var(--container-padding);
 }
