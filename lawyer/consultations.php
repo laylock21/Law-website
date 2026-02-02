@@ -47,8 +47,8 @@ try {
 		throw new Exception('Consultations table schema mismatch');
 	}
 
-	// Count - Include consultations assigned to this lawyer OR designated as 'Any' (lawyer_id IS NULL)
-	$count_where = 'lawyer_id = ? OR lawyer_id IS NULL';
+	// Count - Only include consultations assigned to this lawyer
+	$count_where = 'lawyer_id = ?';
 	$count_params = [$lawyer_id];
 	
 	if (!empty($status_filter)) {
@@ -72,7 +72,7 @@ try {
 	$select_practice_area = $practice_area_column !== null ? "c.{$practice_area_column} as c_practice_area," : "NULL as c_practice_area,";
 	$select_case_desc = $case_description_column !== null ? "c.{$case_description_column} as case_description," : "NULL as case_description,";
 	
-	$list_where = 'c.lawyer_id = ? OR c.lawyer_id IS NULL';
+	$list_where = 'c.lawyer_id = ?';
 	$list_params = [$lawyer_id];
 	
 	if (!empty($status_filter)) {
