@@ -116,7 +116,7 @@ $active_page = "dashboard";
         
         .toast {
             background: #c5a253;
-            color: white;
+            color: white !important;
             padding: 16px 24px;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -131,18 +131,21 @@ $active_page = "dashboard";
         
         .toast i {
             font-size: 24px;
+            color: white !important;
         }
         
         .toast-content h3 {
             margin: 0;
             font-size: 1.2rem;
             font-weight: 600;
+            color: white !important;
         }
         
         .toast-content p {
             margin: 4px 0 0 0;
             font-size: 14px;
             opacity: 0.9;
+            color: white !important;
         }
         
         @keyframes slideIn {
