@@ -3042,14 +3042,17 @@ function checkCurrentStepCompletion() {
 document.addEventListener('DOMContentLoaded', () => {
 	initMultiStepForm();
 	
+	// Flag to prevent unwanted form resets
+	let formInteractionStarted = false;
+	
 	// Reset form when navigating to appointment section
 	const appointmentSection = document.getElementById('appointment');
 	if (appointmentSection) {
 		// Create an intersection observer to detect when section is visible
 		const observer = new IntersectionObserver((entries) => {
 			entries.forEach(entry => {
-				if (entry.isIntersecting) {
-					// Section is visible, reset the form
+				if (entry.isIntersecting && !formInteractionStarted) {
+					// Section is visible and user hasn't started interacting, reset the form
 					resetForm();
 				}
 			});
@@ -3058,11 +3061,30 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 		
 		observer.observe(appointmentSection);
+		
+		// Set flag when user starts interacting with form
+		const formInputs = appointmentSection.querySelectorAll('input, select, textarea, button');
+		formInputs.forEach(input => {
+			input.addEventListener('focus', () => {
+				formInteractionStarted = true;
+			});
+			input.addEventListener('click', () => {
+				formInteractionStarted = true;
+			});
+		});
+		
+		// Reset flag when form is actually reset
+		const originalResetForm = window.resetForm || resetForm;
+		window.resetForm = function() {
+			formInteractionStarted = false;
+			originalResetForm();
+		};
 	}
 	
 	// Also reset when clicking "Book Consultation" links
 	document.querySelectorAll('a[href="#appointment"]').forEach(link => {
 		link.addEventListener('click', () => {
+			formInteractionStarted = false; // Reset flag for intentional navigation
 			setTimeout(() => {
 				resetForm();
 			}, 300); // Small delay to allow smooth scroll

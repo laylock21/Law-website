@@ -567,6 +567,11 @@ $active_page = "consultations";
                 font-size: 12px;
             }
         }
+        
+        /* Add yellow border bottom to table headers */
+        .desktop-table thead th {
+            border-bottom: 3px solid #c5a253 !important;
+        }
     </style>
 </head>
 <body class="admin-page">

@@ -553,7 +553,7 @@ $active_page = "consultations";
 		}
 	});
 
-	// Process bulk action by calling API for each consultation
+	// Process bulk action using single API call
 	async function processBulkAction(checkboxes, action) {
 		const statusMap = {
 			'confirm': 'confirmed',
@@ -562,74 +562,57 @@ $active_page = "consultations";
 		};
 		const newStatus = statusMap[action];
 		
-		let successCount = 0;
-		let skippedCount = 0;
-		let errorCount = 0;
-		const skippedReasons = [];
-		const errorReasons = [];
+		// Extract consultation IDs
+		const consultationIds = Array.from(checkboxes).map(checkbox => parseInt(checkbox.value));
 		
-		// Process each consultation
-		for (const checkbox of checkboxes) {
-			const consultationId = checkbox.value;
-			
-			try {
-				const formData = new FormData();
-				formData.append('consultation_id', consultationId);
-				formData.append('new_status', newStatus);
-				formData.append('cancellation_reason', 'Bulk action by lawyer');
-				
-				const response = await fetch('../api/lawyer/update_consultation_status.php', {
-					method: 'POST',
-					body: formData
-				});
-				
-				const data = await response.json();
-				
-				if (data.success) {
-					successCount++;
-				} else {
-					skippedCount++;
-					skippedReasons.push(`#${consultationId}: ${data.message}`);
-				}
-			} catch (error) {
-				errorCount++;
-				errorReasons.push(`#${consultationId}: Network error`);
-			}
-		}
-		
-		// Trigger async email processing
-		if (successCount > 0) {
-			fetch('../process_emails_async.php', {
+		try {
+			const response = await fetch('../api/lawyer/bulk_update_consultation_status.php', {
 				method: 'POST',
-				headers: {'X-Requested-With': 'XMLHttpRequest'}
-			}).catch(error => {
-				console.log('Email processing error:', error);
+				headers: {
+					'Content-Type': 'application/json',
+					'X-Requested-With': 'XMLHttpRequest'
+				},
+				body: JSON.stringify({
+					consultation_ids: consultationIds,
+					new_status: newStatus,
+					cancellation_reason: 'Bulk action by lawyer'
+				})
 			});
-		}
-		
-		// Build result message
-		const actionName = action === 'confirm' ? 'confirmed' : (action === 'cancel' ? 'cancelled' : 'completed');
-		let resultMessage = '';
-		
-		if (successCount > 0) {
-			resultMessage += `✅ Successfully ${actionName} ${successCount} consultation(s).\n`;
-		}
-		if (skippedCount > 0) {
-			resultMessage += `⚠️ ${skippedCount} consultation(s) skipped:\n${skippedReasons.join('\n')}\n`;
-		}
-		if (errorCount > 0) {
-			resultMessage += `❌ ${errorCount} error(s):\n${errorReasons.join('\n')}`;
-		}
-		
-		// Show result as toast
-		const toastType = successCount > 0 ? 'success' : (errorCount > 0 ? 'error' : 'warning');
-		showToast(resultMessage.trim(), toastType);
-		
-		// Reload page to show updated statuses
-		if (successCount > 0) {
-			setTimeout(() => {
-				location.reload();
-			}, 2000);
+			
+			const data = await response.json();
+			
+			if (data.success || data.results.success_count > 0) {
+				// Build detailed result message
+				let resultMessage = data.message;
+				
+				// Add details for skipped items if any
+				if (data.results.skipped_count > 0 && data.results.skipped_reasons.length > 0) {
+					resultMessage += '\n\nSkipped:\n' + data.results.skipped_reasons.join('\n');
+				}
+				
+				// Add details for errors if any
+				if (data.results.error_count > 0 && data.results.error_reasons.length > 0) {
+					resultMessage += '\n\nErrors:\n' + data.results.error_reasons.join('\n');
+				}
+				
+				// Show result as toast
+				const toastType = data.results.success_count > 0 ? 'success' : 
+								 (data.results.error_count > 0 ? 'error' : 'warning');
+				showToast(resultMessage, toastType);
+				
+				// Reload page to show updated statuses if any were successful
+				if (data.results.success_count > 0) {
+					setTimeout(() => {
+						location.reload();
+					}, 2000);
+				}
+			} else {
+				showToast(data.message || 'Failed to process bulk action', 'error');
+			}
+			
+		} catch (error) {
+			console.error('Bulk action error:', error);
+			showToast('Network error occurred while processing bulk action', 'error');
 		}
 	}
 	
