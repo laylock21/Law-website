@@ -173,6 +173,8 @@ $active_page = "consultations";
         
         .info-item {
             padding: 0.75rem 0;
+            min-width: 0;
+            overflow: hidden;
         }
         
         .info-label {
@@ -187,6 +189,10 @@ $active_page = "consultations";
         .info-value {
             color: #2c3e50;
             font-size: 1rem;
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
         }
         
         .info-value a {
