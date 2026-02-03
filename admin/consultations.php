@@ -16,18 +16,30 @@ require_once '../config/database.php';
 
 // Helper function to generate sortable column headers
 function getSortableHeader($column, $display_name, $current_sort, $current_order) {
-    $new_order = ($current_sort === $column && $current_order === 'asc') ? 'desc' : 'asc';
+    $current_params = $_GET;
     $sort_icon = '';
     
-    if ($current_sort === $column) {
-        $sort_icon = $current_order === 'asc' ? ' <i class="fas fa-sort-up"></i>' : ' <i class="fas fa-sort-down"></i>';
+    // Check if this column is actively sorted (not just default)
+    $is_actively_sorted = isset($_GET['sort']) && $_GET['sort'] === $column;
+    
+    if ($is_actively_sorted) {
+        if ($current_order === 'ASC') {
+            // Currently ascending, next click goes to descending
+            $current_params['sort'] = $column;
+            $current_params['order'] = 'desc';
+            $sort_icon = ' <i class="fas fa-sort-up"></i>';
+        } else {
+            // Currently descending, next click removes sort
+            unset($current_params['sort']);
+            unset($current_params['order']);
+            $sort_icon = ' <i class="fas fa-sort-down"></i>';
+        }
     } else {
+        // Not currently sorted, next click goes to ascending
+        $current_params['sort'] = $column;
+        $current_params['order'] = 'asc';
         $sort_icon = ' <i class="fas fa-sort"></i>';
     }
-    
-    $current_params = $_GET;
-    $current_params['sort'] = $column;
-    $current_params['order'] = $new_order;
     
     $query_string = http_build_query($current_params);
     
@@ -168,7 +180,16 @@ $offset = ($page - 1) * $limit;
 
 // Handle sorting
 $sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'created_at';
-$sort_order = isset($_GET['order']) && $_GET['order'] === 'asc' ? 'ASC' : 'DESC';
+$sort_order = 'DESC'; // Default order
+
+if (isset($_GET['sort']) && isset($_GET['order'])) {
+    // Only apply custom sorting if both sort and order are specified
+    $sort_order = $_GET['order'] === 'asc' ? 'ASC' : 'DESC';
+} else if (!isset($_GET['sort'])) {
+    // No sort specified, use default created_at DESC
+    $sort_by = 'created_at';
+    $sort_order = 'DESC';
+}
 
 // Allowed sort columns for security
 $allowed_sort_columns = [
@@ -693,7 +714,7 @@ $active_page = "consultations";
                         <tbody>
                             <?php foreach ($consultations as $consultation): ?>
                                 <tr>
-                                    <td><input type="checkbox" name="selected_consultations[]" value="<?php echo $consultation['c_id']; ?>" class="consultation-checkbox"></td>
+                                    <td><input type="checkbox" name="selected_consultations[]" value="<?php echo $consultation['c_id']; ?>" class="consultation-checkbox desktop-checkbox"></td>
                                     <td><?php echo htmlspecialchars($consultation['c_id']); ?></td>
                                     <td><?php echo htmlspecialchars($consultation['c_full_name']); ?></td>
                                     <td><?php echo htmlspecialchars($consultation['c_email']); ?></td>
@@ -748,7 +769,7 @@ $active_page = "consultations";
                             <div class="consultation-card">
                                 <div class="consultation-card-header">
                                     <div class="consultation-card-checkbox">
-                                        <input type="checkbox" name="selected_consultations[]" value="<?php echo $consultation['c_id']; ?>" class="consultation-checkbox" onchange="updateBulkActionsVisibility()">
+                                        <input type="checkbox" name="selected_consultations[]" value="<?php echo $consultation['c_id']; ?>" class="consultation-checkbox mobile-checkbox" onchange="updateBulkActionsVisibility()">
                                     </div>
                                     <div class="consultation-card-title-section">
                                         <div class="consultation-card-id">#<?php echo htmlspecialchars($consultation['c_id']); ?></div>
@@ -918,7 +939,10 @@ $active_page = "consultations";
     }
     
     function confirmBulkAction() {
-        const selectedCheckboxes = document.querySelectorAll('.consultation-checkbox:checked');
+        // Get only visible checkboxes to avoid duplicates
+        const isMobile = window.innerWidth <= 480;
+        const selector = isMobile ? '.mobile-checkbox:checked' : '.desktop-checkbox:checked';
+        const selectedCheckboxes = document.querySelectorAll(selector);
         const bulkAction = document.getElementById('bulk_action').value;
         
         if (selectedCheckboxes.length === 0) {

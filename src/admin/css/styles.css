@@ -807,8 +807,9 @@ p, span, div, label {
    MOBILE-RESPONSIVE DESIGN
    ============================================ */
 
-/* Tablet and Mobile */
+/* Mobile Devices - Extended to 1024px for better tablet experience */
 @media (max-width: 1024px) {
+    /* Dashboard navigation */
     .admin-dashboard-nav {
         flex-direction: column;
         gap: 20px;
@@ -823,10 +824,7 @@ p, span, div, label {
     .admin-main-content {
         padding: 20px 15px;
     }
-}
-
-/* Mobile Devices */
-@media (max-width: 768px) {
+    
     /* Bootstrap-inspired Header improvements */
     .admin-dashboard-header {
         padding: 15px 0;
@@ -991,6 +989,185 @@ p, span, div, label {
         margin: 5px 0;
         padding: 12px 20px;
         font-size: 14px;
+    }
+    
+    /* Additional layout adjustments */
+    .admin-horizontal-layout {
+        flex-direction: column;
+    }
+    
+    /* Ensure actions column is always visible on mobile */
+    .lawyers-table td:nth-child(9) {
+        opacity: 1 !important;
+        visibility: visible !important;
+        display: grid !important;
+    }
+    
+    .lawyers-table td:nth-child(9) .btn {
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+    }
+    
+    /* Consultation items mobile adjustments */
+    .admin-consultation-item {
+        padding: 0.6rem; /* Slightly smaller on mobile */
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+    
+    .comparison-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Mobile table optimizations */
+    .lawyers-table {
+        font-size: 0.8rem;
+        min-width: 800px;
+        overflow-x: visible;
+        white-space: nowrap;
+    }
+    
+    .lawyers-table th,
+    .lawyers-table td {
+        padding: 12px 8px;
+        min-width: auto;
+    }
+    
+    /* Adjust remaining column widths for mobile */
+    .lawyers-table th:nth-child(1),
+    .lawyers-table td:nth-child(1) {
+        width: 60px;
+        min-width: 60px;
+    }
+    
+    .lawyers-table th:nth-child(2),
+    .lawyers-table td:nth-child(2) {
+        width: 140px;
+        min-width: 120px;
+    }
+    
+    .lawyers-table th:nth-child(4),
+    .lawyers-table td:nth-child(4) {
+        width: 160px;
+        min-width: 140px;
+    }
+    
+    .lawyers-table th:nth-child(5),
+    .lawyers-table td:nth-child(5) {
+        width: 110px;
+        min-width: 100px;
+    }
+    
+    .lawyers-table th:nth-child(6),
+    .lawyers-table td:nth-child(6) {
+        width: 150px;
+        min-width: 130px;
+    }
+    
+    .lawyers-table th:nth-child(7),
+    .lawyers-table td:nth-child(7) {
+        width: 80px;
+        min-width: 70px;
+    }
+    
+    .lawyers-table th:nth-child(9),
+    .lawyers-table td:nth-child(9) {
+        width: 140px;
+        min-width: 120px;
+    }
+    
+    .lawyers-table td:nth-child(9) .btn {
+        padding: 8px 12px;
+        font-size: 13px;
+        margin: 3px auto;
+        width: 100%;
+        height: 38px;
+        min-width: auto;
+        display: block;
+    }
+    
+    .lawyers-table td:nth-child(9) .btn:not(.btn-warning):not(.btn-success) {
+        font-size: 16px;
+        width: 38px;
+        min-width: 38px;
+        height: 38px;
+        padding: 8px;
+        margin: 3px auto;
+        display: block;
+    }
+    
+    /* Table adjustments */
+    .admin-section-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+    
+    .header-controls {
+        align-items: stretch;
+        gap: 15px;
+        width: 100%;
+    }
+    
+    .search-section {
+        width: 100%;
+    }
+    
+    .search-form {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    
+    .search-container {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .search-input {
+        width: 200px;
+        min-width: auto;
+    }
+    
+    .bulk-actions-section {
+        width: 100%;
+    }
+    
+    .bulk-form {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .bulk-form select {
+        flex: 1;
+        min-width: 150px;
+        margin-right: 10px;
+    }
+    
+    .admin-consultations-table table {
+        min-width: 800px; /* Reduced for mobile */
+    }
+    
+    .admin-pagination {
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+    
+    .admin-pagination a,
+    .admin-pagination span {
+        padding: 6px 10px;
+        font-size: 14px;
+        min-width: 36px;
     }
 }
 
@@ -1728,33 +1905,10 @@ p, span, div, label {
     pointer-events: none;
 }
 
-/* Mobile Table Adjustments */
+/* Small mobile devices - additional adjustments */
 @media (max-width: 768px) {
-    .admin-section-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 15px;
-    }
-    
     .header-controls {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 15px;
-        width: 100%;
-    }
-    
-    .search-section {
-        width: 100%;
-    }
-    
-    .search-form {
-        width: 100%;
-        flex-wrap: wrap;
-    }
-    
-    .search-container {
-        flex: 1;
-        min-width: 0;
+        gap: 10px;
     }
     
     .search-input {
@@ -1762,61 +1916,11 @@ p, span, div, label {
         min-width: auto;
     }
     
-    .bulk-actions-section {
-        width: 100%;
-    }
-    
-    .bulk-form {
-        width: 100%;
-        justify-content: space-between;
-    }
-    
-    .bulk-form select {
-        flex: 1;
-        min-width: 150px;
-        margin-right: 10px;
-    }
-    
-    .admin-consultations-table table {
-        min-width: 800px; /* Reduced for mobile */
-    }
-    
+    /* Additional mobile-specific adjustments */
     .admin-consultations-table th,
     .admin-consultations-table td {
-        padding: 8px 6px;
-        font-size: 12px;
-    }
-    
-    .admin-action-buttons {
-        flex-direction: row;
-    }
-    
-    .admin-action-buttons .admin-btn {
-        width: 100%;
-        text-align: center;
-    }
-    
-    .admin-pagination {
-        gap: 4px;
-        flex-wrap: wrap;
-    }
-    
-    .admin-pagination a,
-    .admin-pagination span {
-        padding: 6px 10px;
-        font-size: 14px;
-        min-width: 36px;
-    }
-}
-
-/* Tablet adjustments */
-@media (max-width: 1024px) and (min-width: 769px) {
-    .header-controls {
-        gap: 10px;
-    }
-    
-    .search-input {
-        min-width: 200px;
+        padding: 6px 4px;
+        font-size: 11px;
     }
 }
 
@@ -3364,141 +3468,6 @@ input[type="radio"]:focus {
     
     .lawyers-table {
         min-width: 1000px;
-    }
-}
-
-@media (max-width: 768px) {
-    .admin-horizontal-layout {
-        flex-direction: column;
-    }
-    
-    /* Ensure actions column is always visible on mobile */
-    .lawyers-table td:nth-child(9) {
-        opacity: 1 !important;
-        visibility: visible !important;
-        display: grid !important;
-    }
-    
-    .lawyers-table td:nth-child(9) .btn {
-        opacity: 1 !important;
-        visibility: visible !important;
-        pointer-events: auto !important;
-    }
-    
-    .admin-stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .admin-action-buttons {
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    .admin-consultations-table {
-        font-size: 0.9rem;
-    }
-    
-    .admin-consultations-table th,
-    .admin-consultations-table td {
-        padding: 0.5rem; /* Compact mobile padding */
-    }
-    
-    /* Consultation items mobile adjustments */
-    .admin-consultation-item {
-        padding: 0.6rem; /* Slightly smaller on mobile */
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-    }
-    
-    .form-grid {
-        grid-template-columns: 1fr;
-        gap: 30px;
-    }
-    
-    .comparison-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .features-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    /* Mobile table optimizations */
-    .lawyers-table {
-        font-size: 0.8rem;
-        min-width: 800px;
-        overflow-x: visible;
-        white-space: nowrap;
-    }
-    
-    .lawyers-table th,
-    .lawyers-table td {
-        padding: 12px 8px;
-        min-width: auto;
-    }
-    
-    /* Adjust remaining column widths for mobile */
-    .lawyers-table th:nth-child(1),
-    .lawyers-table td:nth-child(1) {
-        width: 60px;
-        min-width: 60px;
-    }
-    
-    .lawyers-table th:nth-child(2),
-    .lawyers-table td:nth-child(2) {
-        width: 140px;
-        min-width: 120px;
-    }
-    
-    .lawyers-table th:nth-child(4),
-    .lawyers-table td:nth-child(4) {
-        width: 160px;
-        min-width: 140px;
-    }
-    
-    .lawyers-table th:nth-child(5),
-    .lawyers-table td:nth-child(5) {
-        width: 110px;
-        min-width: 100px;
-    }
-    
-    .lawyers-table th:nth-child(6),
-    .lawyers-table td:nth-child(6) {
-        width: 150px;
-        min-width: 130px;
-    }
-    
-    .lawyers-table th:nth-child(7),
-    .lawyers-table td:nth-child(7) {
-        width: 80px;
-        min-width: 70px;
-    }
-    
-    .lawyers-table th:nth-child(9),
-    .lawyers-table td:nth-child(9) {
-        width: 140px;
-        min-width: 120px;
-    }
-    
-    .lawyers-table td:nth-child(9) .btn {
-        padding: 8px 12px;
-        font-size: 13px;
-        margin: 3px auto;
-        width: 100%;
-        height: 38px;
-        min-width: auto;
-        display: block;
-    }
-    
-    .lawyers-table td:nth-child(9) .btn:not(.btn-warning):not(.btn-success) {
-        font-size: 16px;
-        width: 38px;
-        min-width: 38px;
-        height: 38px;
-        padding: 8px;
-        margin: 3px auto;
-        display: block;
     }
 }
 
