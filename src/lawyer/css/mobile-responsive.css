@@ -342,21 +342,21 @@ body.lawyer-page {
         line-height: 1.4;
     }
     
-    /* Schedule stats bar - Vertical on mobile */
+    /* Schedule stats bar - 2x2 Grid on mobile */
     .schedule-stats-bar {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center;
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
         gap: 12px;
         width: 100%;
         max-width: 100%;
         margin: 0 auto 20px auto;
         padding: 0;
-        grid-template-columns: none !important;
+        margin-top: 80px;
     }
     
     /* Add margin-top only to the first stat item */
     .schedule-stats-bar > div:first-child,
+    .schedule-stats-bar > div:second-child,
     .schedule-stats-bar .stat-item:first-child {
         margin-top: 80px;
     }
@@ -365,12 +365,15 @@ body.lawyer-page {
     .schedule-stats-bar .stat-item {
         width: 100%;
         max-width: 100%;
-        margin: 0 auto;
-        padding: 20px 15px;
+        margin: 0;
+        padding: 15px 12px;
         box-sizing: border-box;
         display: flex;
+        flex-direction: column;
         align-items: center;
-        gap: 15px;
+        justify-content: center;
+        text-align: center;
+        gap: 8px;
     }
     
     /* Center icons in stat items */
@@ -378,11 +381,37 @@ body.lawyer-page {
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        width: 60px !important;
-        height: 60px !important;
+        width: 50px !important;
+        height: 50px !important;
         flex-shrink: 0;
-        font-size: 1.5rem !important;
+        font-size: 1.3rem !important;
         padding: 0 !important;
+        margin-bottom: 8px;
+    }
+    
+    /* Stat content styling for grid layout */
+    .schedule-stats-bar .stat-item .stat-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 4px;
+    }
+    
+    .schedule-stats-bar .stat-item .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1;
+        margin: 0;
+    }
+    
+    .schedule-stats-bar .stat-item .stat-label {
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        line-height: 1.2;
+        margin: 0;
     }
     
     /* Dashboard grid - Single column, centered */
@@ -2123,6 +2152,25 @@ body.lawyer-page {
     .specializations-card .alert {
         margin: 10px;
         font-size: 13px;
+    }
+}
+
+/* Extra small mobile devices - 500px or less */
+@media (max-width: 500px) {
+    /* Ensure form fields are full width, no squishing */
+    .form-grid-large {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+    
+    /* Force fullname field to single column */
+    .form-grid-large .form-group[style*="grid-column"] {
+        grid-column: auto !important;
+    }
+    
+    .form-grid-large .form-group {
+        grid-column: 1 !important;
+        width: 100%;
     }
 }
 

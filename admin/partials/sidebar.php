@@ -213,6 +213,7 @@ $active_page = $active_page ?? "";
 .adm-sidebar-footer {
     padding: 20px 0;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 32px;
 }
 
 .adm-sidebar-link.adm-logout {

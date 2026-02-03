@@ -720,6 +720,9 @@ $active_page = "export";
                 line-height: 1.3;
                 letter-spacing: 0.3px;
             }
+            .lawyer-main-content{
+                margin-top: 80px !important;
+            }
         }
         
         @media (min-width: 425px) and (max-width: 768px) {
