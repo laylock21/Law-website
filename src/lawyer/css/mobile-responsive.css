@@ -2818,8 +2818,8 @@ body.lawyer-page {
     input[type="radio"],
     .lawyer-btn,
     .btn {
-        min-height: 44px;
-        min-width: 44px;
+        min-height: 18px;
+        min-width: 18px;
     }
     
     /* Remove hover effects on touch devices */
