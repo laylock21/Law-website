@@ -105,15 +105,16 @@ $active_page = "emails";
             right: 20px;
             background: #333;
             color: white;
-            padding: 1rem 1.5rem;
+            padding: 12px 16px;
             border-radius: 4px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 8px;
             z-index: 9999;
             animation: slideIn 0.3s ease-out;
             min-width: 250px;
+            font-size: 0.95rem;
         }
         
         .toast.success {
@@ -129,12 +130,18 @@ $active_page = "emails";
         }
         
         .toast .spinner {
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             border: 2px solid rgba(255,255,255,0.3);
             border-top-color: white;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+        
+        .toast i {
+            flex-shrink: 0;
+            font-size: 14px;
         }
         
         @keyframes slideIn {
@@ -154,10 +161,21 @@ $active_page = "emails";
         
         @media (max-width: 768px) {
             .toast {
-                bottom: 10px;
+                top: 10px;
                 right: 10px;
                 left: 10px;
                 min-width: auto;
+                padding: 10px 12px;
+                font-size: 0.875rem;
+            }
+            
+            .toast .spinner {
+                width: 12px;
+                height: 12px;
+            }
+            
+            .toast i {
+                font-size: 12px;
             }
         }
         
