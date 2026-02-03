@@ -622,7 +622,7 @@ $active_page = "lawyer";
             </a>
             
             <div class="details-header">
-                <div style="display: flex; gap: 32px; align-items: flex-start;">
+                <div style="display: flex; gap: 32px; align-items: center;">
                     <!-- Profile Picture - Left -->
                     <div style="flex-shrink: 0;">
                         <?php if (!empty($lawyer['profile'])): ?>
