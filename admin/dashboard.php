@@ -201,6 +201,11 @@ $active_page = "dashboard";
         .action-content h4 {
             font-size: 1.2rem;
         }
+        
+        /* Add yellow border bottom to section headers */
+        .admin-section-header {
+            border-bottom: 3px solid #c5a253 !important;
+        }
     </style>
 </head>
 <body class="admin-page">

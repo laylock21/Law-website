@@ -160,6 +160,11 @@ $active_page = "emails";
                 min-width: auto;
             }
         }
+        
+        /* Add yellow border bottom to table headers */
+        .admin-consultations-table thead th {
+            border-bottom: 3px solid #c5a253 !important;
+        }
     </style>
 </head>
 <body class="admin-page">

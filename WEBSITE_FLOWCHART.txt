@@ -1,0 +1,250 @@
+MD LAW FIRM WEBSITE - COMPLETE FLOWCHART
+=====================================================
+
+MAIN ENTRY POINTS
+==================
+1. index.html (Public Homepage)
+2. login.php (Staff Login)
+
+PUBLIC SECTION (index.html)
+============================
+├── Homepage Sections:
+│   ├── Home Section
+│   ├── About Section
+│   ├── Practice Areas Section
+│   ├── Client Testimonials
+│   ├── Our Legal Team (Carousel)
+│   ├── Book Consultation Form
+│   └── Contact Section
+│
+├── Consultation Booking Flow:
+│   ├── Step 1: Personal Info (First, Middle, Last Name)
+│   ├── Step 2: Contact Info (Email, Phone)
+│   ├── Step 3: Lawyer & Case Details
+│   │   ├── Select Lawyer → Auto-fills Practice Areas
+│   │   └── Case Description
+│   ├── Step 4: Date Selection
+│   │   ├── Calendar View
+│   │   ├── Click Date → Time Slot Modal Opens
+│   │   ├── Select Time Slot
+│   │   └── Click "Confirm" → Submits Form Directly
+│   └── Success Notification Modal
+│
+└── Form Processing:
+    ├── process_consultation.php
+    ├── Email Notifications (EmailNotification.php)
+    └── process_emails_async.php
+
+AUTHENTICATION SYSTEM
+=====================
+login.php
+├── Admin Login → admin/dashboard.php
+├── Lawyer Login → lawyer/dashboard.php
+└── Failed Login → Back to login.php
+
+ADMIN SECTION (/admin/)
+=======================
+admin/dashboard.php (Main Admin Dashboard)
+├── Statistics Overview
+├── Recent Consultations
+├── Quick Actions
+└── Navigation Menu:
+    ├── Dashboard
+    ├── Consultations
+    ├── Manage Lawyers
+    └── Logout
+
+admin/consultations.php (Consultation Management)
+├── View All Consultations
+├── Filter by Status/Lawyer
+├── Bulk Actions:
+│   ├── Bulk Confirm
+│   ├── Bulk Complete
+│   └── Bulk Delete
+├── Individual Actions:
+│   ├── View Details Modal
+│   ├── Update Status
+│   ├── Assign Lawyer
+│   └── Delete Consultation
+└── Pagination
+
+admin/manage_lawyers.php (Lawyer Management)
+├── Statistics (Total, Active, With Photos, Practice Areas)
+├── Create New Lawyer:
+│   ├── Personal Info Form
+│   ├── Specializations Selection
+│   ├── Password Options:
+│   │   ├── Auto-generate Temporary
+│   │   └── Set Custom Password
+│   └── Account Creation Success
+├── Existing Lawyers Table:
+│   ├── View Profile Pictures
+│   ├── Lawyer Details
+│   ├── Specializations
+│   ├── Status (Active/Inactive)
+│   └── Actions:
+│       ├── Manage Schedule → manage_lawyer_schedule.php
+│       ├── Toggle Status (Activate/Deactivate)
+│       ├── Reset Password Modal:
+│       │   ├── Auto-generate Option
+│       │   ├── Custom Password Option
+│       │   └── Force Change on Login
+│       └── Delete Lawyer (with confirmation)
+└── Password Reset Modal (White Header - Fixed!)
+
+admin/manage_lawyer_schedule.php (Schedule Management)
+├── View Lawyer's Current Schedule
+├── Add/Edit Availability
+├── Block Dates
+└── Time Slot Management
+
+admin/view_consultation.php (Individual Consultation View)
+├── Full Consultation Details
+├── Client Information
+├── Case Description
+├── Status Updates
+└── Action History
+
+LAWYER SECTION (/lawyer/)
+=========================
+lawyer/dashboard.php (Lawyer Dashboard)
+├── Profile Section (with Edit Profile link)
+├── Temporary Password Notice (if applicable)
+├── My Specializations Card
+├── Weekly Availability Card:
+│   ├── Today's Schedule:
+│   │   ├── Current Day & Date (Time-sensitive)
+│   │   ├── Available Time Slots
+│   │   └── Max Appointments
+│   └── Next Available Day:
+│       ├── Next Consultation Day & Date (Time-sensitive)
+│       ├── Time Slots
+│       └── Max Appointments
+└── Recent Consultations:
+    ├── Consultation List with Pagination
+    ├── Client Details
+    ├── Practice Areas
+    ├── Status Badges
+    └── Actions (View Details)
+
+lawyer/consultations.php (Lawyer's Consultations)
+├── Consultation Requests Table
+├── Bulk Actions:
+│   ├── Bulk Confirm
+│   └── Bulk Complete
+├── Individual Actions:
+│   ├── View Details Modal
+│   └── Update Status
+├── Status Management
+└── Email Notifications
+
+lawyer/availability.php (Manage Availability)
+├── Set Weekly Schedule
+├── Add One-time Availability
+├── Block Dates
+└── Schedule Management
+
+lawyer/edit_profile.php (Profile Management)
+├── Update Personal Info
+├── Change Profile Picture
+├── Update Specializations
+└── Account Settings
+
+SUPPORTING FILES & SYSTEMS
+===========================
+
+Configuration Files (/config/)
+├── database.php (Database Connection)
+├── Auth.php (Authentication)
+├── ErrorHandler.php (Error Management)
+├── Logger.php (Logging System)
+└── upload_config.php (File Upload Settings)
+
+API Endpoints (/api/)
+├── change_password.php
+├── get_all_lawyers.php
+├── get_lawyers_by_specialization.php
+├── get_lawyer_availability.php
+└── get_time_slots.php
+
+Email System (/includes/)
+├── EmailNotification.php (Email Templates & Sending)
+├── process_emails_async.php (Background Email Processing)
+└── Notification Queue System
+
+Database Structure
+├── users (Admin & Lawyer accounts)
+├── consultations (Client consultation requests)
+├── lawyer_specializations (Lawyer practice areas)
+├── practice_areas (Available legal specializations)
+├── lawyer_availability (Schedule management)
+│   ├── Weekly schedules
+│   ├── One-time schedules
+│   └── Blocked dates
+└── notification_queue (Email queue system)
+
+File Upload System (/uploads/)
+├── profile_pictures/ (Lawyer profile photos)
+└── consultation_files/ (Case-related documents)
+
+Logging System (/logs/)
+├── application_YYYY-MM-DD.log (Daily application logs)
+├── error_YYYY-MM-DD.log (Error logs)
+└── email_YYYY-MM-DD.log (Email processing logs)
+
+WORKFLOW EXAMPLES
+=================
+
+1. CLIENT CONSULTATION BOOKING:
+   Client visits index.html → Fills consultation form → Selects lawyer → 
+   Picks date from calendar → Chooses time slot → Clicks "Confirm" → 
+   Form submitted → Email sent to client & admin → Consultation created
+
+2. ADMIN MANAGING CONSULTATION:
+   Admin logs in → Views consultations.php → Sees new requests → 
+   Assigns to lawyer → Updates status → Email notifications sent
+
+3. LAWYER DAILY WORKFLOW:
+   Lawyer logs in → Views dashboard → Sees today's schedule → 
+   Checks consultations → Updates status → Manages availability
+
+4. ADMIN CREATING LAWYER:
+   Admin → manage_lawyers.php → "Create New Lawyer" → 
+   Fills form → Selects specializations → Sets password → 
+   Account created → Credentials displayed → Email sent to lawyer
+
+5. PASSWORD RESET FLOW:
+   Admin → manage_lawyers.php → Click reset password icon → 
+   Reset Password Modal opens (WHITE HEADER!) → 
+   Choose auto-generate or custom → Submit → New credentials displayed
+
+SECURITY FEATURES
+=================
+├── Session-based Authentication
+├── Role-based Access Control (Admin/Lawyer)
+├── Password Requirements
+├── Temporary Password System
+├── CSRF Protection
+├── Input Validation & Sanitization
+├── SQL Injection Prevention
+└── File Upload Security
+
+RESPONSIVE DESIGN
+=================
+├── Mobile-friendly Navigation
+├── Responsive Tables
+├── Touch-friendly Buttons
+├── Adaptive Layouts
+└── Mobile Calendar Interface
+
+RECENT IMPROVEMENTS
+===================
+├── Streamlined Consultation Booking (Confirm button submits directly)
+├── Time-sensitive Dashboard (Shows today's and next day's schedule)
+├── Fixed Modal Header Styling (White background)
+├── Enhanced Email Notification System
+├── Improved Bulk Actions
+├── Better Error Handling
+└── Cache-busting for CSS updates
+
+This flowchart represents the complete structure and workflow of the MD Law Firm website as of January 2026.
