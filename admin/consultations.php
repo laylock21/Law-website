@@ -471,13 +471,15 @@ $active_page = "consultations";
                 font-size: 12px;
                 color: #6c757d;
                 font-weight: 600;
-                margin-bottom: 4px;
+                margin-right: 8px;
             }
             
             .consultation-card-name {
                 font-size: 16px;
                 font-weight: 600;
                 color: #0b1d3a;
+                display: flex;
+                align-items: center;
             }
             
             .consultation-card-body {
@@ -569,6 +571,39 @@ $active_page = "consultations";
         /* Add yellow border bottom to table headers */
         .desktop-table thead th {
             border-bottom: 3px solid #c5a253 !important;
+        }
+        
+        /* Pagination Arrow Buttons */
+        .pagination-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: #c5a253;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .pagination-btn:hover {
+            background: #B08F42;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(197, 162, 83, 0.3);
+        }
+
+        .pagination-btn.pagination-disabled {
+            opacity: 0.4;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+
+        .pagination-btn i {
+            font-size: 0.9rem;
         }
     </style>
 </head>
@@ -662,7 +697,7 @@ $active_page = "consultations";
                                     </div>
                                     <!-- Status Filter Dropdown -->
                                     <select name="status" class="admin-dropdown" onchange="this.form.submit()" style="margin-left: 10px; min-width: 150px;">
-                                        <option value="all" <?php echo $status_filter === 'all' ? 'selected' : ''; ?>>Status Filter</option>
+                                        <option value="all" <?php echo $status_filter === 'all' ? 'selected' : ''; ?>>All Status</option>
                                         <option value="pending" <?php echo $status_filter === 'pending' ? 'selected' : ''; ?>>Pending</option>
                                         <option value="confirmed" <?php echo $status_filter === 'confirmed' ? 'selected' : ''; ?>>Confirmed</option>
                                         <option value="completed" <?php echo $status_filter === 'completed' ? 'selected' : ''; ?>>Completed</option>
@@ -716,8 +751,14 @@ $active_page = "consultations";
                                 <tr>
                                     <td><input type="checkbox" name="selected_consultations[]" value="<?php echo $consultation['c_id']; ?>" class="consultation-checkbox desktop-checkbox"></td>
                                     <td><?php echo htmlspecialchars($consultation['c_id']); ?></td>
-                                    <td><?php echo htmlspecialchars($consultation['c_full_name']); ?></td>
-                                    <td><?php echo htmlspecialchars($consultation['c_email']); ?></td>
+                                    <td><?php 
+                                        $full_name = htmlspecialchars($consultation['c_full_name']);
+                                        echo mb_strlen($full_name) > 13 ? mb_substr($full_name, 0, 13) . '...' : $full_name;
+                                    ?></td>
+                                    <td><?php 
+                                        $email = htmlspecialchars($consultation['c_email']);
+                                        echo mb_strlen($email) > 13 ? mb_substr($email, 0, 13) . '...' : $email;
+                                    ?></td>
                                     <td><?php echo htmlspecialchars($consultation['c_phone']); ?></td>
                                     <td>
                                         <?php 
@@ -772,8 +813,13 @@ $active_page = "consultations";
                                         <input type="checkbox" name="selected_consultations[]" value="<?php echo $consultation['c_id']; ?>" class="consultation-checkbox mobile-checkbox" onchange="updateBulkActionsVisibility()">
                                     </div>
                                     <div class="consultation-card-title-section">
-                                        <div class="consultation-card-id">#<?php echo htmlspecialchars($consultation['c_id']); ?></div>
-                                        <div class="consultation-card-name"><?php echo htmlspecialchars($consultation['c_full_name']); ?></div>
+                                        <div class="consultation-card-name">
+                                            <span class="consultation-card-id">#<?php echo htmlspecialchars($consultation['c_id']); ?></span>
+                                            <?php 
+                                                $full_name = htmlspecialchars($consultation['c_full_name']);
+                                                echo mb_strlen($full_name) > 13 ? mb_substr($full_name, 0, 13) . '...' : $full_name;
+                                            ?>
+                                        </div>
                                     </div>
                                     <div>
                                         <span class="admin-status-badge admin-status-<?php echo $consultation['c_status']; ?>">
@@ -785,7 +831,10 @@ $active_page = "consultations";
                                 <div class="consultation-card-body">
                                     <div class="consultation-card-row">
                                         <div class="consultation-card-label"><i class="fas fa-envelope"></i> Email</div>
-                                        <div class="consultation-card-value"><?php echo htmlspecialchars($consultation['c_email']); ?></div>
+                                        <div class="consultation-card-value"><?php 
+                                            $email = htmlspecialchars($consultation['c_email']);
+                                            echo mb_strlen($email) > 13 ? mb_substr($email, 0, 13) . '...' : $email;
+                                        ?></div>
                                     </div>
                                     <div class="consultation-card-row">
                                         <div class="consultation-card-label"><i class="fas fa-phone"></i> Phone</div>
@@ -850,19 +899,32 @@ $active_page = "consultations";
             </div>
 
             <?php if ($total_pages > 1): ?>
-                <div class="admin-pagination">
-                    <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                <div style="display:flex; gap:8px; justify-content:center; align-items:center; margin-top:16px;">
+                    <?php if ($page > 1): ?>
                         <?php 
-                        $page_params = $_GET;
-                        $page_params['page'] = $i;
-                        $page_query = http_build_query($page_params);
+                        $prev_params = $_GET;
+                        $prev_params['page'] = $page - 1;
+                        $prev_query = http_build_query($prev_params);
                         ?>
-                        <?php if ($i === $page): ?>
-                            <span class="current"><?php echo $i; ?></span>
-                        <?php else: ?>
-                            <a href="?<?php echo $page_query; ?>"><?php echo $i; ?></a>
-                        <?php endif; ?>
-                    <?php endfor; ?>
+                        <a href="?<?php echo $prev_query; ?>" class="pagination-btn pagination-prev"><i class="fas fa-chevron-left"></i></a>
+                    <?php else: ?>
+                        <span class="pagination-btn pagination-prev pagination-disabled"><i class="fas fa-chevron-left"></i></span>
+                    <?php endif; ?>
+
+                    <span style="font-size:14px; color:#666; font-weight:500;">
+                        <?php echo $page; ?>
+                    </span>
+
+                    <?php if ($page < $total_pages): ?>
+                        <?php 
+                        $next_params = $_GET;
+                        $next_params['page'] = $page + 1;
+                        $next_query = http_build_query($next_params);
+                        ?>
+                        <a href="?<?php echo $next_query; ?>" class="pagination-btn pagination-next"><i class="fas fa-chevron-right"></i></a>
+                    <?php else: ?>
+                        <span class="pagination-btn pagination-next pagination-disabled"><i class="fas fa-chevron-right"></i></span>
+                    <?php endif; ?>
                 </div>
             <?php endif; ?>
         </div>

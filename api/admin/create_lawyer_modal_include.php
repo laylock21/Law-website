@@ -151,7 +151,7 @@
                             Next <i class="fas fa-arrow-right"></i>
                         </button>
                         <button type="submit" class="btn btn-primary btn-lawyer-submit" id="lawyerSubmitBtn" style="display: none; padding: 10px 24px; font-size: 14px; font-weight: 700; border-radius: 8px; background: #c5a253; color: white; border: none; margin-left: auto;">
-                            <i class="fas fa-check"></i> Create Lawyer Account
+                            <i class="fas fa-check"></i> Create Lawyer 
                         </button>
                     </div>
                 </form>

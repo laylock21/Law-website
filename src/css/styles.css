@@ -344,11 +344,12 @@ html {
 	margin: 5px 0;
 	transition: all 0.3s ease;
 	border-radius: 2px;
+	transform-origin: center;
 }
 
 /* Hamburger to X animation */
 .nav-toggle.active span:nth-child(1) {
-	transform: rotate(45deg) translate(7px, 7px);
+	transform: translateY(8px) rotate(45deg);
 }
 
 .nav-toggle.active span:nth-child(2) {
@@ -357,7 +358,7 @@ html {
 }
 
 .nav-toggle.active span:nth-child(3) {
-	transform: rotate(-45deg) translate(7px, -7px);
+	transform: translateY(-8px) rotate(-45deg);
 }
 
 /* Base navigation styles */
@@ -2319,7 +2320,7 @@ html {
 	
 	/* Form navigation buttons - full width on mobile */
 	.form-navigation {
-		flex-direction: row;
+		flex-direction: row-reverse;
 		gap: 12px;
 		margin: 20px 0 12px 0;
 	}

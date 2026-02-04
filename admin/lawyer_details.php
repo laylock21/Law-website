@@ -380,10 +380,10 @@ $active_page = "lawyer";
             }
             
             .details-header > div {
-                flex-direction: column !important;
+                flex-direction: row !important;
                 gap: 16px !important;
                 align-items: center !important;
-                text-align: center !important;
+                text-align: left !important;
             }
             
             .details-header h1 {
@@ -397,8 +397,8 @@ $active_page = "lawyer";
             /* Profile picture */
             .details-header img,
             .details-header > div > div:first-child {
-                width: 100px !important;
-                height: 100px !important;
+                width: 80px !important;
+                height: 80px !important;
             }
             
             /* Info cards */
@@ -622,17 +622,15 @@ $active_page = "lawyer";
             </a>
             
             <div class="details-header">
-                <div style="display: flex; gap: 32px; align-items: flex-start;">
+                <div style="display: flex; gap: 32px; align-items: center;">
                     <!-- Profile Picture - Left -->
-                    <div style="flex-shrink: 0;">
+                    <div style="flex-shrink: 0; width: 150px; height: 150px; display: flex; align-items: center; justify-content: center; border-radius: 12px; border: 4px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.2); background: white; overflow: hidden;">
                         <?php if (!empty($lawyer['profile'])): ?>
                             <img src="data:image/jpeg;base64,<?php echo base64_encode($lawyer['profile']); ?>" 
                                  alt="<?php echo htmlspecialchars($lawyer['lp_fullname']); ?>" 
-                                 style="width: 150px; height: 150px; border-radius: 12px; object-fit: cover; border: 4px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                                 style="width: 100%; height: 100%; object-fit: cover;">
                         <?php else: ?>
-                            <div style="width: 150px; height: 150px; border-radius: 12px; background: white; display: flex; align-items: center; justify-content: center; border: 4px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-                                <i class="fas fa-user" style="font-size: 60px; color: #c5a253;"></i>
-                            </div>
+                            <i class="fas fa-user" style="font-size: 60px; color: #c5a253;"></i>
                         <?php endif; ?>
                     </div>
                     

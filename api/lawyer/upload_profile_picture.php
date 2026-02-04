@@ -63,24 +63,28 @@ try {
     // Get file extension
     $extension = strtolower(pathinfo($uploaded_file['name'], PATHINFO_EXTENSION));
     
-    // Generate secure filename
-    $filename = generateProfilePictureFilename($lawyer_id, 'jpg'); // Always save as JPG
-    $destination_path = PROFILE_PICTURES_DIR . $filename;
+    // Process and store image directly in memory (using temporary file for GD processing)
+    $temp_path = sys_get_temp_dir() . '/profile_' . $lawyer_id . '_' . time() . '.' . $extension;
     
-    // Get current profile picture for cleanup
-    $current_picture_stmt = $pdo->prepare("SELECT profile FROM lawyer_profile WHERE lawyer_id = ?");
-    $current_picture_stmt->execute([$lawyer_id]);
-    $current_picture = $current_picture_stmt->fetchColumn();
+    // Copy uploaded file to temp location for processing
+    if (!copy($uploaded_file['tmp_name'], $temp_path)) {
+        throw new Exception("Failed to create temporary file for image processing");
+    }
     
-    // Process and save the image
-    processProfilePicture($uploaded_file['tmp_name'], $destination_path);
+    // Process image (resize, convert to JPG, etc.)
+    $output_temp = $temp_path . '_output.jpg';
+    processProfilePicture($temp_path, $output_temp);
     
-    // Read the processed image file as binary data for BLOB storage
-    $image_binary_data = file_get_contents($destination_path);
+    // Read the processed image as binary data for BLOB storage
+    $image_binary_data = file_get_contents($output_temp);
     
     if ($image_binary_data === false) {
-        throw new Exception("Failed to read processed image file");
+        throw new Exception("Failed to read processed image data");
     }
+    
+    // Clean up temporary files
+    @unlink($temp_path);
+    @unlink($output_temp);
     
     // Update database with binary image data in lawyer_profile table
     // First check if lawyer_profile record exists
@@ -105,43 +109,21 @@ try {
     $update_result = $update_stmt->execute([$image_binary_data, $lawyer_id]);
     
     if (!$update_result) {
-        // If database update fails, remove the uploaded file
-        if (file_exists($destination_path)) {
-            unlink($destination_path);
-        }
         throw new Exception("Failed to update profile picture in database");
     }
-    
-    // Clean up old profile picture (if exists and different from new one)
-    if ($current_picture && $current_picture !== $filename) {
-        secureCleanupOldProfilePicture($current_picture);
-    }
-    
-    // Generate URL for the new profile picture
-    $profile_picture_url = getProfilePictureUrl($filename);
     
     // Log the successful upload
     Logger::security('profile_picture_uploaded', [
         'user_id' => $lawyer_id,
-        'filename' => $filename,
         'file_size' => $uploaded_file['size']
     ]);
-    error_log("Profile picture uploaded successfully for lawyer ID: $lawyer_id, filename: $filename, URL: $profile_picture_url");
+    error_log("Profile picture uploaded successfully for lawyer ID: $lawyer_id");
     
     // Return success response
     echo json_encode([
         'success' => true,
         'message' => 'Profile picture updated successfully',
-        'filename' => $filename,
-        'url' => $profile_picture_url,
-        'timestamp' => time(),
-        'debug' => [
-            'lawyer_id' => $lawyer_id,
-            'original_filename' => $uploaded_file['name'],
-            'file_size' => $uploaded_file['size'],
-            'destination_path' => $destination_path,
-            'file_exists' => file_exists($destination_path)
-        ]
+        'timestamp' => time()
     ]);
     
 } catch (Exception $e) {

@@ -5090,21 +5090,31 @@ body.admin-page table.admin-consultations-table th,
 @media (max-width: 768px) {
     /* Notification queue alert adjustments */
     .nq-mobile-alert {
-        padding: 12px 16px;
-        font-size: 14px;
-        margin-bottom: 16px;
+        padding: 10px 12px;
+        font-size: 13px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
     
     .nq-mobile-alert strong {
-        display: block;
-        margin-bottom: 4px;
+        display: inline;
+        font-weight: 600;
+    }
+    
+    .nq-mobile-alert > div {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
     
     /* Notification queue heading */
     .nq-mobile-heading {
-        font-size: 1.5rem !important;
-        padding: 12px 0 !important;
-        margin-bottom: 16px;
+        font-size: 1.3rem !important;
+        padding: 8px 0 !important;
+        margin-bottom: 12px;
     }
     
     /* Notification table mobile wrapper */
@@ -5272,13 +5282,18 @@ body.admin-page table.admin-consultations-table th,
 @media (max-width: 480px) {
     /* Notification queue small mobile */
     .nq-mobile-heading {
-        font-size: 1.25rem !important;
-        padding: 10px 0 !important;
+        font-size: 1.1rem !important;
+        padding: 6px 0 !important;
     }
     
     .nq-mobile-alert {
-        padding: 10px 12px;
-        font-size: 13px;
+        padding: 8px 10px;
+        font-size: 12px;
+        gap: 6px;
+    }
+    
+    .nq-mobile-alert > div {
+        gap: 6px;
     }
     
     .nq-mobile-table {

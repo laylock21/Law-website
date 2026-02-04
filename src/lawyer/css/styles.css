@@ -3689,7 +3689,7 @@ label {
 
 .consultations-header {
     display: grid;
-    grid-template-columns: minmax(200px, 2fr) minmax(120px, 1.5fr) minmax(180px, 2fr) minmax(120px, 1.5fr) minmax(80px, 1fr) minmax(70px, 0.8fr);
+    grid-template-columns: minmax(150px, 2fr) minmax(150px, 2fr) minmax(100px, 1fr) minmax(100px, 1.5fr) minmax(100px, 1fr);
     gap: 15px;
     padding: 15px 25px;
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
@@ -3703,7 +3703,7 @@ label {
 
 .consultation-row {
     display: grid;
-    grid-template-columns: minmax(200px, 2fr) minmax(120px, 1.5fr) minmax(180px, 2fr) minmax(120px, 1.5fr) minmax(80px, 1fr) minmax(70px, 0.8fr);
+    grid-template-columns: minmax(150px, 2fr) minmax(150px, 2fr) minmax(100px, 1fr) minmax(100px, 1.5fr) minmax(100px, 1fr);
     gap: 15px;
     padding: 20px 25px;
     border-bottom: 1px solid #e9ecef;
@@ -4007,19 +4007,60 @@ label {
 /* Responsive Design for Consultations Table */
 @media (max-width: 1024px) {
 
+    .consultations-table {
+        max-width: 100%;
+        overflow-x: auto;
+        min-width: 800px; /* Reduced from 900px for 1024px screens */
+    }
+
     .consultations-header,
     .consultation-row {
-        grid-template-columns: 2fr 1.2fr 1.8fr 1.2fr 1fr 0.8fr;
         gap: 12px;
         padding: 15px 20px;
     }
 
     .client-name {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
     }
 
     .client-description {
+        font-size: 0.75rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        color: #666;
+    }
+
+    .contact-email,
+    .contact-phone {
         font-size: 0.8rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    .consultation-date,
+    .consultation-time {
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+
+    .status-badge {
+        font-size: 0.7rem;
+        padding: 4px 8px;
+        white-space: nowrap;
+    }
+
+    .btn-open {
+        font-size: 0.75rem;
+        padding: 6px 12px;
+        min-width: 65px;
     }
 
     .practice-area {
@@ -4029,65 +4070,146 @@ label {
 }
 
 @media (max-width: 768px) {
+    /* Ensure main content and dashboard card are properly contained */
+    .lawyer-main-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+        padding: 20px 15px !important;
+        box-sizing: border-box !important;
+    }
+
+    .dashboard-card.full-width {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Override mobile-responsive.css conflicting styles */
+    .consultations-table {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: show !important;
+        min-width: unset !important;
+        box-sizing: border-box !important;
+    }
+
     .consultations-header {
-        display: none;
+        display: none !important;
         /* Hide header on mobile */
     }
 
     .consultation-row {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        padding: 20px;
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        margin-bottom: 15px;
-        background: white;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        padding: 15px !important;
+        border: 1px solid #e9ecef !important;
+        border-radius: 8px !important;
+        margin-bottom: 15px !important;
+        background: white !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
     }
 
     .consultation-row:hover {
-        transform: none;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        transform: none !important;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1) !important;
     }
 
+    .consultation-row > div,
     .col-client,
     .col-practice,
     .col-contact,
     .col-date,
     .col-status,
     .col-action {
-        width: 100%;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
     }
 
     .col-client {
-        border-bottom: 1px solid #f0f0f0;
-        padding-bottom: 10px;
-        margin-bottom: 8px;
+        border-bottom: 1px solid #f0f0f0 !important;
+        padding-bottom: 10px !important;
+        margin-bottom: 8px !important;
+        overflow: hidden !important;
     }
 
     .client-name {
-        font-size: 1.1rem;
-        margin-bottom: 5px;
+        font-size: 1.05rem !important;
+        margin-bottom: 5px !important;
+        font-weight: 600 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 100% !important;
+    }
+
+    .client-description {
+        font-size: 0.8rem !important;
+        color: #666 !important;
+        font-style: italic !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 100% !important;
+        margin-bottom: 8px !important;
+        word-break: break-all !important;
     }
 
     .practice-area {
-        display: inline-block;
-        margin-bottom: 8px;
+        display: inline-block !important;
+        margin-bottom: 8px !important;
+        max-width: 100% !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
     }
 
     .col-contact {
-        background: #f8f9fa;
-        padding: 10px;
-        border-radius: 6px;
-        margin: 8px 0;
+        background: #f8f9fa !important;
+        padding: 10px !important;
+        border-radius: 6px !important;
+        margin: 8px 0 !important;
+        overflow: hidden !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .contact-email,
+    .contact-phone {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 100% !important;
+        display: block !important;
+        margin-bottom: 4px !important;
     }
 
     .col-date {
-        text-align: left;
-        background: #f0f8ff;
-        padding: 8px;
-        border-radius: 6px;
-        margin: 8px 0;
+        text-align: left !important;
+        background: #f0f8ff !important;
+        padding: 8px !important;
+        border-radius: 6px !important;
+        margin: 8px 0 !important;
+        overflow: hidden !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .consultation-date,
+    .consultation-time {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 100% !important;
     }
 
     .col-status {
@@ -4119,7 +4241,11 @@ label {
     }
 
     .client-description {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
     }
 
     .practice-area {
@@ -4343,6 +4469,7 @@ label {
     min-width: 0;
     /* Prevent overflow */
     max-width: 100%;
+    height: 100%;
 }
 
 /* Small Cards (Profile Picture & Password) */
@@ -6986,7 +7113,7 @@ button.btn-primary:hover {
     }
 
     .lawyer-dashboard-grid {
-        grid-template-columns: 3fr 2fr 1fr;
+        grid-template-columns: 3fr / 1fr;
         gap: 70px;
     }
 
@@ -7050,7 +7177,7 @@ button.btn-primary:hover {
     }
 
     .lawyer-dashboard-grid {
-        grid-template-columns: 2fr 1fr;
+        grid-template-columns: 1fr;
         gap: 55px;
     }
 
@@ -7275,7 +7402,7 @@ button.btn-primary:hover {
     }
 
     .lawyer-dashboard-grid {
-        grid-template-columns: 2fr 1fr 1fr;
+        grid-template-columns: 1fr 1fr;
     }
 }
 
@@ -7286,7 +7413,7 @@ button.btn-primary:hover {
     }
 
     .lawyer-dashboard-grid {
-        grid-template-columns: 3fr 2fr 1fr;
+        grid-template-columns: 3fr / 1fr;
     }
 }
 
@@ -7832,7 +7959,8 @@ button.btn-primary:hover {
 .modal-consultation-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 30px;
+    table-layout: fixed; /* Enable fixed table layout for better control */
+    word-wrap: break-word;
 }
 
 .modal-consultation-table tbody tr {
@@ -7851,6 +7979,8 @@ button.btn-primary:hover {
     background-color: #f8f9fa;
     width: 35%;
     vertical-align: top;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .modal-consultation-table td {
@@ -7858,6 +7988,10 @@ button.btn-primary:hover {
     color: var(--text-dark) !important;
     vertical-align: top;
     background-color: #ffffff !important;
+    width: 65%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 0; /* Force text wrapping */
 }
 
 .modal-case-description {
@@ -7872,8 +8006,7 @@ button.btn-primary:hover {
 
 /* Modal Form Section */
 .modal-form-section {
-    margin-top: 30px;
-    padding-top: 30px;
+    padding-top: 16px;
     border-top: 2px solid #e9ecef;
 }
 
@@ -8613,4 +8746,808 @@ button.btn-primary:hover {
 .lawyer-page.edit-profile-page {
     width: 100%;
     max-width: 100%;
+}
+
+/* =============================================================================
+   LAWYER CONSULTATIONS PAGE STYLES - UNIQUE NAMING
+   ============================================================================= */
+
+/* Consultation Page Checkboxes */
+.lw-consultation-checkbox,
+.lw-consultation-select-all {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* Consultation Page Bulk Action Select */
+.lw-bulk-action-select {
+    padding: 10px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    background: white;
+    color: var(--text-dark);
+    cursor: pointer;
+    display: inline-block;
+    transition: all 0.3s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px 12px;
+    padding-right: 40px;
+    height: 42px;
+    min-width: 150px;
+}
+
+.lw-bulk-action-select:hover {
+    border-color: var(--gold);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.lw-bulk-action-select:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.1);
+}
+
+/* Consultation Page Filter Select */
+.lw-filter-select {
+    padding: 10px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    height: 42px;
+    min-width: 150px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 16 16\'%3E%3Cpath fill=\'none\' stroke=\'%23343a40\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M2 5l6 6 6-6\'/%3E%3C/svg%3E');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px 12px;
+    padding-right: 40px;
+    background-color: white;
+    cursor: pointer;
+}
+
+.lw-filter-select:hover {
+    border-color: var(--gold);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.lw-filter-select:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.1);
+}
+
+/* Consultation Page Header Layout */
+.lw-consultation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.lw-consultation-controls {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.lw-bulk-actions-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.lw-bulk-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Consultation Page Table Container */
+.lw-consultation-table-container {
+    overflow-x: auto;
+    overflow-y: visible;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e9ecef;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    /* Always show scrollbar when content overflows */
+    scrollbar-width: auto; /* Firefox */
+    -webkit-overflow-scrolling: touch;
+    -ms-overflow-style: auto; /* IE/Edge */
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) - Always show scrollbar on desktop */
+.lw-consultation-table-container::-webkit-scrollbar {
+    height: 12px;
+    background-color: #f1f1f1;
+    border-radius: 6px;
+    /* Force scrollbar to always be visible */
+    display: block;
+}
+
+.lw-consultation-table-container::-webkit-scrollbar-track {
+    background-color: #f1f1f1;
+    border-radius: 6px;
+    /* Always visible track */
+    opacity: 1;
+}
+
+.lw-consultation-table-container::-webkit-scrollbar-thumb {
+    background-color: #c1c1c1;
+    border-radius: 6px;
+    border: 2px solid #f1f1f1;
+    /* Always visible thumb */
+    opacity: 1;
+    min-width: 20px; /* Ensure minimum thumb size */
+}
+
+.lw-consultation-table-container::-webkit-scrollbar-thumb:hover {
+    background-color: #a8a8a8;
+}
+
+/* Force scrollbar to always be visible when content overflows */
+.lw-consultation-table-container::-webkit-scrollbar-corner {
+    background-color: #f1f1f1;
+}
+
+/* Desktop-specific: Ensure scrollbar is always visible */
+@media (min-width: 769px) {
+    .lw-consultation-table-container {
+        /* Force scrollbar visibility on desktop */
+        scrollbar-gutter: stable;
+    }
+    
+    .lw-consultation-table-container::-webkit-scrollbar {
+        /* Ensure scrollbar is always rendered */
+        width: auto;
+        height: 12px;
+    }
+    
+    .lw-consultation-table-container::-webkit-scrollbar-thumb {
+        /* Solid visibility on desktop */
+        background-color: #c1c1c1;
+        opacity: 1 !important;
+    }
+    
+    .lw-consultation-table-container::-webkit-scrollbar-track {
+        /* Solid track visibility on desktop */
+        background-color: #f1f1f1;
+        opacity: 1 !important;
+    }
+}
+
+/* Global table overflow prevention */
+table {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+table th,
+table td {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    box-sizing: border-box;
+}
+
+/* Consultation Page Table with Grid Scaling - Dashboard Colors */
+.lw-consultation-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    table-layout: fixed; /* Enable fixed table layout for better control */
+    /* Remove min-width to prevent overflow */
+}
+
+.lw-consultation-table thead,
+.lw-consultation-table tbody {
+    display: contents;
+}
+
+.lw-consultation-table th,
+.lw-consultation-table td {
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lw-consultation-table thead tr {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 2px solid #dee2e6;
+}
+
+.lw-consultation-table th {
+    color: #495057 !important;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 15px 25px;
+    background: none; /* Remove individual cell background */
+    border-bottom: none; /* Remove individual cell border */
+}
+
+.lw-consultation-table tbody tr {
+    background: white;
+    transition: all 0.3s ease;
+    align-items: center;
+    min-height: 80px;
+}
+
+.lw-consultation-table tbody tr:hover {
+    background: #f8f9fa;
+    transform: translateX(3px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.lw-consultation-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.lw-consultation-table tbody td {
+    padding: 20px 25px;
+}
+
+/* Grid Template Columns for Consultation Table - Responsive */
+.lw-consultation-table thead tr,
+.lw-consultation-table tbody tr {
+    display: grid;
+    grid-template-columns: 
+        minmax(40px, 0.5fr)     /* Checkbox */
+        minmax(40px, 0.5fr)     /* ID */
+        minmax(120px, 2fr)      /* Client - more flexible */
+        minmax(80px, 1fr)       /* Practice Area - more flexible */
+        minmax(100px, 1.2fr)    /* Date - more flexible */
+        minmax(80px, 1fr)       /* Status */
+        minmax(80px, 1fr)       /* Created - more flexible */
+        minmax(80px, 1fr);      /* Actions */
+    gap: 8px;
+    align-items: center;
+}
+
+.lw-consultation-table th,
+.lw-consultation-table td {
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+
+/* Text truncation for content columns only (exclude checkbox, status, and actions) */
+.lw-consultation-table th:not(:first-child):not(:nth-child(6)):not(:last-child),
+.lw-consultation-table td:not(:first-child):not(:nth-child(6)):not(:last-child) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Checkbox, Status, and Actions columns - no truncation */
+.lw-consultation-table th:first-child,
+.lw-consultation-table td:first-child,
+.lw-consultation-table th:nth-child(6),
+.lw-consultation-table td:nth-child(6),
+.lw-consultation-table th:last-child,
+.lw-consultation-table td:last-child {
+    text-align: center;
+    overflow: visible;
+}
+
+/* Specific column styling */
+.lw-consultation-table td:nth-child(8) {
+    text-align: center;
+}
+
+.lw-consultation-table td:nth-child(8) > div {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* Client column with email */
+.lw-consultation-client-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+}
+
+.lw-consultation-client-name {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lw-consultation-client-email {
+    font-size: 0.85rem;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Date column with time */
+.lw-consultation-date-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+}
+
+.lw-consultation-date-main {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lw-consultation-date-time {
+    font-size: 0.85rem;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Pagination Layout */
+.lw-consultation-pagination {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 16px;
+}
+
+.lw-consultation-pagination-info {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+}
+
+/* Toast Notification System */
+.lw-toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 400px;
+}
+
+.lw-toast {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 16px 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    animation: lw-slideIn 0.3s ease-out forwards;
+    border-left: 4px solid;
+    min-width: 300px;
+    max-width: 400px;
+    opacity: 1;
+    transform: translateX(0);
+    position: relative;
+    overflow: hidden;
+}
+
+.lw-toast::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: currentColor;
+    width: 100%;
+    transform-origin: left;
+    animation: lw-progressBar linear forwards;
+}
+
+.lw-toast.success::after {
+    color: #28a745;
+}
+
+.lw-toast.error::after {
+    color: #dc3545;
+}
+
+.lw-toast.success {
+    border-left-color: #28a745;
+}
+
+.lw-toast.error {
+    border-left-color: #dc3545;
+}
+
+.lw-toast-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.lw-toast.success .lw-toast-icon {
+    color: #28a745;
+}
+
+.lw-toast.error .lw-toast-icon {
+    color: #dc3545;
+}
+
+.lw-toast-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.lw-toast-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #dc3545;
+}
+
+.lw-toast-message {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.4;
+}
+
+.lw-toast-close {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: color 0.2s;
+}
+
+.lw-toast-close:hover {
+    color: #dc3545;
+}
+
+.lw-toast.hiding {
+    animation: lw-slideOut 0.3s ease-out forwards;
+}
+
+/* Toast Animations */
+@keyframes lw-slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes lw-slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+
+@keyframes lw-progressBar {
+    from {
+        transform: scaleX(1);
+    }
+    to {
+        transform: scaleX(0);
+    }
+}
+
+/* Responsive Design for Consultation Table */
+@media (max-width: 1200px) {
+    .lw-consultation-table {
+        /* Remove min-width to prevent overflow */
+        width: 100%;
+    }
+    
+    /* Adjust grid for medium screens */
+    .lw-consultation-table thead tr,
+    .lw-consultation-table tbody tr {
+        grid-template-columns: 
+            minmax(35px, 0.4fr)     /* Checkbox */
+            minmax(35px, 0.4fr)     /* ID */
+            minmax(100px, 2fr)      /* Client */
+            minmax(70px, 1fr)       /* Practice Area */
+            minmax(90px, 1.2fr)     /* Date */
+            minmax(70px, 1fr)       /* Status */
+            minmax(70px, 1fr)       /* Created */
+            minmax(70px, 1fr);      /* Actions */
+        gap: 6px;
+    }
+    
+    .lw-consultation-table thead tr {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-bottom: 2px solid #dee2e6;
+    }
+    
+    .lw-consultation-table th {
+        padding: 12px 8px;
+        font-size: 0.8rem;
+        background: none;
+        border-bottom: none;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    .lw-consultation-table tbody td {
+        padding: 16px 8px;
+        font-size: 0.9rem;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    .lw-consultation-table tbody tr {
+        min-height: 70px;
+    }
+    
+    .lw-consultation-table tbody tr:hover {
+        background: #f8f9fa;
+        transform: translateX(2px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    }
+}
+
+@media (max-width: 1024px) {
+    .lw-consultation-table {
+        /* Remove min-width to prevent overflow */
+        width: 100%;
+    }
+    
+    /* Further adjust grid for smaller screens */
+    .lw-consultation-table thead tr,
+    .lw-consultation-table tbody tr {
+        grid-template-columns: 
+            minmax(30px, 0.3fr)     /* Checkbox */
+            minmax(30px, 0.3fr)     /* ID */
+            minmax(80px, 2.5fr)     /* Client - give more space */
+            minmax(60px, 1fr)       /* Practice Area */
+            minmax(80px, 1.3fr)     /* Date */
+            minmax(60px, 1fr)       /* Status */
+            minmax(60px, 1fr)       /* Created */
+            minmax(60px, 1fr);      /* Actions */
+        gap: 4px;
+    }
+    
+    .lw-consultation-table thead tr {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-bottom: 2px solid #dee2e6;
+    }
+    
+    .lw-consultation-table th {
+        padding: 10px 12px;
+        font-size: 0.75rem;
+        background: none;
+        border-bottom: none;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    .lw-consultation-table tbody td {
+        padding: 14px 12px;
+        font-size: 0.85rem;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    .lw-consultation-table tbody tr {
+        min-height: 60px;
+    }
+    
+    .lw-consultation-table tbody tr:hover {
+        background: #f8f9fa;
+        transform: translateX(1px);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .lw-consultation-client-email,
+    .lw-consultation-date-time {
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .lw-toast-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+    
+    .lw-toast {
+        min-width: auto;
+        max-width: none;
+    }
+    
+    .lw-consultation-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+    
+    .lw-consultation-controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .lw-bulk-actions-container {
+        justify-content: center;
+    }
+    
+    .lw-bulk-form {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .lw-bulk-action-select,
+    .lw-filter-select {
+        min-width: 120px;
+        font-size: 13px;
+    }
+    
+    /* Mobile table - switch to card layout */
+    .lw-consultation-table-container {
+        overflow-x: visible;
+    }
+    
+    .lw-consultation-table {
+        min-width: unset;
+    }
+    
+    .lw-consultation-table thead {
+        display: none;
+    }
+    
+    /* Hide select checkboxes on mobile */
+    .lw-consultation-table tbody tr td:first-child {
+        display: none !important;
+    }
+    
+    .lw-consultation-table thead th:first-child {
+        display: none !important;
+    }
+    
+    /* Hide bulk actions on mobile since checkboxes are hidden */
+    .lw-bulk-actions-container,
+    #bulk-actions-container {
+        display: none !important;
+    }
+    
+    /* Hide select checkboxes on mobile */
+    .lw-consultation-table tbody tr td:first-child {
+        display: none !important;
+    }
+    
+    /* Hide select all checkbox in header */
+    .lw-consultation-table thead th:first-child {
+        display: none !important;
+    }
+    
+    /* Hide bulk actions on mobile since checkboxes are hidden */
+    .lw-bulk-actions-container,
+    #bulk-actions-container {
+        display: none !important;
+    }
+    
+    .lw-consultation-table tbody tr {
+        display: block;
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        padding: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .lw-consultation-table tbody tr:hover {
+        background: #f8f9fa;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .lw-consultation-table tbody td {
+        display: block;
+        padding: 8px 0;
+        border-bottom: none;
+        text-align: left !important;
+        white-space: normal;
+    }
+    
+    /* Hide checkbox column completely on mobile */
+    .lw-consultation-table tbody td:first-child {
+        display: none !important;
+    }
+    
+    .lw-consultation-table tbody td:before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: #495057;
+        display: block;
+        margin-bottom: 4px;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Since checkbox column is hidden, we need to adjust the labels */
+    .lw-consultation-table tbody td:first-child {
+        display: none !important; /* This is the checkbox column - hidden */
+    }
+    
+    .lw-consultation-table tbody td:nth-child(2):before {
+        content: "ID"; /* This is now the first visible column */
+    }
+    
+    .lw-consultation-table tbody td:nth-child(3):before {
+        content: "Client";
+    }
+    
+    .lw-consultation-table tbody td:nth-child(4):before {
+        content: "Practice Area";
+    }
+    
+    .lw-consultation-table tbody td:nth-child(5):before {
+        content: "Date & Time";
+    }
+    
+    .lw-consultation-table tbody td:nth-child(6):before {
+        content: "Status";
+    }
+    
+    .lw-consultation-table tbody td:nth-child(7):before {
+        content: "Created";
+    }
+    
+    .lw-consultation-table tbody td:nth-child(8):before {
+        content: "Actions";
+    }
+    
+    .lw-consultation-client-cell,
+    .lw-consultation-date-cell {
+        gap: 4px;
+    }
+    
+    .lw-consultation-client-name,
+    .lw-consultation-client-email,
+    .lw-consultation-date-main,
+    .lw-consultation-date-time {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
+    }
 }

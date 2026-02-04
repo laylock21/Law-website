@@ -371,6 +371,9 @@ $active_page = $active_page ?? "";
         background: rgba(0, 0, 0, 0.5);
         z-index: -1;
     }
+    .lw-sidebar-footer {
+        margin-bottom: 32px;
+    }
 }
 </style>
 <!-- Expandable Sidebar Navigation -->
