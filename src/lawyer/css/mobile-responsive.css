@@ -21,6 +21,34 @@ body.lawyer-page {
     max-width: 100vw !important;
 }
 
+/* ========================================
+   Z-INDEX SYSTEM (AUTHORITATIVE)
+   ======================================== */
+
+/* Base page content */
+:root {
+    --z-base: 1;
+
+    /* Layout */
+    --z-sidebar: 1000;
+    --z-topbar: 1100;
+
+    /* Floating UI */
+    --z-dropdown: 2000;
+    --z-tooltip: 3000;
+
+    /* Toasts & notifications */
+    --z-toast: 6000;
+
+    /* Modals */
+    --z-modal-backdrop: 5000;
+    --z-modal: 5100;
+
+    /* Critical / emergency UI */
+    --z-critical: 6000;
+}
+
+
 /* Ensure all content displays fully on mobile - GLOBAL FIX */
 @media (max-width: 768px) {
     /* Prevent any element from exceeding viewport width */
@@ -116,7 +144,7 @@ body.lawyer-page {
         height: 100vh;
         width: 260px;
         transform: translateX(0);
-        z-index: 1001;
+        z-index: var(--z-sidebar);
         background: #3a3a3a;
         box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
         transition: none;
@@ -162,7 +190,7 @@ body.lawyer-page {
         right: auto;
         height: 60px;
         width: 100%;
-        z-index: 1;
+        z-index: var(--z-topbar);
         background: white;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         margin-left: 0;

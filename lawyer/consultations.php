@@ -137,11 +137,12 @@ $active_page = "consultations";
 </head>
 <body class="lawyer-page">
 	<?php include 'partials/sidebar.php'; ?>
+	<!-- Toast notifications - Direct child of body for proper stacking -->
+	<div id="toast-container" class="lw-toast-container"></div>
+	
 	<div class="lawyer-dashboard">
 
 		<main class="lawyer-main-content">
-			<!-- Toast notifications will appear here -->
-			<div id="toast-container" class="lw-toast-container"></div>
 			
 			<div class="lawyer-availability-section">
 				<div class="lw-consultation-header">

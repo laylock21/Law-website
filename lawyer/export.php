@@ -521,14 +521,14 @@ $active_page = "export";
             color: var(--gold);
         }
         
-        .stats-grid {
+        .lawyer-export-stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
         
-        .stat-box {
+        .lawyer-export-stat-box {
             background: linear-gradient(135deg, #f8f9fa, #e9ecef);
             border-radius: 10px;
             padding: 20px;
@@ -541,12 +541,12 @@ $active_page = "export";
             align-items: center;
         }
         
-        .stat-box.highlight {
+        .lawyer-export-stat-box.lawyer-export-highlight {
             background: linear-gradient(135deg, #fff3cd, #ffeaa7);
             border-color: var(--gold);
         }
         
-        .stat-number {
+        .lawyer-export-stat-number {
             font-size: 2.5rem;
             font-weight: 700;
             color: var(--navy);
@@ -554,7 +554,7 @@ $active_page = "export";
             line-height: 1;
         }
         
-        .stat-label {
+        .lawyer-export-stat-label {
             font-size: 0.9rem;
             color: var(--text-light);
             text-transform: uppercase;
@@ -701,21 +701,21 @@ $active_page = "export";
                 grid-template-columns: 1fr;
             }
             
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
+            .lawyer-export-stats-grid {
+                grid-template-columns: repeat(3, 1fr);
             }
 
-            .stat-box {
+            .lawyer-export-stat-box {
                 padding: 16px;
                 min-height: 100px;
             }
             
-            .stat-number {
+            .lawyer-export-stat-number {
                 font-size: 1.8rem;
                 margin-bottom: 6px;
             }
             
-            .stat-label {
+            .lawyer-export-stat-label {
                 font-size: 0.75rem;
                 line-height: 1.3;
                 letter-spacing: 0.3px;
@@ -725,40 +725,21 @@ $active_page = "export";
             }
         }
         
-        @media (min-width: 425px) and (max-width: 768px) {
-            .stats-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-            
-            .stat-box {
-                padding: 14px;
-                min-height: 90px;
-            }
-            
-            .stat-number {
-                font-size: 1.6rem;
-            }
-            
-            .stat-label {
-                font-size: 0.7rem;
-            }
-        }
-        
-        @media (max-width: 424px) {
-            .stats-grid {
+        @media (max-width: 450px) {
+            .lawyer-export-stats-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
 
-            .stat-box {
+            .lawyer-export-stat-box {
                 padding: 12px;
                 min-height: 85px;
             }
             
-            .stat-number {
+            .lawyer-export-stat-number {
                 font-size: 1.4rem;
             }
             
-            .stat-label {
+            .lawyer-export-stat-label {
                 font-size: 0.65rem;
                 letter-spacing: 0.2px;
             }
@@ -780,30 +761,30 @@ $active_page = "export";
             <!-- Statistics Card -->
             <div class="export-card">
                 <h2><i class="fas fa-chart-bar"></i> Availability Statistics</h2>
-                <div class="stats-grid">
-                    <div class="stat-box highlight">
-                        <div class="stat-number"><?php echo $stats['total']; ?></div>
-                        <div class="stat-label">Total Schedules</div>
+                <div class="lawyer-export-stats-grid">
+                    <div class="lawyer-export-stat-box lawyer-export-highlight">
+                        <div class="lawyer-export-stat-number"><?php echo $stats['total']; ?></div>
+                        <div class="lawyer-export-stat-label">Total Schedules</div>
                     </div>
-                    <div class="stat-box">
-                        <div class="stat-number"><?php echo $stats['weekly']; ?></div>
-                        <div class="stat-label">Weekly</div>
+                    <div class="lawyer-export-stat-box">
+                        <div class="lawyer-export-stat-number"><?php echo $stats['weekly']; ?></div>
+                        <div class="lawyer-export-stat-label">Weekly</div>
                     </div>
-                    <div class="stat-box">
-                        <div class="stat-number"><?php echo $stats['one_time']; ?></div>
-                        <div class="stat-label">One-Time</div>
+                    <div class="lawyer-export-stat-box">
+                        <div class="lawyer-export-stat-number"><?php echo $stats['one_time']; ?></div>
+                        <div class="lawyer-export-stat-label">One-Time</div>
                     </div>
-                    <div class="stat-box">
-                        <div class="stat-number"><?php echo $stats['blocked']; ?></div>
-                        <div class="stat-label">Blocked</div>
+                    <div class="lawyer-export-stat-box">
+                        <div class="lawyer-export-stat-number"><?php echo $stats['blocked']; ?></div>
+                        <div class="lawyer-export-stat-label">Blocked</div>
                     </div>
-                    <div class="stat-box">
-                        <div class="stat-number"><?php echo $stats['active']; ?></div>
-                        <div class="stat-label">Active</div>
+                    <div class="lawyer-export-stat-box">
+                        <div class="lawyer-export-stat-number"><?php echo $stats['active']; ?></div>
+                        <div class="lawyer-export-stat-label">Active</div>
                     </div>
-                    <div class="stat-box">
-                        <div class="stat-number"><?php echo $stats['inactive']; ?></div>
-                        <div class="stat-label">Inactive</div>
+                    <div class="lawyer-export-stat-box">
+                        <div class="lawyer-export-stat-number"><?php echo $stats['inactive']; ?></div>
+                        <div class="lawyer-export-stat-label">Inactive</div>
                     </div>
                 </div>
             </div>

@@ -815,9 +815,9 @@ $active_page = "availability";
         /* Toast Notification Styles */
         #toast-container {
             position: fixed;
-            top: 20px;
+            top: 20px; /* Keep original desktop positioning */
             right: 20px;
-            z-index: 9999;
+            z-index: 10001; /* Higher than modal overlay (10000) */
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -960,7 +960,7 @@ $active_page = "availability";
         
         @media (max-width: 768px) {
             #toast-container {
-                top: 10px;
+                top: 90px; /* Below 80px topbar + 10px margin */
                 right: 10px;
                 left: 10px;
                 max-width: none;

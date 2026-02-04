@@ -68,7 +68,7 @@ $active_page = "consultations";
 		/* Toast notification styles */
 		.toast {
 			position: fixed;
-			top: 20px;
+			top: 20px; /* Keep original desktop positioning */
 			right: 20px;
 			background: #333;
 			color: white;
@@ -78,7 +78,7 @@ $active_page = "consultations";
 			display: flex;
 			align-items: center;
 			gap: 0.75rem;
-			z-index: 9999;
+			z-index: 10001; /* Higher than modal overlay (10000) */
 			animation: slideIn 0.3s ease-out;
 			min-width: 300px;
 			max-width: 500px;
@@ -120,7 +120,7 @@ $active_page = "consultations";
 		
 		@media (max-width: 768px) {
 			.toast {
-				top: 10px;
+				top: 90px; /* Below 80px topbar + 10px margin */
 				right: 10px;
 				left: 10px;
 				min-width: auto;
