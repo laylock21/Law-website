@@ -529,78 +529,29 @@ body.lawyer-page {
     }
     
     .info-text strong {
-        font-size: 13px;
+        font-size: 16px !important;
         display: block;
         margin-bottom: 6px;
         overflow: visible;
     }
     
     .info-text p {
-        font-size: 12px;
+        font-size: 13px !important;
         line-height: 1.5;
         overflow: visible;
         height: auto;
         margin: 0;
     }
     
-    /* Availability - Centered, show all */
-    .availability-container {
-        padding: 0;
-        overflow: visible;
-        max-height: none;
-        height: auto;
-        width: 100%;
-        max-width: 100%;
-        margin: 0 auto;
-    }
-    
-    .availability-item {
-        padding: 12px;
-        margin-bottom: 12px;
-        overflow: visible;
-        max-height: none;
-        height: auto;
-        width: 100%;
-        max-width: 100%;
-        box-sizing: border-box;
-        border-radius: 6px;
-    }
-    
-    .availability-item > * {
-        overflow: visible;
-        height: auto;
-        max-height: none;
-    }
-    
-    .availability-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-        width: 100%;
-        overflow: visible;
-        height: auto;
-    }
-    
-    .empty-availability-state,
-    .empty-consultations-state {
-        padding: 20px 15px;
-        text-align: center;
-        width: 100%;
-        margin: 0 auto;
-    }
-    
-    .empty-icon {
-        font-size: 40px;
-    }
-    
+    /* Empty states - match the info text sizing */
     .empty-availability-state h4,
     .empty-consultations-state h4 {
-        font-size: 16px;
+        font-size: 16px !important;
     }
     
     .empty-availability-state p,
     .empty-consultations-state p {
-        font-size: 13px;
+        font-size: 13px !important;
     }
     
     /* Consultations table - Centered, show all */
@@ -2232,6 +2183,54 @@ body.lawyer-page {
 }
 
 /* =============================================================================
+   EXPORT PAGE - MOBILE RESPONSIVE
+   ============================================================================= */
+
+@media (max-width: 768px) {
+    /* Export page titles - 16px */
+    .export-card h2 {
+        font-size: 16px !important;
+    }
+    
+    /* Statistics box text - 13px */
+    .stat-box .stat-label,
+    .stats-grid .stat-label {
+        font-size: 13px !important;
+    }
+    
+    /* Statistics numbers stay larger for visibility */
+    .stat-box .stat-number,
+    .stats-grid .stat-number {
+        font-size: 1.8rem !important;
+    }
+    
+    /* Form labels - 13px */
+    .form-group label {
+        font-size: 13px !important;
+    }
+    
+    /* Format option titles - 16px */
+    .format-info h4 {
+        font-size: 16px !important;
+    }
+    
+    /* Format option descriptions - 13px */
+    .format-info p {
+        font-size: 13px !important;
+    }
+    
+    /* Info box text - 13px */
+    .info-box p {
+        font-size: 13px !important;
+    }
+    
+    /* Export button text - 16px */
+    .export-btn {
+        font-size: 16px !important;
+    }
+}
+
+/* =============================================================================
    VIEW CONSULTATION PAGE - MOBILE RESPONSIVE
    ============================================================================= */
 
@@ -2859,3 +2858,160 @@ body.lawyer-page {
         scroll-behavior: auto !important;
     }
 }
+
+/* =============================================================================
+   SCHEDULE DATE TEXT - RESPONSIVE FONT SIZING
+   ============================================================================= */
+
+/* Desktop styles (default) - Match the time text size */
+.schedule-date-text {
+    font-size: 15px;
+    line-height: 1.3;
+}
+
+.schedule-day-name {
+    font-size: 15px;
+    font-weight: bold;
+}
+
+/* Tablet styles */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .schedule-date-text {
+        font-size: 15px;
+        line-height: 1.3;
+    }
+    
+    .schedule-day-name {
+        font-size: 15px;
+        font-weight: bold;
+    }
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+    .schedule-date-text {
+        font-size: 15px;
+        line-height: 1.3;
+    }
+    
+    .schedule-day-name {
+        font-size: 15px;
+        font-weight: bold;
+    }
+}
+
+/* Small mobile styles */
+@media (max-width: 480px) {
+    .schedule-date-text {
+        font-size: 14px;
+        line-height: 1.3;
+    }
+    
+    .schedule-day-name {
+        font-size: 14px;
+        font-weight: bold;
+    }
+}
+    
+    /* Availability - Centered, show all */
+    .availability-container {
+        padding: 0;
+        overflow: visible;
+        max-height: none;
+        height: auto;
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+    }
+    
+    .availability-item {
+        padding: 12px;
+        margin-bottom: 12px;
+        overflow: visible;
+        max-height: none;
+        height: auto;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        border-radius: 6px;
+    }
+    
+    .availability-item > * {
+        overflow: visible;
+        height: auto;
+        max-height: none;
+    }
+    
+    .availability-header {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        margin-bottom: 16px !important;
+        flex-direction: row !important;
+    }
+    /* Weekly Availability Section - Match consultation text sizing on mobile */
+    @media (max-width: 768px) {
+        /* Availability section headers */
+        .availability-header strong {
+            font-size: 16px !important;
+        }
+        
+        /* All text within availability items */
+        .availability-item span {
+            font-size: 13px !important;
+        }
+        
+        /* Schedule date text in availability */
+        .availability-item .schedule-date-text {
+            font-size: 13px !important;
+        }
+        
+        /* Time text in availability */
+        .availability-item span[style*="font-size: 15px"] {
+            font-size: 13px !important;
+        }
+        
+        /* Max appointments text */
+        .availability-item span:contains("Max Appointments") {
+            font-size: 13px !important;
+        }
+        
+        /* All inline styled spans in availability items */
+        .availability-item div[style*="display: flex"] span {
+            font-size: 13px !important;
+        }
+        
+        /* Empty availability state to match consultations */
+        .empty-availability-state h4 {
+            font-size: 16px !important;
+        }
+        
+        .empty-availability-state p {
+            font-size: 13px !important;
+        }
+        
+        /* Set Your Schedule button text */
+        .btn-set-schedule {
+            font-size: 13px !important;
+        }
+    }
+    /* Mobile-specific overrides for availability text */
+    @media (max-width: 768px) {
+        .availability-time-text {
+            font-size: 13px !important;
+        }
+        
+        .availability-appointments-text {
+            font-size: 13px !important;
+        }
+        
+        /* Also target the section headers */
+        .availability-header strong[style*="font-size: 17px"] {
+            font-size: 16px !important;
+        }
+        
+        /* Info messages in availability */
+        .availability-item div[style*="color: #666"] {
+            font-size: 13px !important;
+        }
+    }
