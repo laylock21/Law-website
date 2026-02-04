@@ -24,16 +24,22 @@ try {
     
     // Status counts
     $pending_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE c_status = 'pending'");
-    $pending_count = $pending_stmt->fetchColumn();
+    $pending_count = (int)$pending_stmt->fetchColumn();
     
     $confirmed_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE c_status = 'confirmed'");
-    $confirmed_count = $confirmed_stmt->fetchColumn();
+    $confirmed_count = (int)$confirmed_stmt->fetchColumn();
     
     $completed_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE c_status = 'completed'");
-    $completed_count = $completed_stmt->fetchColumn();
+    $completed_count = (int)$completed_stmt->fetchColumn();
     
     $cancelled_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE c_status = 'cancelled'");
-    $cancelled_count = $cancelled_stmt->fetchColumn();
+    $cancelled_count = (int)$cancelled_stmt->fetchColumn();
+    
+    // Initialize variables to ensure they're never null (already cast to int above)
+    $pending_count ??= 0;
+    $confirmed_count ??= 0;
+    $completed_count ??= 0;
+    $cancelled_count ??= 0;
     
     // Recent consultations
     $recent_stmt = $pdo->query("SELECT c_id, c_full_name, c_status, c_consultation_date, created_at, lawyer_id FROM consultations ORDER BY created_at DESC LIMIT 5");

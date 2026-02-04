@@ -2618,11 +2618,6 @@ html {
 		align-items: center;
 	}
 	
-	.carousel {
-		width: 100%;
-		max-width: 400px; /* Limit width on mobile for better centering */
-		margin: 0 auto;
-	}
 	
 	/* Ensure carousel controls are visible */
 	.carousel-control-prev,

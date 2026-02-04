@@ -8,6 +8,7 @@
     cursor: pointer;
     overflow: hidden;
     margin: 0 auto;
+    box-sizing: border-box;
 }
 
 .lawprof-card-inner {
@@ -68,6 +69,8 @@
     align-items: center;
     text-align: center;
     position: relative;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .lawprof-profile-name {
@@ -101,7 +104,7 @@
     background: #2c2c2c;
     color: white;
     border: none;
-    padding: 12px 35px;
+    padding: 12px 20px;
     font-size: 14px;
     font-weight: 700;
     border-radius: 8px;
@@ -110,6 +113,12 @@
     text-transform: uppercase;
     letter-spacing: 1px;
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    word-wrap: break-word;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .lawprof-book-btn:hover {
@@ -130,6 +139,8 @@
     justify-content: space-around;
     position: relative;
     z-index: 1;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .lawprof-description-section {
@@ -218,7 +229,7 @@
     background: #2c2c2c;
     color: white;
     border: none;
-    padding: 15px 40px;
+    padding: 15px 20px;
     font-size: 16px;
     font-weight: 700;
     border-radius: 8px;
@@ -227,6 +238,12 @@
     text-transform: uppercase;
     letter-spacing: 1px;
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    word-wrap: break-word;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .lawprof-book-btn-back:hover {
@@ -239,6 +256,7 @@
 @media (max-width: 768px) {
     .lawprof-profile-card {
         height: 550px;
+        max-width: 300px;
     }
     
     .lawprof-profile-name {
@@ -251,5 +269,27 @@
     
     .lawprof-section-title {
         font-size: 20px;
+    }
+    
+    .lawprof-book-btn,
+    .lawprof-book-btn-back {
+        padding: 12px 15px;
+        font-size: 13px;
+        letter-spacing: 0.5px;
+    }
+}
+
+/* Specific fix for tablet range (481px to 767px) */
+@media (min-width: 481px) and (max-width: 767px) {
+    .lawprof-profile-card {
+        height: 580px;
+        max-width: 320px;
+        margin: 0 auto;
+    }
+    
+    .lawprof-book-btn,
+    .lawprof-book-btn-back {
+        padding: 12px 18px;
+        font-size: 14px;
     }
 }

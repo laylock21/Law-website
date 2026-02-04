@@ -28,6 +28,13 @@ try {
         FROM consultations
     ");
     $stats = $stats_stmt->fetch();
+    
+    // Ensure all values are integers and never null
+    $stats['total'] = (int)($stats['total'] ?? 0);
+    $stats['pending'] = (int)($stats['pending'] ?? 0);
+    $stats['confirmed'] = (int)($stats['confirmed'] ?? 0);
+    $stats['completed'] = (int)($stats['completed'] ?? 0);
+    $stats['cancelled'] = (int)($stats['cancelled'] ?? 0);
 } catch (Exception $e) {
     $stats = ['total' => 0, 'pending' => 0, 'confirmed' => 0, 'completed' => 0, 'cancelled' => 0];
 }
@@ -359,7 +366,7 @@ $active_page = "export";
             <!-- Statistics Card -->
             <div class="export-card">
                 <h2><i class="fas fa-chart-bar"></i> Consultation Statistics</h2>
-                <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                <div class="stats-grid" style="display: grid; gap: 20px; margin-bottom: 30px;">
                     <div class="stat-box" style="background: white; border-radius: 12px; padding: 24px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e9ecef;">
                         <div class="stat-number" style="font-size: 48px; font-weight: 700; color: #3a3a3a; margin-bottom: 8px;"><?php echo $stats['total']; ?></div>
                         <div class="stat-label" style="color: #666; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">TOTAL</div>

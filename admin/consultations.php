@@ -623,7 +623,7 @@ $active_page = "consultations";
                         <?php 
                         try {
                             $pending_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE c_status = 'pending'");
-                            echo $pending_stmt->fetchColumn();
+                            echo (int)$pending_stmt->fetchColumn();
                         } catch (Exception $e) {
                             echo '0';
                         }
@@ -636,7 +636,7 @@ $active_page = "consultations";
                         <?php 
                         try {
                             $confirmed_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE c_status = 'confirmed'");
-                            echo $confirmed_stmt->fetchColumn();
+                            echo (int)$confirmed_stmt->fetchColumn();
                         } catch (Exception $e) {
                             echo '0';
                         }
@@ -649,7 +649,7 @@ $active_page = "consultations";
                         <?php 
                         try {
                             $completed_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE c_status = 'completed'");
-                            echo $completed_stmt->fetchColumn();
+                            echo (int)$completed_stmt->fetchColumn();
                         } catch (Exception $e) {
                             echo '0';
                         }
@@ -661,8 +661,8 @@ $active_page = "consultations";
                     <div class="admin-stat-number">
                         <?php 
                         try {
-                            $pending_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE c_status = 'cancelled'");
-                            echo $pending_stmt->fetchColumn();
+                            $cancelled_stmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE c_status = 'cancelled'");
+                            echo (int)$cancelled_stmt->fetchColumn();
                         } catch (Exception $e) {
                             echo '0';
                         }
