@@ -213,7 +213,6 @@ $active_page = $active_page ?? "";
 .lw-sidebar-footer {
     padding: 20px 0;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 32px;
 }
 
 .lw-sidebar-link.lw-logout {
@@ -371,6 +370,9 @@ $active_page = $active_page ?? "";
         bottom: 0;
         background: rgba(0, 0, 0, 0.5);
         z-index: -1;
+    }
+    .lw-sidebar-footer {
+        margin-bottom: 32px;
     }
 }
 </style>

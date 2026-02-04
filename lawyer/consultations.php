@@ -132,223 +132,7 @@ $active_page = "consultations";
 	<link rel="stylesheet" href="../includes/confirmation-modal.css">
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 	<style>
-		/* Make checkboxes bigger */
-		input[type="checkbox"] {
-			width: 16px;
-			height: 16px;
-			cursor: pointer;
-		}
-		
-		#select-all {
-			width: 16px;
-			height: 16px;
-			cursor: pointer;
-		}
-		
-		.consultation-checkbox {
-			width: 16px;
-			height: 16px;
-			cursor: pointer;
-		}
-		
-		/* Bulk action select styling */
-		#bulk_action {
-			padding: 10px 16px;
-			border: 2px solid #e9ecef;
-			border-radius: 6px;
-			font-family: var(--font-sans);
-			font-size: 14px;
-			font-weight: 500;
-			background: white;
-			color: var(--text-dark);
-			cursor: pointer;
-			display: inline-block;
-			transition: all 0.3s ease;
-			appearance: none;
-			-webkit-appearance: none;
-			-moz-appearance: none;
-			background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
-			background-repeat: no-repeat;
-			background-position: right 12px center;
-			background-size: 16px 12px;
-			padding-right: 40px;
-			height: 42px;
-			min-width: 150px;
-		}
-		
-		#bulk_action:hover {
-			border-color: var(--gold);
-			transform: translateY(-1px);
-			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-		}
-		
-		#bulk_action:focus {
-			outline: none;
-			border-color: var(--gold);
-			box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.1);
-		}
-		
-
-		
-		/* Toast Notification Styles */
-		#toast-container {
-			position: fixed;
-			top: 20px;
-			right: 20px;
-			z-index: 9999;
-			display: flex;
-			flex-direction: column;
-			gap: 10px;
-			max-width: 400px;
-		}
-		
-		.toast {
-			background: white;
-			border-radius: 8px;
-			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-			padding: 16px 20px;
-			display: flex;
-			align-items: flex-start;
-			gap: 12px;
-			animation: slideIn 0.3s ease-out forwards;
-			border-left: 4px solid;
-			min-width: 300px;
-			max-width: 400px;
-			opacity: 1;
-			transform: translateX(0);
-			position: relative;
-			overflow: hidden;
-		}
-		
-		.toast::after {
-			content: '';
-			position: absolute;
-			bottom: 0;
-			left: 0;
-			height: 3px;
-			background: currentColor;
-			width: 100%;
-			transform-origin: left;
-			animation: progressBar linear forwards;
-		}
-		
-		.toast.success::after {
-			color: #28a745;
-		}
-		
-		.toast.error::after {
-			color: #dc3545;
-		}
-		
-		@keyframes progressBar {
-			from {
-				transform: scaleX(1);
-			}
-			to {
-				transform: scaleX(0);
-			}
-		}
-		
-		.toast.success {
-			border-left-color: #28a745;
-		}
-		
-		.toast.error {
-			border-left-color: #dc3545;
-		}
-		
-		.toast-icon {
-			font-size: 20px;
-			flex-shrink: 0;
-			margin-top: 2px;
-		}
-		
-		.toast.success .toast-icon {
-			color: #28a745;
-		}
-		
-		.toast.error .toast-icon {
-			color: #dc3545;
-		}
-		
-		.toast-content {
-			flex: 1;
-			display: flex;
-			flex-direction: column;
-			gap: 4px;
-		}
-		
-		.toast-title {
-			font-weight: 600;
-			font-size: 14px;
-			color: #dc3545;
-		}
-		
-		.toast-message {
-			font-size: 13px;
-			color: #666;
-			line-height: 1.4;
-		}
-		
-		.toast-close {
-			background: none;
-			border: none;
-			color: #999;
-			cursor: pointer;
-			font-size: 18px;
-			padding: 0;
-			width: 20px;
-			height: 20px;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			flex-shrink: 0;
-			transition: color 0.2s;
-		}
-		
-		.toast-close:hover {
-			color: #dc3545;
-		}
-		
-		@keyframes slideIn {
-			from {
-				transform: translateX(400px);
-				opacity: 0;
-			}
-			to {
-				transform: translateX(0);
-				opacity: 1;
-			}
-		}
-		
-		@keyframes slideOut {
-			from {
-				transform: translateX(0);
-				opacity: 1;
-			}
-			to {
-				transform: translateX(400px);
-				opacity: 0;
-			}
-		}
-		
-		.toast.hiding {
-			animation: slideOut 0.3s ease-out forwards;
-		}
-		
-		@media (max-width: 768px) {
-			#toast-container {
-				top: 10px;
-				right: 10px;
-				left: 10px;
-				max-width: none;
-			}
-			
-			.toast {
-				min-width: auto;
-				max-width: none;
-			}
-		}
+		/* Minimal styles - most moved to styles.css */
 	</style>
 </head>
 <body class="lawyer-page">
@@ -357,17 +141,17 @@ $active_page = "consultations";
 
 		<main class="lawyer-main-content">
 			<!-- Toast notifications will appear here -->
-			<div id="toast-container"></div>
+			<div id="toast-container" class="lw-toast-container"></div>
 			
 			<div class="lawyer-availability-section">
-				<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+				<div class="lw-consultation-header">
 					<h3>Consultation Requests</h3>
-					<div style="display: flex; gap: 10px; align-items: flex-start;">
+					<div class="lw-consultation-controls">
 						<!-- Status Filter -->
 						<select id="status_filter" 
 							name="status_filter" 
 							onchange="applyFilters()"
-							style="padding: 10px 16px; border: 2px solid #e9ecef; border-radius: 6px; font-size: 14px; font-weight: 500; height: 42px; min-width: 150px; appearance: none; -webkit-appearance: none; -moz-appearance: none; background-image: url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 16 16\'%3E%3Cpath fill=\'none\' stroke=\'%23343a40\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M2 5l6 6 6-6\'/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px 12px; padding-right: 40px; background-color: white; cursor: pointer;">
+							class="lw-filter-select">
 							<option value="">All Statuses</option>
 							<option value="pending" <?php echo $status_filter === 'pending' ? 'selected' : ''; ?>>Pending</option>
 							<option value="confirmed" <?php echo $status_filter === 'confirmed' ? 'selected' : ''; ?>>Confirmed</option>
@@ -376,9 +160,9 @@ $active_page = "consultations";
 						</select>
 						
 						<!-- Bulk Actions -->
-						<div class="bulk-actions" id="bulk-actions-container" style="display: flex; gap: 10px; align-items: center;">
-							<form method="POST" id="bulk-form" style="display: flex; gap: 10px; align-items: center;">
-								<select name="bulk_action" id="bulk_action">
+						<div class="lw-bulk-actions-container" id="bulk-actions-container">
+							<form method="POST" id="bulk-form" class="lw-bulk-form">
+								<select name="bulk_action" id="bulk_action" class="lw-bulk-action-select">
 									<option value="confirm">Confirm</option>
 									<option value="complete">Complete</option>
 									<option value="cancel">Cancel</option>
@@ -388,47 +172,54 @@ $active_page = "consultations";
 						</div>
 					</div>
 				</div>
-				<div style="overflow-x: auto;">
+				<div class="lw-consultation-table-container">
 					<form method="POST" id="consultations-form">
-					<table class="admin-consultations-table" style="width: 100%; border-collapse: collapse;">
+					<table class="lw-consultation-table">
 						<thead>
 							<tr>
-								<th style="text-align:left; padding: 12px;"><input type="checkbox" id="select-all" onchange="toggleSelectAll()"></th>
-								<th style="text-align:left; padding: 12px;">ID</th>
-								<th style="text-align:left; padding: 12px;">Client</th>
-								<th style="text-align:left; padding: 12px;">Practice Area</th>
-								<th style="text-align:left; padding: 12px;">Date</th>
-								<th style="text-align:left; padding: 12px;">Status</th>
-								<th style="text-align:left; padding: 12px;">Created</th>
-								<th style="text-align:center; padding: 12px; width: 120px;">Actions</th>
+								<th><input type="checkbox" id="select-all" class="lw-consultation-select-all" onchange="toggleSelectAll()"></th>
+								<th>ID</th>
+								<th>Client</th>
+								<th>Practice Area</th>
+								<th>Date</th>
+								<th>Status</th>
+								<th>Created</th>
+								<th>Actions</th>
 							</tr>
 						</thead>
 						<tbody>
 							<?php foreach ($consultations as $row): ?>
 								<tr>
-									<td style="padding: 12px; border-bottom: 1px solid #e9ecef;"><input type="checkbox" name="selected_consultations[]" value="<?php echo $row['c_id']; ?>" class="consultation-checkbox"></td>
-									<td style="padding: 12px; border-bottom: 1px solid #e9ecef;">#<?php echo (int)$row['c_id']; ?></td>
-									<td style="padding: 12px; border-bottom: 1px solid #e9ecef;"><?php echo htmlspecialchars($row['c_full_name']); ?><br><small><?php echo htmlspecialchars($row['c_email']); ?></small></td>
-									<td style="padding: 12px; border-bottom: 1px solid #e9ecef;"><?php echo !empty($row['c_practice_area']) ? htmlspecialchars($row['c_practice_area']) : '—'; ?></td>
-									<td style="padding: 12px; border-bottom: 1px solid #e9ecef; ">
-										<?php 
-										if ($row['consultation_date']) {
-											echo date('M d, Y', strtotime($row['consultation_date']));
-											if (!empty($row['consultation_time'])) {
-												echo '<br><small style="color: #666;"><i class="fas fa-clock"></i> ' . date('g:i A', strtotime($row['consultation_time'])) . '</small>';
-											}
-										} else {
-											echo '—';
-										}
-										?>
+									<td><input type="checkbox" name="selected_consultations[]" value="<?php echo $row['c_id']; ?>" class="lw-consultation-checkbox"></td>
+									<td>#<?php echo (int)$row['c_id']; ?></td>
+									<td>
+										<div class="lw-consultation-client-cell">
+											<div class="lw-consultation-client-name"><?php echo htmlspecialchars($row['c_full_name']); ?></div>
+											<div class="lw-consultation-client-email"><?php echo htmlspecialchars($row['c_email']); ?></div>
+										</div>
 									</td>
-									<td style="padding: 12px; border-bottom: 1px solid #e9ecef;">
+									<td><?php echo !empty($row['c_practice_area']) ? htmlspecialchars($row['c_practice_area']) : '—'; ?></td>
+									<td>
+										<div class="lw-consultation-date-cell">
+											<?php 
+											if ($row['consultation_date']) {
+												echo '<div class="lw-consultation-date-main">' . date('M d, Y', strtotime($row['consultation_date'])) . '</div>';
+												if (!empty($row['consultation_time'])) {
+													echo '<div class="lw-consultation-date-time"><i class="fas fa-clock"></i> ' . date('g:i A', strtotime($row['consultation_time'])) . '</div>';
+												}
+											} else {
+												echo '<div class="lw-consultation-date-main">—</div>';
+											}
+											?>
+										</div>
+									</td>
+									<td>
 										<span class="lawyer-status-badge lawyer-status-<?php echo $row['c_status']; ?>"><?php echo ucfirst($row['c_status']); ?></span>
 									</td>
-									<td style="padding: 12px; border-bottom: 1px solid #e9ecef; "><?php echo date('M d, Y H:i', strtotime($row['created_at'])); ?></td>
-									<td style="padding: 0px; border-bottom: 1px solid #e9ecef; text-align: center;" data-id="#<?php echo (int)$row['c_id']; ?>">
-										<div style="display:flex; gap:8px; align-items:center; flex-wrap: wrap; justify-content: center;">
-											<button onclick="openConsultationModal(<?php echo (int)$row['c_id']; ?>); return false;" class="lawyer-btn btn-view-details" style="text-decoration:none; padding:8px 12px; border: none; cursor: pointer;">View Details</button>
+									<td><?php echo date('M d, Y H:i', strtotime($row['created_at'])); ?></td>
+									<td data-id="#<?php echo (int)$row['c_id']; ?>">
+										<div>
+											<button onclick="openConsultationModal(<?php echo (int)$row['c_id']; ?>); return false;" class="lawyer-btn btn-view-details">View Details</button>
 										</div>
 									</td>
 								</tr>
@@ -438,7 +229,7 @@ $active_page = "consultations";
 					</form>
 				</div>
 				<?php if (($total_pages ?? 1) > 1): ?>
-					<div style="display:flex; gap:8px; justify-content:center; align-items:center; margin-top:16px;">
+					<div class="lw-consultation-pagination">
 						<?php 
 						$filter_params = '';
 						if (!empty($status_filter)) {
@@ -451,7 +242,7 @@ $active_page = "consultations";
 							<span class="pagination-btn pagination-prev pagination-disabled"><i class="fas fa-chevron-left"></i></span>
 						<?php endif; ?>
 
-						<span style="font-size:14px; color:#666; font-weight:500;">
+						<span class="lw-consultation-pagination-info">
 							<?php echo $page; ?>
 						</span>
 
@@ -497,7 +288,7 @@ $active_page = "consultations";
 	
 	function toggleSelectAll() {
 		const selectAllCheckbox = document.getElementById('select-all');
-		const consultationCheckboxes = document.querySelectorAll('.consultation-checkbox');
+		const consultationCheckboxes = document.querySelectorAll('.lw-consultation-checkbox');
 		
 		consultationCheckboxes.forEach(checkbox => {
 			checkbox.checked = selectAllCheckbox.checked;
@@ -512,7 +303,7 @@ $active_page = "consultations";
 			bulkForm.addEventListener('submit', async function(e) {
 				e.preventDefault();
 
-				const selectedCheckboxes = document.querySelectorAll('.consultation-checkbox:checked');
+				const selectedCheckboxes = document.querySelectorAll('.lw-consultation-checkbox:checked');
 				const bulkAction = document.getElementById('bulk_action').value;
 
 				if (selectedCheckboxes.length === 0) {
@@ -626,7 +417,7 @@ $active_page = "consultations";
 		
 		// Create toast element
 		const toast = document.createElement('div');
-		toast.className = `toast ${type}`;
+		toast.className = `lw-toast ${type}`;
 		
 		const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
 		const title = type === 'success' ? 'Success' : 'Error';
@@ -635,12 +426,12 @@ $active_page = "consultations";
 		const iconColor = type === 'success' ? '#28a745' : '#dc3545';
 		
 		toast.innerHTML = `
-			<i class="fas ${icon} toast-icon" style="color: ${iconColor};"></i>
-			<div class="toast-content">
-				<div class="toast-title">${title}</div>
-				<div class="toast-message">${message}</div>
+			<i class="fas ${icon} lw-toast-icon" style="color: ${iconColor};"></i>
+			<div class="lw-toast-content">
+				<div class="lw-toast-title">${title}</div>
+				<div class="lw-toast-message">${message}</div>
 			</div>
-			<button class="toast-close" onclick="closeToast(this)">×</button>
+			<button class="lw-toast-close" onclick="closeToast(this)">×</button>
 		`;
 		
 		// Set the progress bar animation duration
@@ -649,7 +440,7 @@ $active_page = "consultations";
 		const style = document.createElement('style');
 		const toastId = Date.now();
 		style.textContent = `
-			.toast[data-id="${toastId}"]::after {
+			.lw-toast[data-id="${toastId}"]::after {
 				animation-duration: ${duration}ms;
 			}
 		`;
@@ -663,7 +454,7 @@ $active_page = "consultations";
 		
 		// Auto-remove after duration
 		const timeoutId = setTimeout(() => {
-			closeToast(toast.querySelector('.toast-close'));
+			closeToast(toast.querySelector('.lw-toast-close'));
 		}, duration);
 		
 		// Store timeout ID on toast element so we can cancel it if needed
@@ -671,7 +462,7 @@ $active_page = "consultations";
 	}
 	
 	function closeToast(button) {
-		const toast = button.closest ? button.closest('.toast') : button;
+		const toast = button.closest ? button.closest('.lw-toast') : button;
 		if (!toast) {
 			console.error('Toast element not found');
 			return;
