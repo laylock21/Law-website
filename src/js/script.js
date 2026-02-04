@@ -1772,6 +1772,23 @@ window.renderCalendar = function() {
 		// Feature: Add click handlers for available dates - syncs with date input field
 		Array.from(bodyEl.querySelectorAll('button[data-date]:not([disabled])')).forEach((btn) => {
 			btn.addEventListener('click', () => {
+				// Validate that practice area and lawyer are selected first
+				const practiceAreaDisplay = document.getElementById('practiceAreaDisplay');
+				const lawyerSelect = document.getElementById('lawyer');
+				
+				const practiceAreaSelected = practiceAreaDisplay && practiceAreaDisplay.textContent !== 'Click to select practice area';
+				const lawyerSelected = lawyerSelect && lawyerSelect.value && lawyerSelect.value !== '';
+				
+				if (!practiceAreaSelected) {
+					showWarningToast('Please select a practice area first before choosing a date.', 'Practice Area Required');
+					return;
+				}
+				
+				if (!lawyerSelected) {
+					showWarningToast('Please select a lawyer first before choosing a date.', 'Lawyer Required');
+					return;
+				}
+				
 				const selectedDate = btn.getAttribute('data-date') || '';
 				
 				// Update the date input field

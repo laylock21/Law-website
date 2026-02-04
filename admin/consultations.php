@@ -572,6 +572,39 @@ $active_page = "consultations";
         .desktop-table thead th {
             border-bottom: 3px solid #c5a253 !important;
         }
+        
+        /* Pagination Arrow Buttons */
+        .pagination-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: #c5a253;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .pagination-btn:hover {
+            background: #B08F42;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(197, 162, 83, 0.3);
+        }
+
+        .pagination-btn.pagination-disabled {
+            opacity: 0.4;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+
+        .pagination-btn i {
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body class="admin-page">
@@ -866,19 +899,32 @@ $active_page = "consultations";
             </div>
 
             <?php if ($total_pages > 1): ?>
-                <div class="admin-pagination">
-                    <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                <div style="display:flex; gap:8px; justify-content:center; align-items:center; margin-top:16px;">
+                    <?php if ($page > 1): ?>
                         <?php 
-                        $page_params = $_GET;
-                        $page_params['page'] = $i;
-                        $page_query = http_build_query($page_params);
+                        $prev_params = $_GET;
+                        $prev_params['page'] = $page - 1;
+                        $prev_query = http_build_query($prev_params);
                         ?>
-                        <?php if ($i === $page): ?>
-                            <span class="current"><?php echo $i; ?></span>
-                        <?php else: ?>
-                            <a href="?<?php echo $page_query; ?>"><?php echo $i; ?></a>
-                        <?php endif; ?>
-                    <?php endfor; ?>
+                        <a href="?<?php echo $prev_query; ?>" class="pagination-btn pagination-prev"><i class="fas fa-chevron-left"></i></a>
+                    <?php else: ?>
+                        <span class="pagination-btn pagination-prev pagination-disabled"><i class="fas fa-chevron-left"></i></span>
+                    <?php endif; ?>
+
+                    <span style="font-size:14px; color:#666; font-weight:500;">
+                        <?php echo $page; ?>
+                    </span>
+
+                    <?php if ($page < $total_pages): ?>
+                        <?php 
+                        $next_params = $_GET;
+                        $next_params['page'] = $page + 1;
+                        $next_query = http_build_query($next_params);
+                        ?>
+                        <a href="?<?php echo $next_query; ?>" class="pagination-btn pagination-next"><i class="fas fa-chevron-right"></i></a>
+                    <?php else: ?>
+                        <span class="pagination-btn pagination-next pagination-disabled"><i class="fas fa-chevron-right"></i></span>
+                    <?php endif; ?>
                 </div>
             <?php endif; ?>
         </div>

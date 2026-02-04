@@ -131,26 +131,24 @@ $active_page = "create_consultation";
             font-family: inherit;
         }
         
+        /* Prevent red borders on page load for invalid fields */
+        .form-control:invalid {
+            border-color: #e9ecef;
+            box-shadow: none;
+        }
+        
         .form-control:focus {
             outline: none;
             border-color: #C5A253;
             box-shadow: 0 0 0 3px rgba(197, 162, 83, 0.1);
         }
         
-        .form-control:invalid:not(:placeholder-shown) {
+        /* Only show invalid styles after user has interacted with the field */
+        .form-control.touched:invalid {
             border-color: #dc3545;
         }
         
-        .form-control:invalid:focus:not(:placeholder-shown) {
-            border-color: #dc3545;
-            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
-        }
-        
-        .form-control.touched.invalid {
-            border-color: #dc3545;
-        }
-        
-        .form-control.touched.invalid:focus {
+        .form-control.touched:invalid:focus {
             border-color: #dc3545;
             box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
         }
