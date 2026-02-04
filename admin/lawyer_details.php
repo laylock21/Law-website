@@ -380,10 +380,10 @@ $active_page = "lawyer";
             }
             
             .details-header > div {
-                flex-direction: column !important;
+                flex-direction: row !important;
                 gap: 16px !important;
                 align-items: center !important;
-                text-align: center !important;
+                text-align: left !important;
             }
             
             .details-header h1 {
@@ -397,8 +397,8 @@ $active_page = "lawyer";
             /* Profile picture */
             .details-header img,
             .details-header > div > div:first-child {
-                width: 100px !important;
-                height: 100px !important;
+                width: 80px !important;
+                height: 80px !important;
             }
             
             /* Info cards */
