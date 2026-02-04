@@ -139,8 +139,8 @@ $active_page = "dashboard";
                                 <img src="../src/img/Expertise LOgo.png" alt="Expertise" class="expertise-logo">
                             </div>
                             <div class="info-text">
-                                <strong>Your Areas of Expertise</strong>
-                                <p>You are qualified to handle consultations in <?php echo count($specializations); ?> legal <?php echo count($specializations) === 1 ? 'area' : 'areas'; ?>: 
+                                <strong style="font-size: 16px;">Your Areas of Expertise</strong>
+                                <p style="font-size: 13px;">You are qualified to handle consultations in <?php echo count($specializations); ?> legal <?php echo count($specializations) === 1 ? 'area' : 'areas'; ?>: 
                                 <strong style="color: var(--gold);">
                                     <?php 
                                     $spec_names = array_map(function($spec) {
@@ -230,15 +230,15 @@ $active_page = "dashboard";
                                     <div style="display: grid; gap: 10px;">
                                         <div style="display: flex; align-items: center; gap: 10px;">
                                             <i class="fas fa-calendar" style="color: #666; width: 22px; font-size: 18px;"></i>
-                                            <span style="font-size: 18px; line-height: 1.3;"><strong style="font-size: 20px;"><?php echo $today; ?></strong>, <?php echo date('F j, Y'); ?></span>
+                                            <span class="schedule-date-text" style="font-size: 15px !important;"><span style="font-weight: bold; font-size: 15px !important;"><?php echo $today; ?></span>, <?php echo date('F j, Y'); ?></span>
                                         </div>
                                         <div style="display: flex; align-items: center; gap: 10px;">
                                             <i class="fas fa-clock" style="color: #666; width: 22px; font-size: 16px;"></i>
-                                            <span style="font-size: 15px;"><?php echo date('g:i A', strtotime($today_schedule['start_time'])); ?> - <?php echo date('g:i A', strtotime($today_schedule['end_time'])); ?></span>
+                                            <span class="availability-time-text" style="font-size: 15px;"><?php echo date('g:i A', strtotime($today_schedule['start_time'])); ?> - <?php echo date('g:i A', strtotime($today_schedule['end_time'])); ?></span>
                                         </div>
                                         <div style="display: flex; align-items: center; gap: 10px;">
                                             <i class="fas fa-users" style="color: #666; width: 22px; font-size: 16px;"></i>
-                                            <span style="font-size: 15px;">Max Appointments: <strong><?php echo $today_schedule['max_appointments']; ?></strong></span>
+                                            <span class="availability-appointments-text" style="font-size: 15px;">Max Appointments: <strong><?php echo $today_schedule['max_appointments']; ?></strong></span>
                                         </div>
                                     </div>
                                 <?php else: ?>
@@ -260,15 +260,15 @@ $active_page = "dashboard";
                                     <div style="display: grid; gap: 10px;">
                                         <div style="display: flex; align-items: center; gap: 10px;">
                                             <i class="fas fa-calendar" style="color: #666; width: 22px; font-size: 18px;"></i>
-                                            <span style="font-size: 18px; line-height: 1.3;"><strong style="font-size: 20px;"><?php echo date('l', strtotime($next_date)); ?></strong>, <?php echo date('F j, Y', strtotime($next_date)); ?></span>
+                                            <span class="schedule-date-text" style="font-size: 15px !important;"><span style="font-weight: bold; font-size: 15px !important;"><?php echo date('l', strtotime($next_date)); ?></span>, <?php echo date('F j, Y', strtotime($next_date)); ?></span>
                                         </div>
                                         <div style="display: flex; align-items: center; gap: 10px;">
                                             <i class="fas fa-clock" style="color: #666; width: 22px; font-size: 16px;"></i>
-                                            <span style="font-size: 15px;"><?php echo date('g:i A', strtotime($next_schedule['start_time'])); ?> - <?php echo date('g:i A', strtotime($next_schedule['end_time'])); ?></span>
+                                            <span class="availability-time-text" style="font-size: 15px;"><?php echo date('g:i A', strtotime($next_schedule['start_time'])); ?> - <?php echo date('g:i A', strtotime($next_schedule['end_time'])); ?></span>
                                         </div>
                                         <div style="display: flex; align-items: center; gap: 10px;">
                                             <i class="fas fa-users" style="color: #666; width: 22px; font-size: 16px;"></i>
-                                            <span style="font-size: 15px;">Max Appointments: <strong><?php echo $next_schedule['max_appointments']; ?></strong></span>
+                                            <span class="availability-appointments-text" style="font-size: 15px;">Max Appointments: <strong><?php echo $next_schedule['max_appointments']; ?></strong></span>
                                         </div>
                                     </div>
                                 <?php else: ?>

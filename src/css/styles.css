@@ -2053,6 +2053,14 @@ html {
 		gap: 16px;
 	}
 	
+	.feature-item h4 {
+		font-size: 16px !important;
+	}
+	
+	.feature-item p {
+		font-size: 13px !important;
+	}
+	
 	.feature-icon {
 		width: 42px;
 		height: 42px;
@@ -2181,6 +2189,14 @@ html {
 		padding: 24px 20px;
 	}
 	
+	.service-card h3 {
+		font-size: 16px !important;
+	}
+	
+	.service-card p {
+		font-size: 13px !important;
+	}
+	
 	.testimonials-grid {
 		grid-template-columns: 1fr;
 		gap: 24px;
@@ -2188,6 +2204,18 @@ html {
 	
 	.testimonial-card {
 		padding: 24px 20px;
+	}
+	
+	.testimonial-content p {
+		font-size: 13px !important;
+	}
+	
+	.testimonial-author h4 {
+		font-size: 16px !important;
+	}
+	
+	.testimonial-author span {
+		font-size: 13px !important;
 	}
 	
 	.lawyer-grid {
@@ -2207,7 +2235,17 @@ html {
 	
 	.footer-section h3,
 	.footer-section h4 {
+		font-size: 16px !important;
 		margin-bottom: 16px;
+	}
+	
+	/* Make MD Law brand title slightly larger */
+	.footer-section h3:first-of-type {
+		font-size: 17px !important;
+	}
+	
+	.footer-section p {
+		font-size: 13px !important;
 	}
 	
 	.footer-section ul {
@@ -2216,6 +2254,10 @@ html {
 	
 	.footer-section ul li {
 		margin-bottom: 10px;
+	}
+	
+	.footer-section ul li a {
+		font-size: 13px !important;
 	}
 	
 	/* Center footer navigation on mobile */
@@ -2256,7 +2298,7 @@ html {
 	}
 	
 	.hero-tagline {
-		font-size: clamp(15px, 4vw, 17px);
+		font-size: 13px !important;
 		margin-bottom: 32px;
 	}
 	
@@ -2572,11 +2614,23 @@ html {
 		padding: 20px 16px;
 	}
 	
+	.contact-card h3 {
+		font-size: 16px !important;
+	}
+	
 	.contact-item {
 		flex-direction: row;
 		gap: 16px;
 		padding-left: 0;
 		margin-bottom: 16px;
+	}
+	
+	.contact-item strong {
+		font-size: 16px !important;
+	}
+	
+	.contact-item span {
+		font-size: 13px !important;
 	}
 	
 	.contact-icon {
@@ -2763,7 +2817,7 @@ html {
 	}
 	
 	.hero-tagline {
-		font-size: 16px;
+		font-size: 13px !important;
 	}
 	
 	/* Enhanced centering for small devices (iPhone SE, Galaxy S8+) */
@@ -2980,7 +3034,7 @@ html {
 	}
 	
 	.section-header h2 {
-		font-size: 24px;
+		font-size: 16px !important;
 		margin-bottom: 16px;
 	}
 	
@@ -2999,6 +3053,18 @@ html {
 	.contact-card {
 		padding: 18px 14px;
 		border-radius: 12px;
+	}
+	
+	.contact-card h3 {
+		font-size: 16px !important;
+	}
+	
+	.contact-item strong {
+		font-size: 16px !important;
+	}
+	
+	.contact-item span {
+		font-size: 13px !important;
 	}
 	
 	/* Compact navigation */
@@ -3029,7 +3095,7 @@ html {
 	}
 	
 	.section-header h2 {
-		font-size: 22px;
+		font-size: 16px !important;
 	}
 	
 	.section-header p {
@@ -3041,7 +3107,7 @@ html {
 	}
 	
 	.hero-tagline {
-		font-size: 15px;
+		font-size: 13px !important;
 	}
 	
 	.btn {
@@ -3139,6 +3205,45 @@ html {
 		padding: 16px 12px;
 	}
 	
+	.testimonial-content p {
+		font-size: 13px !important;
+	}
+	
+	.testimonial-author h4 {
+		font-size: 16px !important;
+	}
+	
+	.testimonial-author span {
+		font-size: 13px !important;
+	}
+	
+	/* Services section header */
+	#services .section-header h2 {
+		font-size: 16px !important;
+	}
+	
+	#services .section-header p {
+		font-size: 13px !important;
+	}
+	
+	/* Testimonials section header */
+	#testimonials .section-header h2 {
+		font-size: 16px !important;
+	}
+	
+	#testimonials .section-header p {
+		font-size: 13px !important;
+	}
+	
+	/* Contact section header */
+	#contact .section-header h2 {
+		font-size: 16px !important;
+	}
+	
+	#contact .section-header p {
+		font-size: 13px !important;
+	}
+	
 	.site-header .nav-list {
 		width: 240px;
 		padding: 80px 12px 12px;
@@ -3187,7 +3292,7 @@ html {
 	}
 	
 	.section-header h2 {
-		font-size: 20px;
+		font-size: 16px !important;
 		margin-bottom: 12px;
 	}
 	
@@ -3206,7 +3311,7 @@ html {
 	}
 	
 	.hero-tagline {
-		font-size: 14px;
+		font-size: 13px !important;
 		margin-bottom: 24px;
 	}
 	
@@ -3325,14 +3430,26 @@ html {
 		border-radius: 10px;
 	}
 	
+	.contact-card h3 {
+		font-size: 16px !important;
+	}
+	
+	.contact-item strong {
+		font-size: 16px !important;
+	}
+	
+	.contact-item span {
+		font-size: 13px !important;
+	}
+	
 	.service-card h3,
 	.testimonial-card h4 {
-		font-size: 16px;
+		font-size: 16px !important;
 	}
 	
 	.service-card p,
 	.testimonial-card p {
-		font-size: 13px;
+		font-size: 13px !important;
 	}
 	
 	.review-card {
@@ -3373,11 +3490,16 @@ html {
 	}
 	
 	.footer-section h3 {
-		font-size: 20px;
+		font-size: 16px !important;
+	}
+	
+	/* Make MD Law brand title slightly larger */
+	.footer-section h3:first-of-type {
+		font-size: 17px !important;
 	}
 	
 	.footer-section h4 {
-		font-size: 16px;
+		font-size: 16px !important;
 	}
 	
 	.footer-section p,
@@ -3553,7 +3675,7 @@ html {
     }
     
     .hero-tagline {
-        font-size: clamp(16px, 2.5vw, 20px);
+        font-size: 13px !important;
     }
 }
 
