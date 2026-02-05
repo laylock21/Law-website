@@ -9436,6 +9436,22 @@ table td {
         gap: 10px;
     }
     
+    /* Reorder controls on mobile: Export first, Status filter second, Bulk actions third */
+    .lw-consultation-controls .btn-export {
+        order: 1;
+        width: 60% !important;
+        margin: 0 auto;
+        justify-content: center;
+    }
+    
+    .lw-consultation-controls .lw-filter-select {
+        order: 2;
+    }
+    
+    .lw-consultation-controls .lw-bulk-actions-container {
+        order: 3;
+    }
+    
     .lw-bulk-actions-container {
         justify-content: center;
     }

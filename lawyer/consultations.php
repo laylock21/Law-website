@@ -171,6 +171,12 @@ $active_page = "consultations";
 								<button type="submit" class="lawyer-btn btn-apply-selected">Apply to Selected</button>
 							</form>
 						</div>
+						
+						<!-- Export Button -->
+						<button type="button" class="lawyer-btn btn-export" onclick="openExportModal()" style="background: #c5a253; color: white; padding: 14px 20px; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 16px;">
+							<i class="fas fa-file-export"></i>
+							Export
+						</button>
 					</div>
 				</div>
 				<div class="lw-consultation-table-container">
@@ -629,6 +635,166 @@ $active_page = "consultations";
 			</div>
 		</div>
 	</div>
+
+	<!-- Export Modal -->
+	<div id="exportModal" class="consultation-modal" style="display: none;">
+		<div class="modal-content" style="max-width: 500px; border-radius: 12px; overflow: hidden;">
+			<div class="modal-header" style="background: #3a3a3a; color: white; padding: 20px 24px; border-bottom: none;">
+				<h2 style="margin: 0; font-size: 22px; font-weight: 700;">Export Consultations</h2>
+				<span class="modal-close" onclick="closeExportModal()" style="color: white; opacity: 0.8; font-size: 28px;">&times;</span>
+			</div>
+			<div class="modal-body" style="padding: 28px 24px;">
+				<form id="exportForm" action="export.php" method="POST">
+					<!-- Status Filter -->
+					<div style="margin-bottom: 24px;">
+						<label style="display: block; font-weight: 600; margin-bottom: 12px; color: #4a5568; font-size: 15px; text-align: center;">Filter by Status</label>
+						<select name="export_status" id="export_status" style="width: 100%; padding: 12px 14px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; color: #2d3748; background: white;">
+							<option value="">All Statuses</option>
+							<option value="pending">Pending</option>
+							<option value="confirmed">Confirmed</option>
+							<option value="completed">Completed</option>
+							<option value="cancelled">Cancelled</option>
+						</select>
+					</div>
+
+					<!-- Export Format -->
+					<div style="margin-bottom: 24px;">
+						<label style="display: block; font-weight: 600; margin-bottom: 12px; color: #4a5568; font-size: 15px; text-align: center;">Export Format</label>
+						<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+							<label class="export-format-option" style="cursor: pointer;">
+								<input type="radio" name="export_format" value="excel" checked style="display: none;">
+								<div class="format-card" style="border: 2px solid #e2e8f0; border-radius: 10px; padding: 24px 16px; text-align: center; transition: all 0.3s ease; background: white;">
+									<i class="fas fa-file-excel" style="font-size: 36px; color: #c5a253; margin-bottom: 10px; display: block;"></i>
+									<div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 15px;">Excel</div>
+									<div style="font-size: 12px; color: #a0aec0;">Spreadsheet format</div>
+								</div>
+							</label>
+							<label class="export-format-option" style="cursor: pointer;">
+								<input type="radio" name="export_format" value="pdf" style="display: none;">
+								<div class="format-card" style="border: 2px solid #e2e8f0; border-radius: 10px; padding: 24px 16px; text-align: center; transition: all 0.3s ease; background: white;">
+									<i class="fas fa-file-pdf" style="font-size: 36px; color: #c5a253; margin-bottom: 10px; display: block;"></i>
+									<div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 15px;">PDF</div>
+									<div style="font-size: 12px; color: #a0aec0;">Professional reports</div>
+								</div>
+							</label>
+						</div>
+					</div>
+
+					<!-- Export Button -->
+					<button type="submit" class="lawyer-btn" style="width: 100%; background: #c5a253; color: white; padding: 13px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease;">
+						<i class="fas fa-download" style="font-size: 16px;"></i>
+						Export Consultations
+					</button>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<style>
+		.export-format-option input[type="radio"]:checked + .format-card {
+			border-color: #c5a253 !important;
+			background: linear-gradient(135deg, #fff9e6, #fffbf0) !important;
+			box-shadow: 0 4px 12px rgba(197, 162, 83, 0.25);
+		}
+
+		.export-format-option .format-card:hover {
+			border-color: #c5a253;
+			transform: translateY(-2px);
+			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+		}
+
+		@media (max-width: 768px) {
+			#exportModal .modal-content {
+				max-width: 85%;
+				margin: 15px auto;
+			}
+			
+			#exportModal .modal-body {
+				padding: 20px 18px !important;
+			}
+			
+			#exportModal .modal-header {
+				padding: 16px 18px !important;
+			}
+			
+			#exportModal .modal-header h2 {
+				font-size: 18px !important;
+			}
+			
+			#exportModal label {
+				font-size: 13px !important;
+				margin-bottom: 10px !important;
+			}
+			
+			#exportModal select {
+				padding: 10px 12px !important;
+				font-size: 13px !important;
+			}
+			
+			#exportModal .format-card {
+				padding: 18px 12px !important;
+			}
+			
+			#exportModal .format-card i {
+				font-size: 28px !important;
+				margin-bottom: 8px !important;
+			}
+			
+			#exportModal .format-card > div:first-of-type {
+				font-size: 14px !important;
+			}
+			
+			#exportModal .format-card > div:last-of-type {
+				font-size: 11px !important;
+			}
+			
+			#exportModal button[type="submit"] {
+				padding: 11px !important;
+				font-size: 14px !important;
+			}
+			
+			#exportModal button[type="submit"] i {
+				font-size: 14px !important;
+			}
+			
+			#exportModal > div > div {
+				margin-bottom: 18px !important;
+			}
+		}
+	</style>
+
+	<script>
+		function openExportModal() {
+			document.getElementById('exportModal').style.display = 'block';
+		}
+
+		function closeExportModal() {
+			document.getElementById('exportModal').style.display = 'none';
+		}
+
+		// Close modal when clicking outside
+		window.addEventListener('click', function(event) {
+			const exportModal = document.getElementById('exportModal');
+			if (event.target === exportModal) {
+				closeExportModal();
+			}
+		});
+
+		// Handle export form submission
+		document.getElementById('exportForm').addEventListener('submit', function(e) {
+			const btn = this.querySelector('button[type="submit"]');
+			const originalHTML = btn.innerHTML;
+			btn.disabled = true;
+			btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...';
+			
+			// Reset button after 3 seconds
+			setTimeout(function() {
+				btn.innerHTML = originalHTML;
+				btn.disabled = false;
+				closeExportModal();
+			}, 3000);
+		});
+	</script>
 </body>
 </html>
 
