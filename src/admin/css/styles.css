@@ -3755,10 +3755,14 @@ input[type="radio"]:focus {
         font-size: 1.3rem;
     }
     
-    /* Lawyer Management - Create button full width on mobile */
+    /* Lawyer Management - Create button smaller size on mobile */
     #openCreateLawyerModal {
-        width: 100% !important;
-        margin-right: 0 !important;
+        width: auto !important;
+        max-width: calc(100% - 20px) !important;
+        padding: 8px 12px !important;
+        font-size: 13px !important;
+        margin: 0 10px !important;
+        box-sizing: border-box !important;
         justify-content: center;
     }
     
@@ -5487,5 +5491,233 @@ body.admin-page table.admin-consultations-table th,
     
     .practice-stat-description {
         font-size: 12px;
+    }
+}
+/* =============================================================================
+   NOTIFICATION QUEUE - MOBILE OPTIMIZATION
+   ============================================================================= */
+
+@media (max-width: 768px) {
+    /* Mobile-optimized alert styling */
+    .nq-mobile-alert {
+        margin: 15px 0 20px 0 !important;
+        padding: 12px 15px !important;
+        border-radius: 8px !important;
+        font-size: 13px !important;
+        line-height: 1.4 !important;
+        border: none !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .nq-mobile-alert.alert-success {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%) !important;
+        color: #155724 !important;
+        border-left: 4px solid #28a745 !important;
+    }
+    
+    .nq-mobile-alert.alert-warning {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%) !important;
+        color: #856404 !important;
+        border-left: 4px solid #ffc107 !important;
+    }
+    
+    .nq-mobile-alert strong {
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        display: block !important;
+        margin-bottom: 2px !important;
+    }
+    
+    .nq-mobile-alert div {
+        display: flex !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+    }
+    
+    /* Compact icon styling */
+    .nq-mobile-alert strong::before {
+        margin-right: 6px !important;
+        font-size: 14px !important;
+    }
+    
+    /* Mobile heading */
+    .nq-mobile-heading {
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        color: #333 !important;
+        margin: 20px 0 15px 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Empty state */
+    .nq-mobile-empty {
+        font-size: 13px !important;
+        padding: 30px 20px !important;
+        background: #f8f9fa !important;
+        border-radius: 8px !important;
+        border: 1px solid #e9ecef !important;
+    }
+    
+    /* Table wrapper for mobile */
+    .nq-mobile-table-wrapper {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        border-radius: 8px !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .nq-mobile-table {
+        font-size: 12px !important;
+        min-width: 600px !important;
+    }
+    
+    .nq-mobile-table th {
+        font-size: 11px !important;
+        padding: 8px 6px !important;
+        background: #f8f9fa !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+    }
+    
+    .nq-mobile-table td {
+        font-size: 12px !important;
+        padding: 8px 6px !important;
+        border-bottom: 1px solid #e9ecef !important;
+    }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+    .nq-mobile-alert {
+        margin: 10px 0 15px 0 !important;
+        padding: 10px 12px !important;
+        font-size: 12px !important;
+    }
+    
+    .nq-mobile-alert strong {
+        font-size: 12px !important;
+    }
+    
+    .nq-mobile-heading {
+        font-size: 15px !important;
+        margin: 15px 0 12px 0 !important;
+    }
+    
+    .nq-mobile-table {
+        font-size: 11px !important;
+    }
+    
+    .nq-mobile-table th,
+    .nq-mobile-table td {
+        padding: 6px 4px !important;
+    }
+}
+/* =============================================================================
+   ADMIN EXPORT PAGE - MOBILE DATE INPUT FIX
+   ============================================================================= */
+
+@media (max-width: 768px) {
+    /* Fix date input fields exceeding container on real mobile devices */
+    .export-card .form-group input[type="date"] {
+        width: calc(100% - 20px) !important;
+        max-width: calc(100% - 20px) !important;
+        padding: 10px 12px !important;
+        font-size: 14px !important;
+        border: 2px solid #e9ecef !important;
+        border-radius: 6px !important;
+        margin: 0 auto !important;
+        box-sizing: border-box !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: textfield !important;
+        background: white !important;
+    }
+    
+    .export-card .form-group input[type="date"]:focus {
+        border-color: var(--gold) !important;
+        outline: none !important;
+        box-shadow: 0 0 0 3px rgba(197, 162, 83, 0.1) !important;
+    }
+    
+    /* Form row adjustments for mobile */
+    .export-card .form-row {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 15px !important;
+        width: 100% !important;
+    }
+    
+    .export-card .form-group {
+        width: 100% !important;
+        margin-bottom: 15px !important;
+        padding: 0 10px !important;
+        box-sizing: border-box !important;
+    }
+    
+    .export-card .form-group label {
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        margin-bottom: 6px !important;
+        display: block !important;
+        color: #333 !important;
+    }
+    
+    /* Select dropdowns mobile fix */
+    .export-card .form-group select {
+        width: calc(100% - 20px) !important;
+        max-width: calc(100% - 20px) !important;
+        padding: 10px 12px !important;
+        font-size: 14px !important;
+        border: 2px solid #e9ecef !important;
+        border-radius: 6px !important;
+        margin: 0 auto !important;
+        box-sizing: border-box !important;
+        background: white !important;
+    }
+    
+    /* Export button mobile adjustments */
+    .export-card .export-btn {
+        width: calc(100% - 20px) !important;
+        max-width: calc(100% - 20px) !important;
+        margin: 20px 10px 0 10px !important;
+        padding: 12px 20px !important;
+        font-size: 14px !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Info box mobile adjustments */
+    .export-card .info-box {
+        margin: 20px 10px 0 10px !important;
+        padding: 12px !important;
+        font-size: 13px !important;
+    }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+    .export-card .form-group input[type="date"],
+    .export-card .form-group select {
+        width: calc(100% - 16px) !important;
+        max-width: calc(100% - 16px) !important;
+        padding: 8px 10px !important;
+        font-size: 13px !important;
+    }
+    
+    .export-card .form-group {
+        padding: 0 8px !important;
+    }
+    
+    .export-card .export-btn {
+        width: calc(100% - 16px) !important;
+        max-width: calc(100% - 16px) !important;
+        margin: 15px 8px 0 8px !important;
+        padding: 10px 16px !important;
+        font-size: 13px !important;
+    }
+    
+    .export-card .info-box {
+        margin: 15px 8px 0 8px !important;
+        padding: 10px !important;
+        font-size: 12px !important;
     }
 }

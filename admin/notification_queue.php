@@ -52,7 +52,7 @@ $active_page = "queue";
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notification Queue - Admin</title>
-    <link rel="stylesheet" href="../src/admin/css/styles.css">
+    <link rel="stylesheet" href="../src/admin/css/styles.css?v=2.2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body class="admin-page">
@@ -70,7 +70,7 @@ $active_page = "queue";
                 </div>
             <?php else: ?>
                 <div class="alert alert-success nq-mobile-alert">
-                    <strong>✅ Email System Active:</strong> All notifications are being sent automatically.
+                    <strong>Email System Active:</strong> All notifications are being sent automatically.
                 </div>
             <?php endif; ?>
             
