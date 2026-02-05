@@ -123,7 +123,7 @@ $active_page = "practice_areas";
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Practice Areas | MD Law Firm</title>
-    <link rel="stylesheet" href="../src/admin/css/styles.css?v=1.8">
+    <link rel="stylesheet" href="../src/admin/css/styles.css?v=1.9">
     <link rel="stylesheet" href="../includes/modal-container.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -529,18 +529,33 @@ $active_page = "practice_areas";
             <?php endif; ?>
             
             <!-- Statistics -->
-            <div class="admin-stats-grid dashboard-stats" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 30px;">
-                <div class="admin-stat-card">
-                    <div class="admin-stat-number"><?php echo $total_areas; ?></div>
-                    <div class="admin-stat-label">Total Areas</div>
+            <div class="practice-areas-stats">
+                <div class="practice-stat-card">
+                    <div class="practice-stat-icon total">
+                        <i class="fas fa-balance-scale"></i>
+                    </div>
+                    <div class="practice-stat-content">
+                        <div class="practice-stat-number"><?php echo $total_areas; ?></div>
+                        <div class="practice-stat-label">Total Areas</div>
+                    </div>
                 </div>
-                <div class="admin-stat-card">
-                    <div class="admin-stat-number"><?php echo $active_areas; ?></div>
-                    <div class="admin-stat-label">Active</div>
+                <div class="practice-stat-card">
+                    <div class="practice-stat-icon active">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="practice-stat-content">
+                        <div class="practice-stat-number"><?php echo $active_areas; ?></div>
+                        <div class="practice-stat-label">Active</div>
+                    </div>
                 </div>
-                <div class="admin-stat-card">
-                    <div class="admin-stat-number"><?php echo $inactive_areas; ?></div>
-                    <div class="admin-stat-label">Inactive</div>
+                <div class="practice-stat-card">
+                    <div class="practice-stat-icon inactive">
+                        <i class="fas fa-pause-circle"></i>
+                    </div>
+                    <div class="practice-stat-content">
+                        <div class="practice-stat-number"><?php echo $inactive_areas; ?></div>
+                        <div class="practice-stat-label">Inactive</div>
+                    </div>
                 </div>
             </div>
             
