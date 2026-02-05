@@ -123,7 +123,7 @@ $active_page = "practice_areas";
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Practice Areas | MD Law Firm</title>
-    <link rel="stylesheet" href="../src/admin/css/styles.css">
+    <link rel="stylesheet" href="../src/admin/css/styles.css?v=1.8">
     <link rel="stylesheet" href="../includes/modal-container.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
