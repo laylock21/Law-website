@@ -5372,3 +5372,120 @@ body.admin-page table.admin-consultations-table th,
         min-width: 750px;
     }
 }
+
+/* =============================================================================
+   PRACTICE AREAS PAGE - REDESIGNED STATISTICS SECTION
+   ============================================================================= */
+
+/* Practice Areas Statistics - New Horizontal Design */
+.practice-areas-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.practice-stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.3s ease;
+}
+
+.practice-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Icon section */
+.practice-stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    flex-shrink: 0;
+}
+
+.practice-stat-icon.total {
+    background: var(--gold);
+}
+
+.practice-stat-icon.active {
+    background: var(--gold);
+}
+
+.practice-stat-icon.inactive {
+    background: var(--gold);
+}
+
+/* Content section */
+.practice-stat-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.practice-stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    line-height: 1;
+    margin: 0;
+}
+
+.practice-stat-label {
+    font-size: 14px;
+    color: #6c757d;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+
+.practice-stat-description {
+    font-size: 13px;
+    color: #8e9aaf;
+    margin: 0;
+    line-height: 1.3;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .practice-areas-stats {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .practice-stat-card {
+        padding: 16px;
+        gap: 16px;
+    }
+    
+    .practice-stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    
+    .practice-stat-number {
+        font-size: 2rem;
+    }
+    
+    .practice-stat-label {
+        font-size: 13px;
+    }
+    
+    .practice-stat-description {
+        font-size: 12px;
+    }
+}
